@@ -234,7 +234,6 @@ void Funkcja7() {
     float bledy[(szerokosc / 2) + 2][wysokosc/2 + 2];
     memset(bledy, 0, sizeof(bledy));
 
-    int blad = 0;
     for (int yy = 0; yy < wysokosc/2; yy++) {
         for (int xx = 0; xx < szerokosc/2; xx++) {
             SDL_Color kolor = getPixel(xx, yy);
