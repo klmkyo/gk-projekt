@@ -73,6 +73,20 @@ SDL_Color z5RGBna24RGB(Uint8 kolor5bit) {
     return kolor; 
 }
 
+Uint8 z24Rgbna5BW(SDL_Color kolor) {
+    int szary8bit = 0.299 * kolor.r + 0.587 * kolor.g + 0.114 * kolor.b;
+    int szary5bit = round(szary8bit * 31.0/255.0);
+
+    return szary5bit;
+}
+
+SDL_Color z5BWna24RGB(Uint8 kolor) {
+    Uint8 szary8bit = round(kolor * 255.0/31.0);
+
+    SDL_Color kolor24bit = {szary8bit, szary8bit, szary8bit};
+    return kolor24bit;
+}
+
 void Funkcja1() {
     SDL_Color kolor;
     uint8_t R, G, B, nowyR, nowyG, nowyB;
@@ -191,7 +205,17 @@ void Funkcja5() {
 
 void Funkcja6() {
 
-    //...
+    // zamienianie z 24bit na 3bit i z powrotem (wyświetlanie na rożnych kwadrantach)
+    for (int y = 0; y < wysokosc/2; y++) {
+        for (int x = 0; x < szerokosc/2; x++) {
+            SDL_Color kolor = getPixel(x, y);
+
+            Uint8 szary5bit = z24Rgbna5BW(kolor);
+            SDL_Color kolor24bit = z5BWna24RGB(szary5bit);
+
+            setPixel(x + szerokosc/2, y + wysokosc/2, kolor24bit.r, kolor24bit.g, kolor24bit.b);
+        }
+    }
 
     SDL_UpdateWindowSurface(window);
 }
