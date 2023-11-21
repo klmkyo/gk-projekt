@@ -213,7 +213,7 @@ void Funkcja6() {
             Uint8 szary5bit = z24Rgbna5BW(kolor);
             SDL_Color kolor24bit = z5BWna24RGB(szary5bit);
 
-            setPixel(x + szerokosc/2, y + wysokosc/2, kolor24bit.r, kolor24bit.g, kolor24bit.b);
+            setPixel(x + szerokosc/2, y, kolor24bit.r, kolor24bit.g, kolor24bit.b);
         }
     }
 
