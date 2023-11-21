@@ -261,8 +261,42 @@ void Funkcja7() {
     SDL_UpdateWindowSurface(window);
 }
 
+void updateBledy(int xx, int yy, float (*bledy)[wysokosc/2 + 2][3], int blad, int colorIndex, int przesuniecie) {
+    bledy[xx+1+przesuniecie][yy  ][colorIndex] += (blad*7.0/16.0);
+    bledy[xx-1+przesuniecie][yy+1][colorIndex] += (blad*3.0/16.0);
+    bledy[xx  +przesuniecie][yy+1][colorIndex] += (blad*5.0/16.0);
+    bledy[xx+1+przesuniecie][yy+1][colorIndex] += (blad*1.0/16.0);
+}
+
 void Funkcja8() {
-    //...
+    Uint8 przesuniecie = 1;
+
+    float bledy[(szerokosc / 2) + 2][wysokosc/2 + 2][3];
+    memset(bledy, 0, sizeof(bledy));
+
+    for (int yy = 0; yy < wysokosc/2; yy++) {
+        for (int xx = 0; xx < szerokosc/2; xx++) {
+            SDL_Color kolor = getPixel(xx, yy);
+
+            Uint8 rZBledem = normalizacja(kolor.r + bledy[xx + przesuniecie][yy][0]);
+            Uint8 gZBledem = normalizacja(kolor.g + bledy[xx + przesuniecie][yy][1]);
+            Uint8 bZBledem = normalizacja(kolor.b + bledy[xx + przesuniecie][yy][2]);
+
+            SDL_Color tempColor = SDL_Color{rZBledem, gZBledem, bZBledem};
+            Uint8 kolor8bit = z24RGBna8RGB(tempColor);
+            SDL_Color nowyKolor = z8RGBna24RGB(kolor8bit);
+
+            int rBlad = rZBledem - nowyKolor.r;
+            int gBlad = gZBledem - nowyKolor.g;
+            int bBlad = bZBledem - nowyKolor.b;
+
+            setPixel(xx + szerokosc/2, yy, nowyKolor.r, nowyKolor.g, nowyKolor.b);
+
+            updateBledy(xx, yy, bledy, rBlad, 0, przesuniecie);
+            updateBledy(xx, yy, bledy, gBlad, 1, przesuniecie);
+            updateBledy(xx, yy, bledy, bBlad, 2, przesuniecie);
+        }
+    }
 
     SDL_UpdateWindowSurface(window);
 }
