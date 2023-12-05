@@ -44,6 +44,12 @@ void Funkcja6();
 void Funkcja7();
 void Funkcja8();
 void Funkcja9();
+void FunkcjaQ();
+void FunkcjaW();
+void FunkcjaE();
+void FunkcjaR();
+
+bool porownajKolory(SDL_Color kolor1, SDL_Color kolor2);
 
 Uint8 z24RGBna8RGB(SDL_Color kolor) {
     Uint8 nowyR, nowyG, nowyB;
@@ -227,60 +233,65 @@ void Funkcja6() {
 }
 
 void Funkcja7() {
-    // same as above, but with floyd-steinberg dithering
-
     Uint8 przesuniecie = 1;
 
-    float bledy[(szerokosc / 2) + 2][wysokosc/2 + 2];
+    float bledy[(szerokosc / 2) + 2][wysokosc / 2 + 2];
     memset(bledy, 0, sizeof(bledy));
 
-    for (int yy = 0; yy < wysokosc/2; yy++) {
-        for (int xx = 0; xx < szerokosc/2; xx++) {
+    for (int yy = 0; yy < wysokosc / 2; yy++) {
+        for (int xx = 0; xx < szerokosc / 2; xx++) {
             SDL_Color kolor = getPixel(xx, yy);
 
-            Uint8 szaryOrg = 0.299 * kolor.r + 0.587 * kolor.g + 0.114 * kolor.b;
+            Uint8 szaryOrg =
+                0.299 * kolor.r + 0.587 * kolor.g + 0.114 * kolor.b;
 
-            Uint8 szaryZBledem = normalizacja(szaryOrg + bledy[xx + przesuniecie][yy]);
+            Uint8 szaryZBledem =
+                normalizacja(szaryOrg + bledy[xx + przesuniecie][yy]);
 
-
-            SDL_Color tempColor = SDL_Color{szaryZBledem, szaryZBledem, szaryZBledem};
+            SDL_Color tempColor =
+                SDL_Color{szaryZBledem, szaryZBledem, szaryZBledem};
             Uint8 szary5bit = z24Rgbna5BW(tempColor);
             SDL_Color nowyKolor = z5BWna24RGB(szary5bit);
 
             int blad = szaryOrg - nowyKolor.r;
 
-            setPixel(xx + szerokosc/2, yy, nowyKolor.r, nowyKolor.g, nowyKolor.b);            
+            setPixel(xx + szerokosc / 2, yy, nowyKolor.r, nowyKolor.g,
+                     nowyKolor.b);
 
-            bledy[xx+1+przesuniecie][yy  ] += (blad*7.0/16.0);
-            bledy[xx-1+przesuniecie][yy+1] += (blad*3.0/16.0);
-            bledy[xx  +przesuniecie][yy+1] += (blad*5.0/16.0);
-            bledy[xx+1+przesuniecie][yy+1] += (blad*1.0/16.0);
+            bledy[xx + 1 + przesuniecie][yy] += (blad * 7.0 / 16.0);
+            bledy[xx - 1 + przesuniecie][yy + 1] += (blad * 3.0 / 16.0);
+            bledy[xx + przesuniecie][yy + 1] += (blad * 5.0 / 16.0);
+            bledy[xx + 1 + przesuniecie][yy + 1] += (blad * 1.0 / 16.0);
         }
     }
 
     SDL_UpdateWindowSurface(window);
 }
 
-void updateBledy(int xx, int yy, float (*bledy)[wysokosc/2 + 2][3], int blad, int colorIndex, int przesuniecie) {
-    bledy[xx+1+przesuniecie][yy  ][colorIndex] += (blad*7.0/16.0);
-    bledy[xx-1+przesuniecie][yy+1][colorIndex] += (blad*3.0/16.0);
-    bledy[xx  +przesuniecie][yy+1][colorIndex] += (blad*5.0/16.0);
-    bledy[xx+1+przesuniecie][yy+1][colorIndex] += (blad*1.0/16.0);
+void updateBledy(int xx, int yy, float (*bledy)[wysokosc / 2 + 2][3], int blad,
+                 int colorIndex, int przesuniecie) {
+    bledy[xx + 1 + przesuniecie][yy][colorIndex] += (blad * 7.0 / 16.0);
+    bledy[xx - 1 + przesuniecie][yy + 1][colorIndex] += (blad * 3.0 / 16.0);
+    bledy[xx + przesuniecie][yy + 1][colorIndex] += (blad * 5.0 / 16.0);
+    bledy[xx + 1 + przesuniecie][yy + 1][colorIndex] += (blad * 1.0 / 16.0);
 }
 
 void Funkcja8() {
     Uint8 przesuniecie = 1;
 
-    float bledy[(szerokosc / 2) + 2][wysokosc/2 + 2][3];
+    float bledy[(szerokosc / 2) + 2][wysokosc / 2 + 2][3];
     memset(bledy, 0, sizeof(bledy));
 
-    for (int yy = 0; yy < wysokosc/2; yy++) {
-        for (int xx = 0; xx < szerokosc/2; xx++) {
+    for (int yy = 0; yy < wysokosc / 2; yy++) {
+        for (int xx = 0; xx < szerokosc / 2; xx++) {
             SDL_Color kolor = getPixel(xx, yy);
 
-            Uint8 rZBledem = normalizacja(kolor.r + bledy[xx + przesuniecie][yy][0]);
-            Uint8 gZBledem = normalizacja(kolor.g + bledy[xx + przesuniecie][yy][1]);
-            Uint8 bZBledem = normalizacja(kolor.b + bledy[xx + przesuniecie][yy][2]);
+            Uint8 rZBledem =
+                normalizacja(kolor.r + bledy[xx + przesuniecie][yy][0]);
+            Uint8 gZBledem =
+                normalizacja(kolor.g + bledy[xx + przesuniecie][yy][1]);
+            Uint8 bZBledem =
+                normalizacja(kolor.b + bledy[xx + przesuniecie][yy][2]);
 
             SDL_Color tempColor = SDL_Color{rZBledem, gZBledem, bZBledem};
             Uint8 kolor8bit = z24RGBna8RGB(tempColor);
@@ -290,40 +301,73 @@ void Funkcja8() {
             int gBlad = gZBledem - nowyKolor.g;
             int bBlad = bZBledem - nowyKolor.b;
 
-            setPixel(xx + szerokosc/2, yy, nowyKolor.r, nowyKolor.g, nowyKolor.b);
+            setPixel(xx + szerokosc / 2, yy, nowyKolor.r, nowyKolor.g,
+                     nowyKolor.b);
 
             updateBledy(xx, yy, bledy, rBlad, 0, przesuniecie);
             updateBledy(xx, yy, bledy, gBlad, 1, przesuniecie);
             updateBledy(xx, yy, bledy, bBlad, 2, przesuniecie);
         }
-    }
+    }💀
 
     SDL_UpdateWindowSurface(window);
 }
 
-SDL_Color paleta8[32];
+SDL_Color paleta8[320 * 200];
 int ileKolorow = 0;
 
 int dodajKolor(SDL_Color kolor) {
     int aktualnyKolor = ileKolorow;
-    if(ileKolorow < 32) {
+    if (ileKolorow < 256) {
         paleta8[ileKolorow] = kolor;
-    }
-    cout << aktualnyKolor << ": " << (int)kolor.r << " " << (int)kolor.g << " " << (int)kolor.b << endl;
+    } 
+    cout << aktualnyKolor << ": " << (int)kolor.r << " " << (int)kolor.g << " "
+         << (int)kolor.b << endl;
     ileKolorow++;
     return aktualnyKolor;
 }
 
 int sprawdzKolor(SDL_Color kolor) {
     if (ileKolorow > 0) {
-        //  ...
+        for (int k = 0; k < ileKolorow; k++) {
+            if (porownajKolory(kolor, paleta8[k])) return k;
+        }
     }
 
     return dodajKolor(kolor);
 }
 
-void Funkcja9() {
+bool porownajKolory(SDL_Color kolor1, SDL_Color kolor2) {
+    return kolor1.r == kolor2.r && kolor1.g == kolor2.g && kolor1.b == kolor2.b;
+}
 
+void Funkcja9() {
+    for (int y = 0; y < wysokosc / 2; y++) {
+        for (int x = 0; x < szerokosc / 2; x++) {
+            SDL_Color kolor = getPixel(x, y);
+            int kolor8bit = sprawdzKolor(kolor);
+            SDL_Color nowyKolor = paleta8[kolor8bit];
+            setPixel(x + szerokosc / 2, y, nowyKolor.r, nowyKolor.g,
+                     nowyKolor.b);
+        }
+    }
+
+    SDL_UpdateWindowSurface(window);
+}
+
+void funkcjaQ() {
+    SDL_UpdateWindowSurface(window);
+}
+
+void funkcjaW() {
+    SDL_UpdateWindowSurface(window);
+}
+
+void funkcjaE() {
+    SDL_UpdateWindowSurface(window);
+}
+
+void funkcjaR() {
     SDL_UpdateWindowSurface(window);
 }
 
@@ -544,6 +588,7 @@ int main(int argc, char *argv[]) {
             case SDL_KEYDOWN: {
                 // wychodzimy, gdy wciśnięto ESC
                 if (event.key.keysym.sym == SDLK_ESCAPE) done = true;
+                
                 if (event.key.keysym.sym == SDLK_1) Funkcja1();
                 if (event.key.keysym.sym == SDLK_2) Funkcja2();
                 if (event.key.keysym.sym == SDLK_3) Funkcja3();
@@ -553,6 +598,11 @@ int main(int argc, char *argv[]) {
                 if (event.key.keysym.sym == SDLK_7) Funkcja7();
                 if (event.key.keysym.sym == SDLK_8) Funkcja8();
                 if (event.key.keysym.sym == SDLK_9) Funkcja9();
+                if (event.key.keysym.sym == SDLK_q) FunkcjaQ();
+                if (event.key.keysym.sym == SDLK_w) FunkcjaW();
+                if (event.key.keysym.sym == SDLK_e) FunkcjaE();
+                if (event.key.keysym.sym == SDLK_r) FunkcjaR();
+
                 if (event.key.keysym.sym == SDLK_a)
                     ladujBMP("obrazek1.bmp", 0, 0);
                 if (event.key.keysym.sym == SDLK_s)
