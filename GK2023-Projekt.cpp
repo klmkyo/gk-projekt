@@ -315,7 +315,7 @@ int dodajKolor(SDL_Color kolor) {
 }
 
 int sprawdzKolor(SDL_Color kolor) {
-    if (ileKolorw > 0) {
+    if (ileKolorow > 0) {
         //  ...
     }
 
