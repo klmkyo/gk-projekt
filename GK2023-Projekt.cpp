@@ -301,8 +301,28 @@ void Funkcja8() {
     SDL_UpdateWindowSurface(window);
 }
 
+SDL_Color paleta8[32];
+int ileKolorow = 0;
+
+int dodajKolor(SDL_Color kolor) {
+    int aktualnyKolor = ileKolorow;
+    if(ileKolorow < 32) {
+        paleta8[ileKolorow] = kolor;
+    }
+    cout << aktualnyKolor << ": " << (int)kolor.r << " " << (int)kolor.g << " " << (int)kolor.b << endl;
+    ileKolorow++;
+    return aktualnyKolor;
+}
+
+int sprawdzKolor(SDL_Color kolor) {
+    if (ileKolorw > 0) {
+        //  ...
+    }
+
+    return dodajKolor(kolor);
+}
+
 void Funkcja9() {
-    //...
 
     SDL_UpdateWindowSurface(window);
 }
