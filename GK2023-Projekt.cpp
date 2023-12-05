@@ -317,7 +317,8 @@ bool porownajKolory(SDL_Color kolor1, SDL_Color kolor2) {
     return kolor1.r == kolor2.r && kolor1.g == kolor2.g && kolor1.b == kolor2.b;
 }
 
-constexpr int maxKolorow = 300 * 256;
+
+constexpr int maxKolorow = 300*256;
 SDL_Color paleta8[maxKolorow];
 int ileKolorow = 0;
 
@@ -326,8 +327,7 @@ int dodajKolor(SDL_Color kolor) {
     if (ileKolorow < maxKolorow) {
         paleta8[ileKolorow] = kolor;
     }
-    // cout << aktualnyKolor << ": " << (int)kolor.r << " " << (int)kolor.g << "
-    // " << (int)kolor.b << endl;
+    // cout << aktualnyKolor << ": " << (int)kolor.r << " " << (int)kolor.g << " " << (int)kolor.b << endl;
     ileKolorow++;
     return aktualnyKolor;
 }
@@ -340,73 +340,6 @@ int sprawdzKolor(SDL_Color kolor) {
     }
 
     return dodajKolor(kolor);
-}
-
-struct RGBColor {
-    float r, g, b;
-
-    RGBColor(float red, float green, float blue) : r(red), g(green), b(blue) {}
-};
-
-struct HSLColor {
-    float h, s, l;
-
-    HSLColor(float hue, float saturation, float lightness)
-        : h(hue), s(saturation), l(lightness) {}
-};
-
-// Function to convert RGB to HSL
-HSLColor rgbToHsl(float r, float g, float b) {
-    r /= 255.0f;
-    g /= 255.0f;
-    b /= 255.0f;
-
-    float maxColor = std::max({r, g, b});
-    float minColor = std::min({r, g, b});
-    float delta = maxColor - minColor;
-
-    float h, s, l;
-
-    // Calculate hue
-    if (delta == 0.0f) {
-        h = 0.0f;
-    } else if (maxColor == r) {
-        h = fmod(((g - b) / delta), 6.0f);
-    } else if (maxColor == g) {
-        h = ((b - r) / delta) + 2.0f;
-    } else if (maxColor == b) {
-        h = ((r - g) / delta) + 4.0f;
-    }
-
-    h *= 60.0f;
-
-    // Calculate lightness
-    l = (maxColor + minColor) / 2.0f;
-
-    // Calculate saturation
-    if (delta == 0.0f) {
-        s = 0.0f;
-    } else {
-        s = delta / (1.0f - std::abs(2.0f * l - 1.0f));
-    }
-
-    return HSLColor(h, s, l);
-}
-
-// Comparator function for sorting based on HSL values
-bool compareHSL(const RGBColor &a, const RGBColor &b) {
-    HSLColor hslA = rgbToHsl(a.r, a.g, a.b);
-    HSLColor hslB = rgbToHsl(b.r, b.g, b.b);
-
-    // Sort primarily by hue, secondarily by saturation, and tertiarily by
-    // lightness
-    if (hslA.h != hslB.h) {
-        return hslA.h < hslB.h;
-    } else if (hslA.s != hslB.s) {
-        return hslA.s < hslB.s;
-    } else {
-        return hslA.l < hslB.l;
-    }
 }
 
 void Funkcja9() {
@@ -433,25 +366,7 @@ void Funkcja9() {
     const float cellWidth = (szerokosc / 2) / gridCols;
     const float cellHeight = (wysokosc / 2) / gridRows;
 
-    cout << "gridRows: " << gridRows << " gridCols: " << gridCols
-         << " cellWidth: " << cellWidth << " cellHeight: " << cellHeight
-         << endl;
-
-    // sort colors in paleta8
-    for (int i = 0; i < ileKolorow; i++) {
-        for (int j = 0; j < ileKolorow - 1; j++) {
-            // sort by hsl
-            RGBColor rgbColor1 =
-                RGBColor(paleta8[j].r, paleta8[j].g, paleta8[j].b);
-            RGBColor rgbColor2 =
-                RGBColor(paleta8[j + 1].r, paleta8[j + 1].g, paleta8[j + 1].b);
-            if (compareHSL(rgbColor1, rgbColor2)) {
-                SDL_Color tempColor = paleta8[j];
-                paleta8[j] = paleta8[j + 1];
-                paleta8[j + 1] = tempColor;
-            }
-        }
-    }
+    cout << "gridRows: " << gridRows << " gridCols: " << gridCols << " cellWidth: " << cellWidth << " cellHeight: " << cellHeight << endl;
 
     for (int i = 0; i < ileKolorow; i++) {
         int row = i / (int)gridCols;
