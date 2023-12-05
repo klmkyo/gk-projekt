@@ -308,21 +308,26 @@ void Funkcja8() {
             updateBledy(xx, yy, bledy, gBlad, 1, przesuniecie);
             updateBledy(xx, yy, bledy, bBlad, 2, przesuniecie);
         }
-    }💀
+    }
 
     SDL_UpdateWindowSurface(window);
 }
 
-SDL_Color paleta8[320 * 200];
+bool porownajKolory(SDL_Color kolor1, SDL_Color kolor2) {
+    return kolor1.r == kolor2.r && kolor1.g == kolor2.g && kolor1.b == kolor2.b;
+}
+
+constexpr int maxKolorow = 300 * 256;
+SDL_Color paleta8[maxKolorow];
 int ileKolorow = 0;
 
 int dodajKolor(SDL_Color kolor) {
     int aktualnyKolor = ileKolorow;
-    if (ileKolorow < 256) {
+    if (ileKolorow < maxKolorow) {
         paleta8[ileKolorow] = kolor;
-    } 
-    cout << aktualnyKolor << ": " << (int)kolor.r << " " << (int)kolor.g << " "
-         << (int)kolor.b << endl;
+    }
+    // cout << aktualnyKolor << ": " << (int)kolor.r << " " << (int)kolor.g << "
+    // " << (int)kolor.b << endl;
     ileKolorow++;
     return aktualnyKolor;
 }
@@ -337,39 +342,144 @@ int sprawdzKolor(SDL_Color kolor) {
     return dodajKolor(kolor);
 }
 
-bool porownajKolory(SDL_Color kolor1, SDL_Color kolor2) {
-    return kolor1.r == kolor2.r && kolor1.g == kolor2.g && kolor1.b == kolor2.b;
+struct RGBColor {
+    float r, g, b;
+
+    RGBColor(float red, float green, float blue) : r(red), g(green), b(blue) {}
+};
+
+struct HSLColor {
+    float h, s, l;
+
+    HSLColor(float hue, float saturation, float lightness)
+        : h(hue), s(saturation), l(lightness) {}
+};
+
+// Function to convert RGB to HSL
+HSLColor rgbToHsl(float r, float g, float b) {
+    r /= 255.0f;
+    g /= 255.0f;
+    b /= 255.0f;
+
+    float maxColor = std::max({r, g, b});
+    float minColor = std::min({r, g, b});
+    float delta = maxColor - minColor;
+
+    float h, s, l;
+
+    // Calculate hue
+    if (delta == 0.0f) {
+        h = 0.0f;
+    } else if (maxColor == r) {
+        h = fmod(((g - b) / delta), 6.0f);
+    } else if (maxColor == g) {
+        h = ((b - r) / delta) + 2.0f;
+    } else if (maxColor == b) {
+        h = ((r - g) / delta) + 4.0f;
+    }
+
+    h *= 60.0f;
+
+    // Calculate lightness
+    l = (maxColor + minColor) / 2.0f;
+
+    // Calculate saturation
+    if (delta == 0.0f) {
+        s = 0.0f;
+    } else {
+        s = delta / (1.0f - std::abs(2.0f * l - 1.0f));
+    }
+
+    return HSLColor(h, s, l);
+}
+
+// Comparator function for sorting based on HSL values
+bool compareHSL(const RGBColor &a, const RGBColor &b) {
+    HSLColor hslA = rgbToHsl(a.r, a.g, a.b);
+    HSLColor hslB = rgbToHsl(b.r, b.g, b.b);
+
+    // Sort primarily by hue, secondarily by saturation, and tertiarily by
+    // lightness
+    if (hslA.h != hslB.h) {
+        return hslA.h < hslB.h;
+    } else if (hslA.s != hslB.s) {
+        return hslA.s < hslB.s;
+    } else {
+        return hslA.l < hslB.l;
+    }
 }
 
 void Funkcja9() {
+    ileKolorow = 0;
+    int indexKoloru;
+    SDL_Color kolor;
     for (int y = 0; y < wysokosc / 2; y++) {
         for (int x = 0; x < szerokosc / 2; x++) {
-            SDL_Color kolor = getPixel(x, y);
-            int kolor8bit = sprawdzKolor(kolor);
-            SDL_Color nowyKolor = paleta8[kolor8bit];
-            setPixel(x + szerokosc / 2, y, nowyKolor.r, nowyKolor.g,
-                     nowyKolor.b);
+            kolor = getPixel(x, y);
+            indexKoloru = sprawdzKolor(kolor);
+            // cout << indexKoloru << endl;
+        }
+    }
+
+    cout << endl << "ile kolorow: " << ileKolorow << endl;
+    if (ileKolorow <= maxKolorow)
+        cout << "Paleta spelnia ograniczenia 8-bit/piksel" << endl;
+    else
+        cout << "Paleta przekracza ograniczenia 8-bit/piksel" << endl;
+
+    const float gridRows = std::sqrt(ileKolorow);
+    const float gridCols =
+        (ileKolorow + gridRows - 1) / gridRows;  // Ceiling division
+    const float cellWidth = (szerokosc / 2) / gridCols;
+    const float cellHeight = (wysokosc / 2) / gridRows;
+
+    cout << "gridRows: " << gridRows << " gridCols: " << gridCols
+         << " cellWidth: " << cellWidth << " cellHeight: " << cellHeight
+         << endl;
+
+    // sort colors in paleta8
+    for (int i = 0; i < ileKolorow; i++) {
+        for (int j = 0; j < ileKolorow - 1; j++) {
+            // sort by hsl
+            RGBColor rgbColor1 =
+                RGBColor(paleta8[j].r, paleta8[j].g, paleta8[j].b);
+            RGBColor rgbColor2 =
+                RGBColor(paleta8[j + 1].r, paleta8[j + 1].g, paleta8[j + 1].b);
+            if (compareHSL(rgbColor1, rgbColor2)) {
+                SDL_Color tempColor = paleta8[j];
+                paleta8[j] = paleta8[j + 1];
+                paleta8[j + 1] = tempColor;
+            }
+        }
+    }
+
+    for (int i = 0; i < ileKolorow; i++) {
+        int row = i / (int)gridCols;
+        int col = i % (int)gridCols;
+        SDL_Color color = paleta8[i];
+
+        int startY = row * cellHeight;
+        int endY = (row + 1) * cellHeight;
+        int startX = (szerokosc / 2) + col * cellWidth;
+        int endX = (szerokosc / 2) + (col + 1) * cellWidth;
+
+        for (int y = startY; y < endY; y++) {
+            for (int x = startX; x < endX; x++) {
+                setPixel(x, y, color.r, color.g, color.b);
+            }
         }
     }
 
     SDL_UpdateWindowSurface(window);
 }
 
-void funkcjaQ() {
-    SDL_UpdateWindowSurface(window);
-}
+void FunkcjaQ() { SDL_UpdateWindowSurface(window); }
 
-void funkcjaW() {
-    SDL_UpdateWindowSurface(window);
-}
+void FunkcjaW() { SDL_UpdateWindowSurface(window); }
 
-void funkcjaE() {
-    SDL_UpdateWindowSurface(window);
-}
+void FunkcjaE() { SDL_UpdateWindowSurface(window); }
 
-void funkcjaR() {
-    SDL_UpdateWindowSurface(window);
-}
+void FunkcjaR() { SDL_UpdateWindowSurface(window); }
 
 void setPixel(int x, int y, Uint8 R, Uint8 G, Uint8 B) {
     if ((x >= 0) && (x < szerokosc) && (y >= 0) && (y < wysokosc)) {
@@ -588,7 +698,7 @@ int main(int argc, char *argv[]) {
             case SDL_KEYDOWN: {
                 // wychodzimy, gdy wciśnięto ESC
                 if (event.key.keysym.sym == SDLK_ESCAPE) done = true;
-                
+
                 if (event.key.keysym.sym == SDLK_1) Funkcja1();
                 if (event.key.keysym.sym == SDLK_2) Funkcja2();
                 if (event.key.keysym.sym == SDLK_3) Funkcja3();
