@@ -1,0 +1,8 @@
+paleta na bazie wybrania najlepszych kolorów (dedykowana)
+wersja genetyczna na skali szarości
+
+sortowanie elementów, dzielenie na N równych części // N - ilość kolorow w palecie
+dzieli się za każdym razem na pół, za każdym razem sortuje się według danej składowej RGB
+liczenie średniej każdej części
+
+każdy kolor zamień na najbliższą średnią części

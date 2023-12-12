@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <algorithm>
 #include <bitset>
 #include <exception>
 #include <iostream>
@@ -28,7 +29,6 @@ SDL_Color z5RGBna24RGB(Uint8 kolor5bit);
 
 void czyscEkran(Uint8 R, Uint8 G, Uint8 B);
 
-// keep in range 0,255
 Uint8 normalizacja(int wartosc) {
     if (wartosc < 0) return 0;
     if (wartosc > 255) return 255;
@@ -111,8 +111,6 @@ void Funkcja1() {
             B = kolor.b;
 
             // 111 111 11
-
-            //
             nowyR = R >> 5;
             nowyG = G >> 5;
             nowyB = B >> 6;
@@ -317,8 +315,7 @@ bool porownajKolory(SDL_Color kolor1, SDL_Color kolor2) {
     return kolor1.r == kolor2.r && kolor1.g == kolor2.g && kolor1.b == kolor2.b;
 }
 
-
-constexpr int maxKolorow = 300*256;
+constexpr int maxKolorow = 300 * 256;
 SDL_Color paleta8[maxKolorow];
 int ileKolorow = 0;
 
@@ -327,7 +324,8 @@ int dodajKolor(SDL_Color kolor) {
     if (ileKolorow < maxKolorow) {
         paleta8[ileKolorow] = kolor;
     }
-    // cout << aktualnyKolor << ": " << (int)kolor.r << " " << (int)kolor.g << " " << (int)kolor.b << endl;
+    // cout << aktualnyKolor << ": " << (int)kolor.r << " " << (int)kolor.g << "
+    // " << (int)kolor.b << endl;
     ileKolorow++;
     return aktualnyKolor;
 }
@@ -366,7 +364,9 @@ void Funkcja9() {
     const float cellWidth = (szerokosc / 2) / gridCols;
     const float cellHeight = (wysokosc / 2) / gridRows;
 
-    cout << "gridRows: " << gridRows << " gridCols: " << gridCols << " cellWidth: " << cellWidth << " cellHeight: " << cellHeight << endl;
+    cout << "gridRows: " << gridRows << " gridCols: " << gridCols
+         << " cellWidth: " << cellWidth << " cellHeight: " << cellHeight
+         << endl;
 
     for (int i = 0; i < ileKolorow; i++) {
         int row = i / (int)gridCols;
@@ -388,9 +388,151 @@ void Funkcja9() {
     SDL_UpdateWindowSurface(window);
 }
 
-void FunkcjaQ() { SDL_UpdateWindowSurface(window); }
+#define OBRAZEK_SIZE 64000
 
-void FunkcjaW() { SDL_UpdateWindowSurface(window); }
+SDL_Color obrazek[OBRAZEK_SIZE];
+SDL_Color obrazekT[OBRAZEK_SIZE];
+SDL_Color paleta[OBRAZEK_SIZE];
+
+void losujWartosci() {
+    Uint8 wartosc;
+    for (int i = 0; i < OBRAZEK_SIZE; i++) {
+        wartosc = rand() % OBRAZEK_SIZE;
+        obrazek[i] = {wartosc, wartosc, wartosc};
+        obrazekT[i] = {wartosc, wartosc, wartosc};
+    }
+
+    cout << endl;
+}
+
+void wyswietlWartosci() {
+    for (int i = 0; i < OBRAZEK_SIZE; i++) {
+        cout << (int)obrazek[i].r << " ";
+    }
+    cout << endl;
+}
+
+void sortujKubelekKFC(int start, int koniec) {
+    sort(obrazek + start, obrazek + koniec,
+         [](SDL_Color a, SDL_Color b) { return a.r < b.r; });
+}
+
+void medianCut(int start, int koniec, int iteracja) {
+    cout << "start: " << start << ", koniec: " << koniec
+         << ", iteracja: " << iteracja << endl;
+    if (iteracja > 0) {
+        // sortowanie wtorkowego kubełka kfc za 22 zł
+        sortujKubelekKFC(start, koniec);
+
+        cout << "Dzielenie kubełka KFC na poziomie " << iteracja << endl;
+
+        int srodek = (start + koniec + 1) / 2;
+        medianCut(start, srodek - 1, iteracja - 1);
+        medianCut(srodek, koniec, iteracja - 1);
+    } else {
+        // budowanie palety uśredniając kolory z określonego kubełka KFC
+        int sumaBW = 0;
+        for (int p = start; p < koniec; p++) {
+            sumaBW += obrazek[p].r;
+        }
+        Uint8 noweBW = sumaBW / (koniec + 1 - start);
+        SDL_Color nowyKolor = {noweBW, noweBW, noweBW};
+        paleta[ileKolorow] = nowyKolor;
+
+        printf("\n");
+        cout << "🍿 Kubełek " << ileKolorow << "(" << start << "," << koniec
+             << ") = 🍗 " << (int)noweBW << endl;
+        cout << "🎨 Kolor " << ileKolorow << ": " << (int)nowyKolor.r << " "
+             << (int)nowyKolor.g << " " << (int)nowyKolor.b << endl;
+
+        ileKolorow++;
+    }
+}
+
+int znajdzNajblizszyKolorIndex(SDL_Color kolor) {
+    int najblizszyKolor = 0;
+    int najmniejszaRoznica = 255;
+    for (int j = 0; j < ileKolorow; j++) {
+        int roznica = abs(paleta[j].r - kolor.r);
+        if (roznica < najmniejszaRoznica) {
+            najmniejszaRoznica = roznica;
+            najblizszyKolor = j;
+        }
+    }
+    return najblizszyKolor;
+}
+
+int znajdzNajblizszyKolorIndex(Uint8 szary) {
+    SDL_Color c;
+    c.r = szary;
+    znajdzNajblizszyKolorIndex(c);
+}
+
+SDL_Color znajdzNajblizszyKolor(SDL_Color kolor) {
+    int najblizszyKolor = 0;
+    int najmniejszaRoznica = 255;
+    for (int j = 0; j < ileKolorow; j++) {
+        int roznica = abs(paleta[j].r - kolor.r);
+        if (roznica < najmniejszaRoznica) {
+            najmniejszaRoznica = roznica;
+            najblizszyKolor = j;
+        }
+    }
+    return paleta[najblizszyKolor];
+}
+
+/* Note: The comments and some variable names are in Polish,
+and there are some humorous references to KFC buckets.
+The actual functionality of the code doesn't
+have anything to do with KFC or chicken.*/
+// Copilot, 2023
+// https://www.youtube.com/watch?v=5e9tj9eqgs0
+
+void FunkcjaQ() {
+    ileKolorow = 0;
+    SDL_UpdateWindowSurface(window);
+    losujWartosci();
+    wyswietlWartosci();
+    medianCut(0, 255, 2);
+    for (int i = 0; i < OBRAZEK_SIZE; i++) {
+        obrazek[i] = znajdzNajblizszyKolor(obrazekT[i]);
+        cout << znajdzNajblizszyKolorIndex(obrazekT[i]) << " ";
+        // setPixel(i, wysokosc / 2, obrazek[i].r, obrazek[i].g,
+        //          obrazek[i].b);
+    }
+
+    wyswietlWartosci();
+}
+
+void FunkcjaW() {
+    SDL_Color kolor;
+    Uint8 szary;
+    int numer = 0, indeks = 0;
+    for (int y = 0; y > wysokosc / 2; y++) {
+        for (int x = 0; x < szerokosc / 2; x++) {
+            kolor = getPixel(x, y);
+            szary = 0.299 * kolor.r + 0.587 * kolor.g + 0.114 * kolor.b;
+            obrazek[numer] = {szary, szary, szary};
+            setPixel(x + szerokosc / 2, y, szary, szary, szary);
+            numer++;
+        }
+    }
+    SDL_UpdateWindowSurface(window);
+    medianCut(0, numer - 1, 2);
+
+    for (int y = 0; y > wysokosc / 2; y++) {
+        for (int x = 0; x < szerokosc / 2; x++) {
+            kolor = getPixel(x, y);
+            szary = 0.299 * kolor.r + 0.587 * kolor.g + 0.114 * kolor.b;
+            indeks = znajdzNajblizszyKolorIndex(szary);
+
+            setPixel(x + szerokosc / 2, y + wysokosc / 2, paleta[indeks].r,
+                     paleta[indeks].g, paleta[indeks].b);
+        }
+    }
+
+    SDL_UpdateWindowSurface(window);
+}
 
 void FunkcjaE() { SDL_UpdateWindowSurface(window); }
 

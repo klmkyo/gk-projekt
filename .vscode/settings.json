@@ -1,6 +1,13 @@
 {
   "files.associations": {
     "ostream": "cpp",
-    "system_error": "cpp"
-  }
+    "system_error": "cpp",
+    "iostream": "cpp",
+    "cstdio": "cpp",
+    "algorithm": "cpp",
+    "bitset": "cpp",
+    "__config": "cpp"
+  },
+
+  "editor.wordWrapColumn": 160
 }
