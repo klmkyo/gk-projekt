@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 
 #include <algorithm>
 #include <bitset>
@@ -17,6 +18,15 @@ SDL_Surface *screen = NULL;
 #define wysokosc 400
 
 #define tytul "GK2023 - Projekt - Zespol 33"
+
+enum SkladowaRGB {
+    R,
+    G,
+    B,
+};
+
+SkladowaRGB najwiekszaRoznica(int start, int koniec);
+
 
 void setPixel(int x, int y, Uint8 R, Uint8 G, Uint8 B);
 SDL_Color getPixel(int x, int y);
@@ -50,6 +60,16 @@ void FunkcjaE();
 void FunkcjaR();
 
 bool porownajKolory(SDL_Color kolor1, SDL_Color kolor2);
+
+#define OBRAZEK_SIZE 64000
+
+SDL_Color obrazek[OBRAZEK_SIZE];
+SDL_Color obrazekT[OBRAZEK_SIZE];
+SDL_Color paleta[OBRAZEK_SIZE];
+constexpr int maxKolorow = 16;
+SDL_Color paleta8[maxKolorow];
+int ileKolorow = 0;
+int ileKubelkow = 0;
 
 Uint8 z24RGBna8RGB(SDL_Color kolor) {
     Uint8 nowyR, nowyG, nowyB;
@@ -315,9 +335,6 @@ bool porownajKolory(SDL_Color kolor1, SDL_Color kolor2) {
     return kolor1.r == kolor2.r && kolor1.g == kolor2.g && kolor1.b == kolor2.b;
 }
 
-constexpr int maxKolorow = 300 * 256;
-SDL_Color paleta8[maxKolorow];
-int ileKolorow = 0;
 
 int dodajKolor(SDL_Color kolor) {
     int aktualnyKolor = ileKolorow;
@@ -341,7 +358,6 @@ int sprawdzKolor(SDL_Color kolor) {
 }
 
 void Funkcja9() {
-    ileKolorow = 0;
     int indexKoloru;
     SDL_Color kolor;
     for (int y = 0; y < wysokosc / 2; y++) {
@@ -388,12 +404,6 @@ void Funkcja9() {
     SDL_UpdateWindowSurface(window);
 }
 
-#define OBRAZEK_SIZE 64000
-
-SDL_Color obrazek[OBRAZEK_SIZE];
-SDL_Color obrazekT[OBRAZEK_SIZE];
-SDL_Color paleta[OBRAZEK_SIZE];
-
 void losujWartosci() {
     Uint8 wartosc;
     for (int i = 0; i < OBRAZEK_SIZE; i++) {
@@ -417,6 +427,15 @@ void sortujKubelekKFC(int start, int koniec) {
          [](SDL_Color a, SDL_Color b) { return a.r < b.r; });
 }
 
+void sortujKubelekKFCKolor(int start, int koniec, SkladowaRGB skladowa) {
+    // sort by rgb using skladowa parameter
+    sort(obrazek + start, obrazek + koniec, [skladowa](SDL_Color a, SDL_Color b) {
+        if (skladowa == R) return a.r < b.r;
+        if (skladowa == G) return a.g < b.g;
+        if (skladowa == B) return a.b < b.b;
+    });
+}
+
 void medianCut(int start, int koniec, int iteracja) {
     cout << "start: " << start << ", koniec: " << koniec
          << ", iteracja: " << iteracja << endl;
@@ -437,23 +456,61 @@ void medianCut(int start, int koniec, int iteracja) {
         }
         Uint8 noweBW = sumaBW / (koniec + 1 - start);
         SDL_Color nowyKolor = {noweBW, noweBW, noweBW};
-        paleta[ileKolorow] = nowyKolor;
+        paleta[ileKubelkow] = nowyKolor;
 
         printf("\n");
-        cout << "🍿 Kubełek " << ileKolorow << "(" << start << "," << koniec
+        cout << "🍿 Kubełek " << ileKubelkow << "(" << start << "," << koniec
              << ") = 🍗 " << (int)noweBW << endl;
-        cout << "🎨 Kolor " << ileKolorow << ": " << (int)nowyKolor.r << " "
+        cout << "🎨 Kolor " << ileKubelkow << ": " << (int)nowyKolor.r << " "
              << (int)nowyKolor.g << " " << (int)nowyKolor.b << endl;
 
-        ileKolorow++;
+        ileKubelkow++;
+    }
+}
+
+void medianCutRGB(int start, int koniec, int iteracja) {
+    cout << "start: " << start << ", koniec: " << koniec
+         << ", iteracja: " << iteracja << endl;
+    if (iteracja > 0) {
+        // sortowanie wtorkowego kubełka kfc za 22 zł
+        SkladowaRGB skladowa = najwiekszaRoznica(start, koniec);
+        sortujKubelekKFCKolor(start, koniec, skladowa);
+
+        cout << "Dzielenie kubełka KFC na poziomie " << iteracja << endl;
+
+        int srodek = (start + koniec + 1) / 2;
+        medianCutRGB(start, srodek - 1, iteracja - 1);
+        medianCutRGB(srodek, koniec, iteracja - 1);
+    } else {
+        // budowanie palety uśredniając kolory z określonego kubełka KFC
+        int sumaR = 0;
+        int sumaG = 0;
+        int sumaB = 0;
+
+        for (int p = start; p < koniec; p++) {
+            sumaR += obrazek[p].r;
+            sumaG += obrazek[p].g;
+            sumaB += obrazek[p].b;
+
+        }
+        int ilosc = koniec + 1 - start;
+        SDL_Color nowyKolor = {sumaR / ilosc, sumaG / ilosc, sumaB / ilosc};
+        paleta[ileKubelkow] = nowyKolor;
+
+        printf("\n");
+        cout << "🍿 Kubełek / 🎨 Kolor " << ileKubelkow << ": " << (int)nowyKolor.r << " "
+             << (int)nowyKolor.g << " " << (int)nowyKolor.b << endl;
+
+        ileKubelkow++;
     }
 }
 
 int znajdzNajblizszyKolorIndex(SDL_Color kolor) {
     int najblizszyKolor = 0;
     int najmniejszaRoznica = 255;
-    for (int j = 0; j < ileKolorow; j++) {
-        int roznica = abs(paleta[j].r - kolor.r);
+    for (int j = 0; j < ileKubelkow; j++) {
+        int roznica = abs(paleta[j].r - kolor.r) + abs(paleta[j].g - kolor.g) +
+                      abs(paleta[j].b - kolor.b);
         if (roznica < najmniejszaRoznica) {
             najmniejszaRoznica = roznica;
             najblizszyKolor = j;
@@ -465,13 +522,13 @@ int znajdzNajblizszyKolorIndex(SDL_Color kolor) {
 int znajdzNajblizszyKolorIndex(Uint8 szary) {
     SDL_Color c;
     c.r = szary;
-    znajdzNajblizszyKolorIndex(c);
+    return znajdzNajblizszyKolorIndex(c);
 }
 
 SDL_Color znajdzNajblizszyKolor(SDL_Color kolor) {
     int najblizszyKolor = 0;
     int najmniejszaRoznica = 255;
-    for (int j = 0; j < ileKolorow; j++) {
+    for (int j = 0; j < ileKubelkow; j++) {
         int roznica = abs(paleta[j].r - kolor.r);
         if (roznica < najmniejszaRoznica) {
             najmniejszaRoznica = roznica;
@@ -479,6 +536,33 @@ SDL_Color znajdzNajblizszyKolor(SDL_Color kolor) {
         }
     }
     return paleta[najblizszyKolor];
+}
+
+// in obrazek[start..koniec], find the color with highest difference
+SkladowaRGB najwiekszaRoznica(int start, int koniec) {
+    SDL_Color min = {255, 255, 255};
+    SDL_Color max = {0, 0, 0};
+
+    for (int i = start; i <= koniec; i++) {
+        if (obrazek[i].r < min.r) min.r = obrazek[i].r;
+        if (obrazek[i].g < min.g) min.g = obrazek[i].g;
+        if (obrazek[i].b < min.b) min.b = obrazek[i].b;
+
+        if (obrazek[i].r > max.r) max.r = obrazek[i].r;
+        if (obrazek[i].g > max.g) max.g = obrazek[i].g;
+        if (obrazek[i].b > max.b) max.b = obrazek[i].b;
+    }
+
+    int diffR = max.r - min.r;
+    int diffG = max.g - min.g;
+    int diffB = max.b - min.b;
+
+    if (diffR >= diffG && diffR >= diffB) return R;
+    if (diffG >= diffR && diffG >= diffB) return G;
+    if (diffB >= diffR && diffB >= diffG) return B;
+
+    printf("wtorkowe kubelki wyprzedaly sie :(");
+    throw std::exception();
 }
 
 /* Note: The comments and some variable names are in Polish,
@@ -489,7 +573,6 @@ have anything to do with KFC or chicken.*/
 // https://www.youtube.com/watch?v=5e9tj9eqgs0
 
 void FunkcjaQ() {
-    ileKolorow = 0;
     SDL_UpdateWindowSurface(window);
     losujWartosci();
     wyswietlWartosci();
@@ -504,11 +587,12 @@ void FunkcjaQ() {
     wyswietlWartosci();
 }
 
+
 void FunkcjaW() {
     SDL_Color kolor;
     Uint8 szary;
     int numer = 0, indeks = 0;
-    for (int y = 0; y > wysokosc / 2; y++) {
+    for (int y = 0; y < wysokosc / 2; y++) {
         for (int x = 0; x < szerokosc / 2; x++) {
             kolor = getPixel(x, y);
             szary = 0.299 * kolor.r + 0.587 * kolor.g + 0.114 * kolor.b;
@@ -520,7 +604,7 @@ void FunkcjaW() {
     SDL_UpdateWindowSurface(window);
     medianCut(0, numer - 1, 2);
 
-    for (int y = 0; y > wysokosc / 2; y++) {
+    for (int y = 0; y < wysokosc / 2; y++) {
         for (int x = 0; x < szerokosc / 2; x++) {
             kolor = getPixel(x, y);
             szary = 0.299 * kolor.r + 0.587 * kolor.g + 0.114 * kolor.b;
@@ -534,7 +618,33 @@ void FunkcjaW() {
     SDL_UpdateWindowSurface(window);
 }
 
-void FunkcjaE() { SDL_UpdateWindowSurface(window); }
+void FunkcjaE() {
+    
+    SDL_Color kolor;
+    SDL_Color nowyKolor;
+    int numer = 0, indeks = 0;
+    for (int y = 0; y < wysokosc / 2; y++) {
+        for (int x = 0; x < szerokosc / 2; x++) {
+            kolor = getPixel(x, y);
+            obrazek[numer] = kolor;
+            numer++;
+        }
+    }
+    SDL_UpdateWindowSurface(window);
+    medianCutRGB(0, numer - 1, 5);
+
+    for (int y = 0; y < wysokosc / 2; y++) {
+        for (int x = 0; x < szerokosc / 2; x++) {
+            kolor = getPixel(x, y);
+            indeks = znajdzNajblizszyKolorIndex(kolor);
+
+            setPixel(x + szerokosc / 2, y + wysokosc / 2, paleta[indeks].r,
+                     paleta[indeks].g, paleta[indeks].b);
+        }
+    }
+
+    SDL_UpdateWindowSurface(window);
+}
 
 void FunkcjaR() { SDL_UpdateWindowSurface(window); }
 
