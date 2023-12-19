@@ -357,32 +357,31 @@ int sprawdzKolor(SDL_Color kolor) {
 }
 
 void Funkcja9() {
-    
+
     cout << endl << "ile kolorow: " << ileKubelkow << endl;
     if (ileKubelkow <= maxKolorow)
         cout << "Paleta spelnia ograniczenia 8-bit/piksel" << endl;
     else
         cout << "Paleta przekracza ograniczenia 8-bit/piksel" << endl;
 
-    const float gridRows = std::sqrt(ileKubelkow);
-    const float gridCols =
-        (ileKubelkow + gridRows - 1) / gridRows;  // Ceiling division
-    const float cellWidth = (szerokosc / 2) / gridCols;
-    const float cellHeight = (wysokosc / 2) / gridRows;
+    const int gridRows = std::sqrt(ileKubelkow);
+    const int gridCols = (ileKubelkow + gridRows - 1) / gridRows;  // Ceiling division
+    const int cellWidth = round((szerokosc / 2) / (float)gridCols);
+    const int cellHeight = round((wysokosc / 2) / (float)gridRows);
 
     cout << "gridRows: " << gridRows << " gridCols: " << gridCols
          << " cellWidth: " << cellWidth << " cellHeight: " << cellHeight
          << endl;
 
     for (int i = 0; i < ileKubelkow; i++) {
-        int row = i / (int)gridCols;
-        int col = i % (int)gridCols;
+        int row = i / gridCols;
+        int col = i % gridCols;
         SDL_Color color = paleta[i];
 
         int startY = row * cellHeight;
-        int endY = (row + 1) * cellHeight;
+        int endY = std::min((row + 1) * cellHeight, wysokosc / 2);
         int startX = (szerokosc / 2) + col * cellWidth;
-        int endX = (szerokosc / 2) + (col + 1) * cellWidth;
+        int endX = std::min((szerokosc / 2) + (col + 1) * cellWidth, szerokosc);
 
         for (int y = startY; y < endY; y++) {
             for (int x = startX; x < endX; x++) {
