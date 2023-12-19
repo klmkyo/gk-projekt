@@ -66,9 +66,8 @@ bool porownajKolory(SDL_Color kolor1, SDL_Color kolor2);
 SDL_Color obrazek[OBRAZEK_SIZE];
 SDL_Color obrazekT[OBRAZEK_SIZE];
 SDL_Color paleta[OBRAZEK_SIZE];
-constexpr int maxKolorow = 16;
+constexpr int maxKolorow = 320*600;
 SDL_Color paleta8[maxKolorow];
-int ileKolorow = 0;
 int ileKubelkow = 0;
 
 Uint8 z24RGBna8RGB(SDL_Color kolor) {
@@ -337,20 +336,20 @@ bool porownajKolory(SDL_Color kolor1, SDL_Color kolor2) {
 
 
 int dodajKolor(SDL_Color kolor) {
-    int aktualnyKolor = ileKolorow;
-    if (ileKolorow < maxKolorow) {
-        paleta8[ileKolorow] = kolor;
+    int aktualnyKolor = ileKubelkow;
+    if (ileKubelkow < maxKolorow) {
+        paleta[ileKubelkow] = kolor;
     }
     // cout << aktualnyKolor << ": " << (int)kolor.r << " " << (int)kolor.g << "
     // " << (int)kolor.b << endl;
-    ileKolorow++;
+    ileKubelkow++;
     return aktualnyKolor;
 }
 
 int sprawdzKolor(SDL_Color kolor) {
-    if (ileKolorow > 0) {
-        for (int k = 0; k < ileKolorow; k++) {
-            if (porownajKolory(kolor, paleta8[k])) return k;
+    if (ileKubelkow > 0) {
+        for (int k = 0; k < ileKubelkow; k++) {
+            if (porownajKolory(kolor, paleta[k])) return k;
         }
     }
 
@@ -358,25 +357,16 @@ int sprawdzKolor(SDL_Color kolor) {
 }
 
 void Funkcja9() {
-    int indexKoloru;
-    SDL_Color kolor;
-    for (int y = 0; y < wysokosc / 2; y++) {
-        for (int x = 0; x < szerokosc / 2; x++) {
-            kolor = getPixel(x, y);
-            indexKoloru = sprawdzKolor(kolor);
-            // cout << indexKoloru << endl;
-        }
-    }
-
-    cout << endl << "ile kolorow: " << ileKolorow << endl;
-    if (ileKolorow <= maxKolorow)
+    
+    cout << endl << "ile kolorow: " << ileKubelkow << endl;
+    if (ileKubelkow <= maxKolorow)
         cout << "Paleta spelnia ograniczenia 8-bit/piksel" << endl;
     else
         cout << "Paleta przekracza ograniczenia 8-bit/piksel" << endl;
 
-    const float gridRows = std::sqrt(ileKolorow);
+    const float gridRows = std::sqrt(ileKubelkow);
     const float gridCols =
-        (ileKolorow + gridRows - 1) / gridRows;  // Ceiling division
+        (ileKubelkow + gridRows - 1) / gridRows;  // Ceiling division
     const float cellWidth = (szerokosc / 2) / gridCols;
     const float cellHeight = (wysokosc / 2) / gridRows;
 
@@ -384,10 +374,10 @@ void Funkcja9() {
          << " cellWidth: " << cellWidth << " cellHeight: " << cellHeight
          << endl;
 
-    for (int i = 0; i < ileKolorow; i++) {
+    for (int i = 0; i < ileKubelkow; i++) {
         int row = i / (int)gridCols;
         int col = i % (int)gridCols;
-        SDL_Color color = paleta8[i];
+        SDL_Color color = paleta[i];
 
         int startY = row * cellHeight;
         int endY = (row + 1) * cellHeight;
@@ -630,13 +620,14 @@ void FunkcjaE() {
             numer++;
         }
     }
-    SDL_UpdateWindowSurface(window);
     medianCutRGB(0, numer - 1, 5);
 
     for (int y = 0; y < wysokosc / 2; y++) {
         for (int x = 0; x < szerokosc / 2; x++) {
             kolor = getPixel(x, y);
             indeks = znajdzNajblizszyKolorIndex(kolor);
+
+            cout << "Dla " << x << ", " << y << " wybrano kolor index " << indeks << endl;
 
             setPixel(x + szerokosc / 2, y + wysokosc / 2, paleta[indeks].r,
                      paleta[indeks].g, paleta[indeks].b);
