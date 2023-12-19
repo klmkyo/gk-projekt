@@ -483,7 +483,7 @@ void medianCutRGB(int start, int koniec, int iteracja) {
 
         }
         int ilosc = koniec + 1 - start;
-        SDL_Color nowyKolor = {sumaR / ilosc, sumaG / ilosc, sumaB / ilosc};
+        SDL_Color nowyKolor = {Uint8(sumaR / ilosc), Uint8(sumaG / ilosc), Uint8(sumaB / ilosc)};
         paleta[ileKubelkow] = nowyKolor;
 
         printf("\n");
