@@ -16,6 +16,7 @@ using namespace std;
 SDL_Window *window = NULL;
 SDL_Surface *screen = NULL;
 
+
 #define szerokosc 640
 #define wysokosc 400
 
@@ -23,6 +24,8 @@ SDL_Surface *screen = NULL;
 #define wysokoscObrazka (wysokosc / 2)
 
 #define tytul "GK2023 - Projekt - Zespol 33"
+
+#define PALETA_SIZE_BYTES 20
 
 typedef std::vector<std::vector<SDL_Color>> Canvas;
 
@@ -32,6 +35,8 @@ enum SkladowaRGB {
     B,
 };
 
+// 1 i 2 oznaczają, że przy czytaniu obrazu będzie używana paleta WBUDOWANA W PROGRAM
+// w 2, 3, 4 paleta jest dołączona do pliku
 enum TrybObrazu {
     PaletaNarzucona = 1,
     SzaroscNarzucona = 2,
@@ -693,7 +698,7 @@ void KonwertujBmpNaKfc(const char *bmpZrodlo) {
 // offsetem 8 pixeli (zaczynające się od (0, 8)), ale zapisuje się tak samo (bez
 // offsetu jakoś to pomaga)
 
-/**
+/** 
  * @brief Zapisuje Canvas do pliku
  * @param tryb Tryb w jakim obraz zostanie zapisany
  * @param dithering Informacja o tym, z jakim ditheringiem jest podany Canvas
@@ -712,20 +717,23 @@ void ZapisDoPliku(TrybObrazu tryb, Dithering dithering, Canvas &obrazek) {
     wyjscie.write((char *)&szerokoscObrazu, sizeof(char) * 2);
     wyjscie.write((char *)&wysokoscObrazu, sizeof(char) * 2);
     wyjscie.write((char *)&tryb, sizeof(Uint8));
+    wyjscie.write((char *)&dithering, sizeof(Uint8));
 
-    // 1, 2 - tryby bez palety (zapisywanie pikseli z pakowaniem bitowym)
-    // 3, 4, 5 - tryby z paletą
+    // 1, 2 - tryby bez palety -> rozmiar danych
+    // 3, 4, 5 - tryby z paletą -> poleta, rozmiar danych.
     if (czyTrybJestZPaleta(tryb)) {
-        wyjscie.write((char *)&paleta, sizeof(paleta) / sizeof(paleta[0]));
-        // yyyy nie wiem czy to na dole powinno byc
-    } else {
-        wyjscie.write((char *)&dithering, sizeof(Uint8));
+        wyjscie.write((char *)&paleta, PALETA_SIZE_BYTES);
     }
 
     if (czyTrybJestZPaleta(tryb)) {
         int iloscBitowDoZapisania = 5 * szerokoscObrazka * wysokoscObrazka;
 
         vector<bitset<5>> bitset5(iloscBitowDoZapisania);
+
+        if (szerokoscObrazka % 8 != 0) {
+            throw std::invalid_argument(
+                "Szerokosc obrazka nie jest wielokrotnoscia 8");
+        }
 
 
         // Nowa wersja - zapisuje po kolumnach ale max 8 rzędów
@@ -750,52 +758,31 @@ void ZapisDoPliku(TrybObrazu tryb, Dithering dithering, Canvas &obrazek) {
             }
         }
 
-        // Stara wersja - zapisuje od lewej do prawej i gory na dol
-        /*
-            for (int y; y < wysokoscObrazka; y++) {
-                for (int x; x < szerokoscObrazka; x++) {
-                    int index = y * szerokoscObrazka + x;
-
-                    if (tryb == TrybObrazu::PaletaNarzucona) {
-                        bitset5[index] = z24RGBna5RGB(obrazek[y][x]) >> 3;
-                    } else {
-                        bitset5[index] = z24RGBna5BW(obrazek[y][x]) >> 3;
-                    }
-                }
-            }
-        */
-
         std::vector<uint8_t> packedBits;
         int bitCounter = 0;
         uint8_t currentByte = 0;
 
         for (const auto &bit5 : bitset5) {
-            // Convert the 5-bit value to an unsigned long and then to an 8-bit
-            // value
+            // Konwertuj 5-bitową wartość na unsigned long, a następnie na 8-bitową wartość
             uint8_t value = bit5.to_ulong();
 
-            // Check if adding 5 bits to the current byte exceeds 8 bits
+            // Sprawdź, czy dodanie 5 bitów do bieżącego bajtu przekracza 8 bitów
             if (bitCounter + 5 <= 8) {
-                // If not, shift the 5-bit value left by the number of empty bit
-                // positions in the current byte and OR it with the current byte
-                // to add these bits to the byte.
+                // Jeśli nie, przesuń wartość 5-bitową w lewo o liczbę pustych pozycji bitowych w bieżącym bajcie i wykonaj operację OR z bieżącym bajtem, aby dodać te bity do bajtu.
                 currentByte |= (value << (8 - bitCounter - 5));
-                // Increase the bit counter by 5 since we have added 5 more
-                // bits.
+                // Zwiększ licznik bitów o 5, ponieważ dodaliśmy kolejne 5 bitów.
                 bitCounter += 5;
             } else {
-                // If adding 5 bits exceeds 8 bits, calculate how many bits will
-                // overflow
+                // Jeśli dodanie 5 bitów przekracza 8 bitów, oblicz, ile bitów zostanie przekroczone
                 int overflow = bitCounter + 5 - 8;
-                // Add the non-overflowing part of the value to the current byte
+                // Dodaj część wartości, która nie przekracza, do bieżącego bajtu
                 currentByte |= (value >> overflow);
-                // Push the completed 8-bit byte to the packedBits vector
+                // Dodaj ukończony 8-bitowy bajt do wektora packedBits
                 packedBits.push_back(currentByte);
-                // Create a new byte with the overflow bits, shifted left to
-                // their position in the new byte
+                // Utwórz nowy bajt z przekraczającymi bitami, przesuniętymi w lewo do ich pozycji w nowym bajcie
 
                 currentByte = (value & ((1 << overflow) - 1)) << (8 - overflow);
-                // Set the bit counter to the number of bits in the overflow
+                // Ustaw licznik bitów na liczbę bitów w przekroczeniu
                 bitCounter = overflow;
             }
         }
@@ -806,17 +793,6 @@ void ZapisDoPliku(TrybObrazu tryb, Dithering dithering, Canvas &obrazek) {
 
         // save to file
         wyjscie.write((char *)&packedBits[0], packedBits.size());
-    }
-
-    int maxSteps = wysokoscObrazu / 8;
-    for (int step = 0; step < maxSteps; step++) {
-        int offset = step * 8;
-        for (int k = 0; k < szerokoscObrazu; k++) {
-            for (int r = 0; r < 8; r++) {
-                int columnAbsolute = k;
-                int rowAbsolute = offset + r;
-            }
-        }
     }
 
     if (tryb == TrybObrazu::PaletaNarzucona) {
