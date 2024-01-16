@@ -1,14 +1,16 @@
 #include <SDL2/SDL.h>
+#include <assert.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <assert.h>
 
 #include <algorithm>
 #include <bitset>
 #include <exception>
+#include <fstream>
 #include <iostream>
+#include <vector>
 using namespace std;
 
 SDL_Window *window = NULL;
@@ -17,7 +19,12 @@ SDL_Surface *screen = NULL;
 #define szerokosc 640
 #define wysokosc 400
 
+#define szerokoscObrazka (szerokosc / 2)
+#define wysokoscObrazka (wysokosc / 2)
+
 #define tytul "GK2023 - Projekt - Zespol 33"
+
+typedef std::vector<std::vector<SDL_Color>> Canvas;
 
 enum SkladowaRGB {
     R,
@@ -25,8 +32,19 @@ enum SkladowaRGB {
     B,
 };
 
-SkladowaRGB najwiekszaRoznica(int start, int koniec);
+enum TrybObrazu {
+    PaletaNarzucona = 1,
+    SzaroscNarzucona = 2,
+    SzaroscDedykowana = 3,
+    PaletaWykryta = 4,
+    PaletaDedykowana = 5
+};
 
+bool czyTrybJestZPaleta(TrybObrazu tryb) { return tryb >= 3; }
+
+enum Dithering { Brak = 0, Bayer = 1, Floyd = 2 };
+
+SkladowaRGB najwiekszaRoznica(int start, int koniec);
 
 void setPixel(int x, int y, Uint8 R, Uint8 G, Uint8 B);
 SDL_Color getPixel(int x, int y);
@@ -58,7 +76,9 @@ void FunkcjaQ();
 void FunkcjaW();
 void FunkcjaE();
 void FunkcjaR();
+void FunkcjaT();
 
+void ladujBMPDoPamieci(char const *nazwa, Canvas &obrazek);
 bool porownajKolory(SDL_Color kolor1, SDL_Color kolor2);
 
 #define OBRAZEK_SIZE 64000
@@ -66,7 +86,7 @@ bool porownajKolory(SDL_Color kolor1, SDL_Color kolor2);
 SDL_Color obrazek[OBRAZEK_SIZE];
 SDL_Color obrazekT[OBRAZEK_SIZE];
 SDL_Color paleta[OBRAZEK_SIZE];
-constexpr int maxKolorow = 320*600;
+constexpr int maxKolorow = 320 * 600;
 SDL_Color paleta8[maxKolorow];
 int ileKubelkow = 0;
 
@@ -105,7 +125,7 @@ SDL_Color z5RGBna24RGB(Uint8 kolor5bit) {
     return kolor;
 }
 
-Uint8 z24Rgbna5BW(SDL_Color kolor) {
+Uint8 z24RGBna5BW(SDL_Color kolor) {
     int szary8bit = 0.299 * kolor.r + 0.587 * kolor.g + 0.114 * kolor.b;
     int szary5bit = round(szary8bit * 31.0 / 255.0);
 
@@ -238,7 +258,7 @@ void Funkcja6() {
         for (int x = 0; x < szerokosc / 2; x++) {
             SDL_Color kolor = getPixel(x, y);
 
-            Uint8 szary5bit = z24Rgbna5BW(kolor);
+            Uint8 szary5bit = z24RGBna5BW(kolor);
             SDL_Color kolor24bit = z5BWna24RGB(szary5bit);
 
             setPixel(x + szerokosc / 2, y, kolor24bit.r, kolor24bit.g,
@@ -267,7 +287,7 @@ void Funkcja7() {
 
             SDL_Color tempColor =
                 SDL_Color{szaryZBledem, szaryZBledem, szaryZBledem};
-            Uint8 szary5bit = z24Rgbna5BW(tempColor);
+            Uint8 szary5bit = z24RGBna5BW(tempColor);
             SDL_Color nowyKolor = z5BWna24RGB(szary5bit);
 
             int blad = szaryOrg - nowyKolor.r;
@@ -333,7 +353,6 @@ void Funkcja8() {
 bool porownajKolory(SDL_Color kolor1, SDL_Color kolor2) {
     return kolor1.r == kolor2.r && kolor1.g == kolor2.g && kolor1.b == kolor2.b;
 }
-
 
 int dodajKolor(SDL_Color kolor) {
     int aktualnyKolor = ileKubelkow;
@@ -418,11 +437,12 @@ void sortujKubelekKFC(int start, int koniec) {
 
 void sortujKubelekKFCKolor(int start, int koniec, SkladowaRGB skladowa) {
     // sort by rgb using skladowa parameter
-    sort(obrazek + start, obrazek + koniec, [skladowa](SDL_Color a, SDL_Color b) {
-        if (skladowa == R) return a.r < b.r;
-        if (skladowa == G) return a.g < b.g;
-        if (skladowa == B) return a.b < b.b;
-    });
+    sort(obrazek + start, obrazek + koniec,
+         [skladowa](SDL_Color a, SDL_Color b) {
+             if (skladowa == R) return a.r < b.r;
+             if (skladowa == G) return a.g < b.g;
+             if (skladowa == B) return a.b < b.b;
+         });
 }
 
 void medianCut(int start, int koniec, int iteracja) {
@@ -480,15 +500,16 @@ void medianCutRGB(int start, int koniec, int iteracja) {
             sumaR += obrazek[p].r;
             sumaG += obrazek[p].g;
             sumaB += obrazek[p].b;
-
         }
         int ilosc = koniec + 1 - start;
-        SDL_Color nowyKolor = {Uint8(sumaR / ilosc), Uint8(sumaG / ilosc), Uint8(sumaB / ilosc)};
+        SDL_Color nowyKolor = {Uint8(sumaR / ilosc), Uint8(sumaG / ilosc),
+                               Uint8(sumaB / ilosc)};
         paleta[ileKubelkow] = nowyKolor;
 
         printf("\n");
-        cout << "🍿 Kubełek / 🎨 Kolor " << ileKubelkow << ": " << (int)nowyKolor.r << " "
-             << (int)nowyKolor.g << " " << (int)nowyKolor.b << endl;
+        cout << "🍿 Kubełek / 🎨 Kolor " << ileKubelkow << ": "
+             << (int)nowyKolor.r << " " << (int)nowyKolor.g << " "
+             << (int)nowyKolor.b << endl;
 
         ileKubelkow++;
     }
@@ -576,7 +597,6 @@ void FunkcjaQ() {
     wyswietlWartosci();
 }
 
-
 void FunkcjaW() {
     SDL_Color kolor;
     Uint8 szary;
@@ -608,7 +628,6 @@ void FunkcjaW() {
 }
 
 void FunkcjaE() {
-    
     SDL_Color kolor;
     SDL_Color nowyKolor;
     int numer = 0, indeks = 0;
@@ -626,7 +645,8 @@ void FunkcjaE() {
             kolor = getPixel(x, y);
             indeks = znajdzNajblizszyKolorIndex(kolor);
 
-            cout << "Dla " << x << ", " << y << " wybrano kolor index " << indeks << endl;
+            cout << "Dla " << x << ", " << y << " wybrano kolor index "
+                 << indeks << endl;
 
             setPixel(x + szerokosc / 2, y + wysokosc / 2, paleta[indeks].r,
                      paleta[indeks].g, paleta[indeks].b);
@@ -636,7 +656,212 @@ void FunkcjaE() {
     SDL_UpdateWindowSurface(window);
 }
 
-void FunkcjaR() { SDL_UpdateWindowSurface(window); }
+// pakowanie bitowe (dla 2 pierwszych trybow chyba, reszta paleta)
+
+void ZapisDoPliku(TrybObrazu tryb, Dithering dithering, Canvas &obrazek);
+
+void FunkcjaR() {
+    Canvas obrazek(wysokoscObrazka, std::vector<SDL_Color>(szerokoscObrazka));
+
+    ladujBMPDoPamieci("obrazek1.bmp", obrazek);
+    ZapisDoPliku(TrybObrazu::PaletaNarzucona, Dithering::Brak, obrazek);
+}
+
+/// takes a path to bmp file, and creates a converted version of it
+/// abc.bmp -> abc.kfc
+void KonwertujBmpNaKfc(const char *bmpZrodlo) {
+    Canvas obrazek(wysokoscObrazka, std::vector<SDL_Color>(szerokoscObrazka));
+
+    ladujBMPDoPamieci(bmpZrodlo, obrazek);
+
+    // dithering itd
+    // tutaj powstaje paleta
+
+    // podaje obrazek + palete
+    ZapisDoPliku(TrybObrazu::PaletaNarzucona, Dithering::Brak, obrazek);
+}
+
+// jest jakieś dzielenie na bloki? funkcja tworząca i odczytująca tablicę
+
+// idzie się od lewej do prawej, ale czytając tylko po 8 pikseli z każdej
+// kolumny
+// (0, 0), (0, 1), (0, 2), (0, 3), (0, 4), (0, 5), (0, 6), (0, 7)
+// (1, 0), (1, 1), (1, 2), (1, 3), (1, 4), (1, 5), (1, 6), (1, 7)
+// ...
+// (n, 0), (n, 1), (n, 2), (n, 3), (n, 4), (n, 5), (n, 6), (n, 7)
+// i następnie odczytuje się piksele, tym razem zaczynając odczyt kolumny z
+// offsetem 8 pixeli (zaczynające się od (0, 8)), ale zapisuje się tak samo (bez
+// offsetu jakoś to pomaga)
+
+/**
+ * @brief Zapisuje Canvas do pliku
+ * @param tryb Tryb w jakim obraz zostanie zapisany
+ * @param dithering Informacja o tym, z jakim ditheringiem jest podany Canvas
+ * @param obrazek Canvas, który zostanie zapisany do pliku
+ */
+void ZapisDoPliku(TrybObrazu tryb, Dithering dithering, Canvas &obrazek) {
+    Uint16 szerokoscObrazu = szerokosc / 2;
+    Uint16 wysokoscObrazu = wysokosc / 2;
+    cout << "Zapisuje obrazek do pliku" << endl;
+
+    // Data założenia KFC - September 24, 1952; 71 years ago
+    char id[2] = {0x19, 0x52};
+
+    ofstream wyjscie("obraz.z33", ios::binary);
+    wyjscie.write((char *)&id, sizeof(char) * 2);
+    wyjscie.write((char *)&szerokoscObrazu, sizeof(char) * 2);
+    wyjscie.write((char *)&wysokoscObrazu, sizeof(char) * 2);
+    wyjscie.write((char *)&tryb, sizeof(Uint8));
+
+    // 1, 2 - tryby bez palety (zapisywanie pikseli z pakowaniem bitowym)
+    // 3, 4, 5 - tryby z paletą
+    if (czyTrybJestZPaleta(tryb)) {
+        wyjscie.write((char *)&paleta, sizeof(paleta) / sizeof(paleta[0]));
+        // yyyy nie wiem czy to na dole powinno byc
+    } else {
+        wyjscie.write((char *)&dithering, sizeof(Uint8));
+    }
+
+    if (czyTrybJestZPaleta(tryb)) {
+        int iloscBitowDoZapisania = 5 * szerokoscObrazka * wysokoscObrazka;
+
+        vector<bitset<5>> bitset5(iloscBitowDoZapisania);
+
+
+        // Nowa wersja - zapisuje po kolumnach ale max 8 rzędów
+        // i potem przechodzi 8 rzedów niżej i znowu wszystkie kolumny itd......
+        int maxSteps = wysokoscObrazka / 8;
+        int bitIndex = 0;
+        for (int step = 0; step < maxSteps; step++) {
+            int offset = step * 8;
+            for (int k = 0; k < szerokoscObrazu; k++) {
+                for (int r = 0; r < 8; r++) {
+                    int columnAbsolute = k;
+                    int rowAbsolute = offset + r;
+
+                    if (tryb == TrybObrazu::PaletaNarzucona) {
+                        bitset5[bitIndex] = z24RGBna5RGB(obrazek[columnAbsolute][rowAbsolute]) >> 3;
+                    } else {
+                        bitset5[bitIndex] = z24RGBna5BW(obrazek[columnAbsolute][rowAbsolute]) >> 3;
+                    }
+
+                    bitIndex++;
+                }
+            }
+        }
+
+        // Stara wersja - zapisuje od lewej do prawej i gory na dol
+        /*
+            for (int y; y < wysokoscObrazka; y++) {
+                for (int x; x < szerokoscObrazka; x++) {
+                    int index = y * szerokoscObrazka + x;
+
+                    if (tryb == TrybObrazu::PaletaNarzucona) {
+                        bitset5[index] = z24RGBna5RGB(obrazek[y][x]) >> 3;
+                    } else {
+                        bitset5[index] = z24RGBna5BW(obrazek[y][x]) >> 3;
+                    }
+                }
+            }
+        */
+
+        std::vector<uint8_t> packedBits;
+        int bitCounter = 0;
+        uint8_t currentByte = 0;
+
+        for (const auto &bit5 : bitset5) {
+            // Convert the 5-bit value to an unsigned long and then to an 8-bit
+            // value
+            uint8_t value = bit5.to_ulong();
+
+            // Check if adding 5 bits to the current byte exceeds 8 bits
+            if (bitCounter + 5 <= 8) {
+                // If not, shift the 5-bit value left by the number of empty bit
+                // positions in the current byte and OR it with the current byte
+                // to add these bits to the byte.
+                currentByte |= (value << (8 - bitCounter - 5));
+                // Increase the bit counter by 5 since we have added 5 more
+                // bits.
+                bitCounter += 5;
+            } else {
+                // If adding 5 bits exceeds 8 bits, calculate how many bits will
+                // overflow
+                int overflow = bitCounter + 5 - 8;
+                // Add the non-overflowing part of the value to the current byte
+                currentByte |= (value >> overflow);
+                // Push the completed 8-bit byte to the packedBits vector
+                packedBits.push_back(currentByte);
+                // Create a new byte with the overflow bits, shifted left to
+                // their position in the new byte
+
+                currentByte = (value & ((1 << overflow) - 1)) << (8 - overflow);
+                // Set the bit counter to the number of bits in the overflow
+                bitCounter = overflow;
+            }
+        }
+
+        if (bitCounter > 0) {
+            packedBits.push_back(currentByte);
+        }
+
+        // save to file
+        wyjscie.write((char *)&packedBits[0], packedBits.size());
+    }
+
+    int maxSteps = wysokoscObrazu / 8;
+    for (int step = 0; step < maxSteps; step++) {
+        int offset = step * 8;
+        for (int k = 0; k < szerokoscObrazu; k++) {
+            for (int r = 0; r < 8; r++) {
+                int columnAbsolute = k;
+                int rowAbsolute = offset + r;
+            }
+        }
+    }
+
+    if (tryb == TrybObrazu::PaletaNarzucona) {
+    }
+
+    wyjscie.close();
+}
+
+// read
+void FunkcjaT() {
+    cout << "Wczytaj obrazek z pliku" << endl;
+
+    ifstream wejscie("obraz.z33", ios::binary);
+    char id[2];
+    Uint16 szerokoscObrazu;
+    Uint16 wysokoscObrazu;
+    TrybObrazu tryb;
+    Dithering dithering;
+
+    wejscie.read((char *)&id, sizeof(char) * 2);
+    wejscie.read((char *)&szerokoscObrazu, sizeof(char) * 2);
+    wejscie.read((char *)&wysokoscObrazu, sizeof(char) * 2);
+    wejscie.read((char *)&tryb, sizeof(Uint8));
+    wejscie.read((char *)&dithering, sizeof(Uint8));
+    // if (tryb >= TrybObrazu::SzaroscDedykowana) {
+    //     // wczytac palete[256???] w offsetcie 8
+    //     // tryb 1 to funkcja 5(tutaj z24 na 8bit) lub 6(tutaj z 24 na 5 bit)
+    //     // tryb 2 to funkcja 7 chyba tylko jakies przesuniecie jest
+    //     // tryb 3 to funkcja ???
+    //     // tryb 4 to funkcja ???
+    //     // tryb 5 to funkcja ???
+
+    // } else {
+    // }
+
+    // ZapisDoPliku(1,0,);
+
+    cout << "id: " << id[0] << id[1] << endl;
+    cout << "szerokosc: " << szerokoscObrazka << endl;
+    cout << "wysokosc: " << wysokoscObrazka << endl;
+    cout << "tryb: " << (int)tryb << endl;
+    cout << "dithering: " << (int)dithering << endl;
+
+    wejscie.close();
+}
 
 void setPixel(int x, int y, Uint8 R, Uint8 G, Uint8 B) {
     if ((x >= 0) && (x < szerokosc) && (y >= 0) && (y < wysokosc)) {
@@ -813,6 +1038,22 @@ void ladujBMP(char const *nazwa, int x, int y) {
     }
 }
 
+void ladujBMPDoPamieci(char const *nazwa, Canvas &obrazek) {
+    SDL_Surface *bmp = SDL_LoadBMP(nazwa);
+    if (!bmp) {
+        printf("Unable to load bitmap: %s\n", SDL_GetError());
+    } else {
+        SDL_Color kolor;
+        for (int yy = 0; yy < bmp->h; yy++) {
+            for (int xx = 0; xx < bmp->w; xx++) {
+                kolor = getPixelSurface(xx, yy, bmp);
+                obrazek[yy][xx] = kolor;
+            }
+        }
+        SDL_FreeSurface(bmp);
+    }
+}
+
 void czyscEkran(Uint8 R, Uint8 G, Uint8 B) {
     SDL_FillRect(screen, 0, SDL_MapRGB(screen->format, R, G, B));
     SDL_UpdateWindowSurface(window);
@@ -869,6 +1110,7 @@ int main(int argc, char *argv[]) {
                 if (event.key.keysym.sym == SDLK_w) FunkcjaW();
                 if (event.key.keysym.sym == SDLK_e) FunkcjaE();
                 if (event.key.keysym.sym == SDLK_r) FunkcjaR();
+                if (event.key.keysym.sym == SDLK_t) FunkcjaT();
 
                 if (event.key.keysym.sym == SDLK_a)
                     ladujBMP("obrazek1.bmp", 0, 0);
