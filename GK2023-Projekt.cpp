@@ -1,16 +1,13 @@
 #include <SDL2/SDL.h>
-#include <assert.h>
-#include <math.h>
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
+#include <string>
 #include <algorithm>
 #include <bitset>
 #include <exception>
 #include <fstream>
 #include <iostream>
 #include <vector>
+
 using namespace std;
 
 SDL_Window *window = NULL;
@@ -26,6 +23,7 @@ SDL_Surface *screen = NULL;
 #define OBRAZEK_SIZE 64000  // 320 * 200
 
 typedef std::vector<std::vector<SDL_Color>> Canvas;
+typedef std::vector<SDL_Color> Canvas1D;
 
 enum SkladowaRGB {
     R,
@@ -36,19 +34,16 @@ enum SkladowaRGB {
 // 1 i 2 oznaczają, że przy czytaniu obrazu będzie używana paleta WBUDOWANA W
 // PROGRAM w 2, 3, 4 paleta jest dołączona do pliku
 enum TrybObrazu {
-    PaletaNarzucona = 1,
-    SzaroscNarzucona = 2,
-    SzaroscDedykowana = 3,
-    PaletaWykryta = 4,
-    PaletaDedykowana = 5
+    PaletaNarzucona = 1, // przejście z 24bit obrazka na 5bit
+    SzaroscNarzucona = 2, // przejście z 24bit obrazka na 5bit szarosci
+    SzaroscDedykowana = 3, // utworzenie palety z 32 odcieniami szarosci i zapisanie obrazka jako indeksy do palety
+    PaletaWykryta = 4, // ?????????
+    PaletaDedykowana = 5 // utworzenie palety z 32 kolorami i zapisanie obrazka jako indeksy do palety
 };
 enum Dithering { Brak = 0, Bayer = 1, Floyd = 2 };
 
-SDL_Color obrazek[OBRAZEK_SIZE];
-SDL_Color obrazekT[OBRAZEK_SIZE];
-SDL_Color paleta[OBRAZEK_SIZE];
+
 constexpr int maxKolorow = 320 * 600;
-SDL_Color paleta8[maxKolorow];
 int ileKubelkow = 0;
 
 bool czyTrybJestZPaleta(TrybObrazu tryb) { return tryb >= 3; }
@@ -125,7 +120,7 @@ bool porownajKolory(SDL_Color kolor1, SDL_Color kolor2) {
 int dodajKolor(SDL_Color kolor) {
     int aktualnyKolor = ileKubelkow;
     if (ileKubelkow < maxKolorow) {
-        paleta[ileKubelkow] = kolor;
+        //paleta[ileKubelkow] = kolor;
     }
     // cout << aktualnyKolor << ": " << (int)kolor.r << " " << (int)kolor.g << "
     // " << (int)kolor.b << endl;
@@ -136,19 +131,18 @@ int dodajKolor(SDL_Color kolor) {
 int sprawdzKolor(SDL_Color kolor) {
     if (ileKubelkow > 0) {
         for (int k = 0; k < ileKubelkow; k++) {
-            if (porownajKolory(kolor, paleta[k])) return k;
+            //if (porownajKolory(kolor, paleta[k])) return k;
         }
     }
 
     return dodajKolor(kolor);
 }
 
-void losujWartosci() {
+void losujWartosci(Canvas1D &paleta) {
     Uint8 wartosc;
     for (int i = 0; i < OBRAZEK_SIZE; i++) {
         wartosc = rand() % OBRAZEK_SIZE;
-        obrazek[i] = {wartosc, wartosc, wartosc};
-        obrazekT[i] = {wartosc, wartosc, wartosc};
+        //paleta[i] = {wartosc, wartosc, wartosc};
     }
 
     cout << endl;
@@ -156,24 +150,22 @@ void losujWartosci() {
 
 void wyswietlWartosci() {
     for (int i = 0; i < OBRAZEK_SIZE; i++) {
-        cout << (int)obrazek[i].r << " ";
+        //cout << (int)obrazek[i].r << " ";
     }
     cout << endl;
 }
 
-void medianCut(int start, int koniec, int iteracja) {
-    cout << "start: " << start << ", koniec: " << koniec
-         << ", iteracja: " << iteracja << endl;
+void medianCutBW(int start, int koniec, int iteracja, Canvas1D& obrazek, Canvas1D& paleta) {
     if (iteracja > 0) {
         // sortowanie wtorkowego kubełka kfc za 22 zł
-        sort(obrazek + start, obrazek + koniec,
+        sort(obrazek.begin() + start, obrazek.begin() + koniec,
              [](SDL_Color a, SDL_Color b) { return a.r < b.r; });
 
         cout << "Dzielenie kubełka KFC na poziomie " << iteracja << endl;
 
         int srodek = (start + koniec + 1) / 2;
-        medianCut(start, srodek - 1, iteracja - 1);
-        medianCut(srodek, koniec, iteracja - 1);
+        medianCutBW(start, srodek - 1, iteracja - 1, obrazek, paleta);
+        medianCutBW(srodek, koniec, iteracja - 1, obrazek, paleta);
     } else {
         // budowanie palety uśredniając kolory z określonego kubełka KFC
         int sumaBW = 0;
@@ -194,14 +186,14 @@ void medianCut(int start, int koniec, int iteracja) {
     }
 }
 
-void medianCutRGB(int start, int koniec, int iteracja) {
+, Canvas1D void medianCutRGB(int start, int koniec, int iteracja, Canvas1D& paleta) {
     cout << "start: " << start << ", koniec: " << koniec
          << ", iteracja: " << iteracja << endl;
     if (iteracja > 0) {
         // sortowanie wtorkowego kubełka kfc za 22 zł
         SkladowaRGB skladowa = najwiekszaRoznica(start, koniec);
 
-        sort(obrazek + start, obrazek + koniec,
+        sort(obrazek.begin() + start, obrazek.begin() + koniec,
              [skladowa](SDL_Color a, SDL_Color b) {
                  if (skladowa == R) return a.r < b.r;
                  if (skladowa == G) return a.g < b.g;
@@ -211,8 +203,8 @@ void medianCutRGB(int start, int koniec, int iteracja) {
         cout << "Dzielenie kubełka KFC na poziomie " << iteracja << endl;
 
         int srodek = (start + koniec + 1) / 2;
-        medianCutRGB(start, srodek - 1, iteracja - 1);
-        medianCutRGB(srodek, koniec, iteracja - 1);
+        medianCutRGB(start, srodek - 1, iteracja - 1, obrazek, paleta);
+        medianCutRGB(srodek, koniec, iteracja - 1,obrazek, paleta);
     } else {
         // budowanie palety uśredniając kolory z określonego kubełka KFC
         int sumaR = 0;
@@ -298,12 +290,7 @@ SkladowaRGB najwiekszaRoznica(int start, int koniec) {
     throw std::exception();
 }
 
-/* Note: The comments and some variable names are in Polish,
-and there are some humorous references to KFC buckets.
-The actual functionality of the code doesn't
-have anything to do with KFC or chicken.*/
-// Copilot, 2023
-// https://www.youtube.com/watch?v=5e9tj9eqgs0
+
 
 // Co robi funkcja Q
 // 1. Losuje wartości dla każdego piksela
@@ -317,7 +304,7 @@ void FunkcjaQ() {
     SDL_UpdateWindowSurface(window);
     losujWartosci();
     wyswietlWartosci();
-    medianCut(0, 255, 2);
+    medianCutBW(0, 255, 2);
     for (int i = 0; i < OBRAZEK_SIZE; i++) {
         obrazek[i] = znajdzNajblizszyKolor(obrazekT[i]);
         cout << znajdzNajblizszyKolorIndex(obrazekT[i]) << " ";
@@ -347,7 +334,7 @@ void FunkcjaW() {
         }
     }
     SDL_UpdateWindowSurface(window);
-    medianCut(0, numer - 1, 2);
+    medianCutBW(0, numer - 1, 2);
 
     for (int y = 0; y < wysokosc / 2; y++) {
         for (int x = 0; x < szerokosc / 2; x++) {
@@ -449,13 +436,12 @@ void KonwertujBmpNaKfc(const char *bmpZrodlo) {
  */
 void ZapisDoPliku(TrybObrazu tryb, Dithering dithering, Canvas &obrazek) {
     Uint16 szerokoscObrazu = szerokosc / 2;
-    Uint16 wysokoscObrazu = wysokosc / 2;
+, Canvas1D,& paleta    Uint16 wysokoscObrazu = wysokosc / 2;
     cout << "Zapisuje obrazek do pliku" << endl;
-
     // Data założenia KFC - September 24, 1952; 71 years ago
     char id[2] = {0x19, 0x52};
 
-    ofstream wyjscie("obraz.z33", ios::binary);
+    ofstream wyjscie("obraz.kfc", ios::binary);
     wyjscie.write((char *)&id, sizeof(char) * 2);
     wyjscie.write((char *)&szerokoscObrazu, sizeof(char) * 2);
     wyjscie.write((char *)&wysokoscObrazu, sizeof(char) * 2);
@@ -465,7 +451,8 @@ void ZapisDoPliku(TrybObrazu tryb, Dithering dithering, Canvas &obrazek) {
     // 1, 2 - tryby bez palety -> rozmiar danych
     // 3, 4, 5 - tryby z paletą -> poleta, rozmiar danych.
     if (czyTrybJestZPaleta(tryb)) {
-        wyjscie.write((char *)&paleta, PALETA_SIZE_BYTES);
+        // TODO: PALETA_SIZEE moze byc tutaj bledne
+        wyjscie.write((char *)&paleta, PALETA_SIZE);
     }
 
     // ilosc bitow zawsze taka sama niezaleznie od trybu
@@ -878,3 +865,4 @@ int main(int argc, char *argv[]) {
     SDL_Quit();
     return 0;
 }
+
