@@ -1,11 +1,12 @@
 #include <SDL2/SDL.h>
 #include <stdio.h>
-#include <string>
+
 #include <algorithm>
 #include <bitset>
 #include <exception>
 #include <fstream>
 #include <iostream>
+#include <string>
 #include <vector>
 
 using namespace std;
@@ -34,20 +35,21 @@ enum SkladowaRGB {
 // 1 i 2 oznaczają, że przy czytaniu obrazu będzie używana paleta WBUDOWANA W
 // PROGRAM w 2, 3, 4 paleta jest dołączona do pliku
 enum TrybObrazu {
-    PaletaNarzucona = 1, // przejście z 24bit obrazka na 5bit
-    SzaroscNarzucona = 2, // przejście z 24bit obrazka na 5bit szarosci
-    SzaroscDedykowana = 3, // utworzenie palety z 32 odcieniami szarosci i zapisanie obrazka jako indeksy do palety
-    PaletaWykryta = 4, // ?????????
-    PaletaDedykowana = 5 // utworzenie palety z 32 kolorami i zapisanie obrazka jako indeksy do palety
+    PaletaNarzucona = 1,    // przejście z 24bit obrazka na 5bit
+    SzaroscNarzucona = 2,   // przejście z 24bit obrazka na 5bit szarosci
+    SzaroscDedykowana = 3,  // utworzenie palety z 32 odcieniami szarosci i
+                            // zapisanie obrazka jako indeksy do palety
+    PaletaWykryta = 4,      // ?????????
+    PaletaDedykowana = 5  // utworzenie palety z 32 kolorami i zapisanie obrazka
+                          // jako indeksy do palety
 };
 enum Dithering { Brak = 0, Bayer = 1, Floyd = 2 };
-
 
 constexpr int maxKolorow = 320 * 600;
 int ileKubelkow = 0;
 
 bool czyTrybJestZPaleta(TrybObrazu tryb) { return tryb >= 3; }
-SkladowaRGB najwiekszaRoznica(int start, int koniec);
+SkladowaRGB najwiekszaRoznica(int start, int koniec, Canvas1D& obrazek);
 
 void setPixel(int x, int y, Uint8 R, Uint8 G, Uint8 B);
 SDL_Color getPixel(int x, int y);
@@ -55,8 +57,10 @@ SDL_Color getPixel(int x, int y);
 Uint8 z24RGBna5RGB(SDL_Color kolor);
 SDL_Color z5RGBna24RGB(Uint8 kolor5bit);
 
-void ZapisDoPliku(TrybObrazu tryb, Dithering dithering, Canvas &obrazek);
+void ZapisDoPliku(TrybObrazu tryb, Dithering dithering, Canvas &obrazek, Canvas1D &paleta);
 void czyscEkran(Uint8 R, Uint8 G, Uint8 B);
+
+void KonwertujBmpNaKfc(const char *bmpZrodlo);
 
 Uint8 normalizacja(int wartosc) {
     if (wartosc < 0) return 0;
@@ -64,7 +68,7 @@ Uint8 normalizacja(int wartosc) {
     return wartosc;
 }
 
-void FunkcjaQ();
+void FunkcjaQ() {}
 void FunkcjaW();
 void FunkcjaE();
 void FunkcjaR();
@@ -117,45 +121,8 @@ bool porownajKolory(SDL_Color kolor1, SDL_Color kolor2) {
     return kolor1.r == kolor2.r && kolor1.g == kolor2.g && kolor1.b == kolor2.b;
 }
 
-int dodajKolor(SDL_Color kolor) {
-    int aktualnyKolor = ileKubelkow;
-    if (ileKubelkow < maxKolorow) {
-        //paleta[ileKubelkow] = kolor;
-    }
-    // cout << aktualnyKolor << ": " << (int)kolor.r << " " << (int)kolor.g << "
-    // " << (int)kolor.b << endl;
-    ileKubelkow++;
-    return aktualnyKolor;
-}
-
-int sprawdzKolor(SDL_Color kolor) {
-    if (ileKubelkow > 0) {
-        for (int k = 0; k < ileKubelkow; k++) {
-            //if (porownajKolory(kolor, paleta[k])) return k;
-        }
-    }
-
-    return dodajKolor(kolor);
-}
-
-void losujWartosci(Canvas1D &paleta) {
-    Uint8 wartosc;
-    for (int i = 0; i < OBRAZEK_SIZE; i++) {
-        wartosc = rand() % OBRAZEK_SIZE;
-        //paleta[i] = {wartosc, wartosc, wartosc};
-    }
-
-    cout << endl;
-}
-
-void wyswietlWartosci() {
-    for (int i = 0; i < OBRAZEK_SIZE; i++) {
-        //cout << (int)obrazek[i].r << " ";
-    }
-    cout << endl;
-}
-
-void medianCutBW(int start, int koniec, int iteracja, Canvas1D& obrazek, Canvas1D& paleta) {
+void medianCutBW(int start, int koniec, int iteracja, Canvas1D &obrazek,
+                 Canvas1D &paleta) {
     if (iteracja > 0) {
         // sortowanie wtorkowego kubełka kfc za 22 zł
         sort(obrazek.begin() + start, obrazek.begin() + koniec,
@@ -174,24 +141,22 @@ void medianCutBW(int start, int koniec, int iteracja, Canvas1D& obrazek, Canvas1
         }
         Uint8 noweBW = sumaBW / (koniec + 1 - start);
         SDL_Color nowyKolor = {noweBW, noweBW, noweBW};
-        paleta[ileKubelkow] = nowyKolor;
+        paleta.push_back(nowyKolor);
 
         printf("\n");
-        cout << "🍿 Kubełek " << ileKubelkow << "(" << start << "," << koniec
+        cout << "🍿 Kubełek " << paleta.size() << "(" << start << "," << koniec
              << ") = 🍗 " << (int)noweBW << endl;
         cout << "🎨 Kolor " << ileKubelkow << ": " << (int)nowyKolor.r << " "
              << (int)nowyKolor.g << " " << (int)nowyKolor.b << endl;
 
-        ileKubelkow++;
     }
 }
 
-, Canvas1D void medianCutRGB(int start, int koniec, int iteracja, Canvas1D& paleta) {
-    cout << "start: " << start << ", koniec: " << koniec
-         << ", iteracja: " << iteracja << endl;
+void medianCutRGB(int start, int koniec, int iteracja, Canvas1D& obrazek,
+                             Canvas1D &paleta) {
     if (iteracja > 0) {
         // sortowanie wtorkowego kubełka kfc za 22 zł
-        SkladowaRGB skladowa = najwiekszaRoznica(start, koniec);
+        SkladowaRGB skladowa = najwiekszaRoznica(start, koniec, obrazek);
 
         sort(obrazek.begin() + start, obrazek.begin() + koniec,
              [skladowa](SDL_Color a, SDL_Color b) {
@@ -204,7 +169,7 @@ void medianCutBW(int start, int koniec, int iteracja, Canvas1D& obrazek, Canvas1
 
         int srodek = (start + koniec + 1) / 2;
         medianCutRGB(start, srodek - 1, iteracja - 1, obrazek, paleta);
-        medianCutRGB(srodek, koniec, iteracja - 1,obrazek, paleta);
+        medianCutRGB(srodek, koniec, iteracja - 1, obrazek, paleta);
     } else {
         // budowanie palety uśredniając kolory z określonego kubełka KFC
         int sumaR = 0;
@@ -219,21 +184,20 @@ void medianCutBW(int start, int koniec, int iteracja, Canvas1D& obrazek, Canvas1
         int ilosc = koniec + 1 - start;
         SDL_Color nowyKolor = {Uint8(sumaR / ilosc), Uint8(sumaG / ilosc),
                                Uint8(sumaB / ilosc)};
-        paleta[ileKubelkow] = nowyKolor;
+        paleta.push_back(nowyKolor);
 
         printf("\n");
-        cout << "🍿 Kubełek / 🎨 Kolor " << ileKubelkow << ": "
+        cout << "🍿 Kubełek / 🎨 Kolor " << paleta.size() << ": "
              << (int)nowyKolor.r << " " << (int)nowyKolor.g << " "
              << (int)nowyKolor.b << endl;
 
-        ileKubelkow++;
     }
 }
 
-int znajdzNajblizszyKolorIndex(SDL_Color kolor) {
+int znajdzNajblizszyKolorIndex(SDL_Color kolor, Canvas1D& paleta) {
     int najblizszyKolor = 0;
     int najmniejszaRoznica = 255;
-    for (int j = 0; j < ileKubelkow; j++) {
+    for (int j = 0; j < paleta.size(); j++) {
         int roznica = abs(paleta[j].r - kolor.r) + abs(paleta[j].g - kolor.g) +
                       abs(paleta[j].b - kolor.b);
         if (roznica < najmniejszaRoznica) {
@@ -244,16 +208,16 @@ int znajdzNajblizszyKolorIndex(SDL_Color kolor) {
     return najblizszyKolor;
 }
 
-int znajdzNajblizszyKolorIndex(Uint8 szary) {
+int znajdzNajblizszyKolorBWIndex(Uint8 szary, Canvas1D& paleta) {
     SDL_Color c;
     c.r = szary;
-    return znajdzNajblizszyKolorIndex(c);
+    return znajdzNajblizszyKolorIndex(c, paleta);
 }
 
-SDL_Color znajdzNajblizszyKolor(SDL_Color kolor) {
+SDL_Color znajdzNajblizszyKolor(SDL_Color kolor, Canvas1D& paleta) {
     int najblizszyKolor = 0;
     int najmniejszaRoznica = 255;
-    for (int j = 0; j < ileKubelkow; j++) {
+    for (int j = 0; j < paleta.size(); j++) {
         int roznica = abs(paleta[j].r - kolor.r);
         if (roznica < najmniejszaRoznica) {
             najmniejszaRoznica = roznica;
@@ -264,7 +228,7 @@ SDL_Color znajdzNajblizszyKolor(SDL_Color kolor) {
 }
 
 // in obrazek[start..koniec], find the color with highest difference
-SkladowaRGB najwiekszaRoznica(int start, int koniec) {
+SkladowaRGB najwiekszaRoznica(int start, int koniec, Canvas1D& obrazek) {
     SDL_Color min = {255, 255, 255};
     SDL_Color max = {0, 0, 0};
 
@@ -286,33 +250,7 @@ SkladowaRGB najwiekszaRoznica(int start, int koniec) {
     if (diffG >= diffR && diffG >= diffB) return G;
     if (diffB >= diffR && diffB >= diffG) return B;
 
-    printf("wtorkowe kubelki wyprzedaly sie :(");
-    throw std::exception();
-}
-
-
-
-// Co robi funkcja Q
-// 1. Losuje wartości dla każdego piksela
-// 2. Wyświetla wartości
-// 3. Dzieli kubełki KFC na poziomie 2
-// 4. Buduje paletę uśredniając kolory z określonego kubełka KFC
-// 5. Wyświetla paletę
-// 6. Dla każdego piksela znajduje najbliższy kolor z palety
-// 7. Wyświetla wartości
-void FunkcjaQ() {
-    SDL_UpdateWindowSurface(window);
-    losujWartosci();
-    wyswietlWartosci();
-    medianCutBW(0, 255, 2);
-    for (int i = 0; i < OBRAZEK_SIZE; i++) {
-        obrazek[i] = znajdzNajblizszyKolor(obrazekT[i]);
-        cout << znajdzNajblizszyKolorIndex(obrazekT[i]) << " ";
-        // setPixel(i, wysokosc / 2, obrazek[i].r, obrazek[i].g,
-        //          obrazek[i].b);
-    }
-
-    wyswietlWartosci();
+    throw std::invalid_argument("Nieznana skladowa RGB");
 }
 
 // Co robi funkcja W
@@ -321,31 +259,31 @@ void FunkcjaQ() {
 // 3. Dla każdego piksela znajduje najbliższy kolor z palety
 // 4. Wyświetla wartości
 void FunkcjaW() {
-    SDL_Color kolor;
-    Uint8 szary;
-    int numer = 0, indeks = 0;
-    for (int y = 0; y < wysokosc / 2; y++) {
-        for (int x = 0; x < szerokosc / 2; x++) {
-            kolor = getPixel(x, y);
-            szary = 0.299 * kolor.r + 0.587 * kolor.g + 0.114 * kolor.b;
-            obrazek[numer] = {szary, szary, szary};
-            setPixel(x + szerokosc / 2, y, szary, szary, szary);
-            numer++;
-        }
-    }
-    SDL_UpdateWindowSurface(window);
-    medianCutBW(0, numer - 1, 2);
+    // SDL_Color kolor;
+    // Uint8 szary;
+    // int numer = 0, indeks = 0;
+    // for (int y = 0; y < wysokosc / 2; y++) {
+    //     for (int x = 0; x < szerokosc / 2; x++) {
+    //         kolor = getPixel(x, y);
+    //         szary = 0.299 * kolor.r + 0.587 * kolor.g + 0.114 * kolor.b;
+    //         obrazek[numer] = {szary, szary, szary};
+    //         setPixel(x + szerokosc / 2, y, szary, szary, szary);
+    //         numer++;
+    //     }
+    // }
+    // SDL_UpdateWindowSurface(window);
+    // medianCutBW(0, numer - 1, 2);
 
-    for (int y = 0; y < wysokosc / 2; y++) {
-        for (int x = 0; x < szerokosc / 2; x++) {
-            kolor = getPixel(x, y);
-            szary = 0.299 * kolor.r + 0.587 * kolor.g + 0.114 * kolor.b;
-            indeks = znajdzNajblizszyKolorIndex(szary);
+    // for (int y = 0; y < wysokosc / 2; y++) {
+    //     for (int x = 0; x < szerokosc / 2; x++) {
+    //         kolor = getPixel(x, y);
+    //         szary = 0.299 * kolor.r + 0.587 * kolor.g + 0.114 * kolor.b;
+    //         indeks = znajdzNajblizszyKolorBWIndex(szary);
 
-            setPixel(x + szerokosc / 2, y + wysokosc / 2, paleta[indeks].r,
-                     paleta[indeks].g, paleta[indeks].b);
-        }
-    }
+    //         setPixel(x + szerokosc / 2, y + wysokosc / 2, paleta[indeks].r,
+    //                  paleta[indeks].g, paleta[indeks].b);
+    //     }
+    // }
 
     SDL_UpdateWindowSurface(window);
 }
@@ -355,51 +293,42 @@ void FunkcjaW() {
 // 2. Buduje paletę uśredniając kolory z określonego kubełka KFC
 // 3. Dla każdego piksela znajduje najbliższy kolor z palety
 // 4. Wyświetla wartości
+// dobra, tak bez pierdolenia, ta funkcja robi to samo co funkcja W, tylko
+// zamiast szarości używa RGB
 
 void FunkcjaE() {
-    SDL_Color kolor;
-    SDL_Color nowyKolor;
-    int numer = 0, indeks = 0;
-    for (int y = 0; y < wysokosc / 2; y++) {
-        for (int x = 0; x < szerokosc / 2; x++) {
-            kolor = getPixel(x, y);
-            obrazek[numer] = kolor;
-            numer++;
-        }
-    }
-    medianCutRGB(0, numer - 1, 5);
+    // SDL_Color kolor;
+    // SDL_Color nowyKolor;
+    // int numer = 0, indeks = 0;
+    // for (int y = 0; y < wysokosc / 2; y++) {
+    //     for (int x = 0; x < szerokosc / 2; x++) {
+    //         kolor = getPixel(x, y);
+    //         obrazek[numer] = kolor;
+    //         numer++;
+    //     }
+    // }
+    // medianCutRGB(0, numer - 1, 5);
 
-    for (int y = 0; y < wysokosc / 2; y++) {
-        for (int x = 0; x < szerokosc / 2; x++) {
-            kolor = getPixel(x, y);
-            indeks = znajdzNajblizszyKolorIndex(kolor);
+    // for (int y = 0; y < wysokosc / 2; y++) {
+    //     for (int x = 0; x < szerokosc / 2; x++) {
+    //         kolor = getPixel(x, y);
+    //         indeks = znajdzNajblizszyKolorIndex(kolor);
 
-            cout << "Dla " << x << ", " << y << " wybrano kolor index "
-                 << indeks << endl;
+    //         cout << "Dla " << x << ", " << y << " wybrano kolor index "
+    //              << indeks << endl;
 
-            setPixel(x + szerokosc / 2, y + wysokosc / 2, paleta[indeks].r,
-                     paleta[indeks].g, paleta[indeks].b);
-        }
-    }
+    //         setPixel(x + szerokosc / 2, y + wysokosc / 2, paleta[indeks].r,
+    //                  paleta[indeks].g, paleta[indeks].b);
+    //     }
+    // }
 
     SDL_UpdateWindowSurface(window);
 }
 
 // pakowanie bitowe (dla 2 pierwszych trybow chyba, reszta paleta)
 
-
 void FunkcjaR() {
-    Canvas obrazek(wysokoscObrazka, std::vector<SDL_Color>(szerokoscObrazka));
-
-    ladujBMPDoPamieci("obrazek1.bmp", obrazek);
-    ZapisDoPliku(TrybObrazu::PaletaNarzucona, Dithering::Brak, obrazek);
-}
-
-SDL_Color paleta_narzucona[PALETA_SIZE];
-void initPaletaNarzucona() {
-    for (int i = 0; i < PALETA_SIZE; i++) {
-        paleta_narzucona[i] = z5BWna24RGB(i);
-    }
+    KonwertujBmpNaKfc("obrazek1.bmp");
 }
 
 /// takes a path to bmp file, and creates a converted version of it
@@ -411,9 +340,10 @@ void KonwertujBmpNaKfc(const char *bmpZrodlo) {
 
     // dithering itd
     // tutaj powstaje paleta
+    Canvas1D paleta;
 
     // podaje obrazek + palete
-    ZapisDoPliku(TrybObrazu::PaletaNarzucona, Dithering::Brak, obrazek);
+    ZapisDoPliku(TrybObrazu::SzaroscNarzucona, Dithering::Brak, obrazek, paleta);
 }
 
 // jest jakieś dzielenie na bloki? funkcja tworząca i odczytująca tablicę
@@ -434,13 +364,13 @@ void KonwertujBmpNaKfc(const char *bmpZrodlo) {
  * @param dithering Informacja o tym, z jakim ditheringiem jest podany Canvas
  * @param obrazek Canvas, który zostanie zapisany do pliku
  */
-void ZapisDoPliku(TrybObrazu tryb, Dithering dithering, Canvas &obrazek) {
+void ZapisDoPliku(TrybObrazu tryb, Dithering dithering, Canvas &obrazek, Canvas1D &paleta) {
     Uint16 szerokoscObrazu = szerokosc / 2;
-, Canvas1D,& paleta    Uint16 wysokoscObrazu = wysokosc / 2;
+    Uint16 wysokoscObrazu = wysokosc / 2;
     cout << "Zapisuje obrazek do pliku" << endl;
     // Data założenia KFC - September 24, 1952; 71 years ago
-    char id[2] = {0x19, 0x52};
 
+    char id[2] = {0x19, 0x52};
     ofstream wyjscie("obraz.kfc", ios::binary);
     wyjscie.write((char *)&id, sizeof(char) * 2);
     wyjscie.write((char *)&szerokoscObrazu, sizeof(char) * 2);
@@ -485,11 +415,11 @@ void ZapisDoPliku(TrybObrazu tryb, Dithering dithering, Canvas &obrazek) {
                 } else if (tryb == TrybObrazu::PaletaDedykowana) {
                     // adresy do palety
                     bitset5[bitIndex] = znajdzNajblizszyKolorIndex(
-                        obrazek[columnAbsolute][rowAbsolute]);
+                        obrazek[columnAbsolute][rowAbsolute], paleta);
                 } else if (tryb == TrybObrazu::SzaroscDedykowana) {
                     // też adresy do palety (która jest poprostu szara xD)
                     bitset5[bitIndex] = znajdzNajblizszyKolorIndex(
-                        obrazek[columnAbsolute][rowAbsolute]);
+                        obrazek[columnAbsolute][rowAbsolute], paleta);
                 } else if (tryb == TrybObrazu::PaletaWykryta) {
                     // ?????????
                 } else {
@@ -539,7 +469,6 @@ void ZapisDoPliku(TrybObrazu tryb, Dithering dithering, Canvas &obrazek) {
         packedBits.push_back(currentByte);
     }
 
-    // save to file
     wyjscie.write((char *)&packedBits[0], packedBits.size());
 
     if (tryb == TrybObrazu::PaletaNarzucona) {
@@ -865,4 +794,3 @@ int main(int argc, char *argv[]) {
     SDL_Quit();
     return 0;
 }
-
