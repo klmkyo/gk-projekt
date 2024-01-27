@@ -1,16 +1,14 @@
 #include <SDL2/SDL.h>
-#include <assert.h>
-#include <math.h>
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 #include <algorithm>
 #include <bitset>
 #include <exception>
 #include <fstream>
 #include <iostream>
+#include <string>
 #include <vector>
+
 using namespace std;
 
 SDL_Window *window = NULL;
@@ -18,13 +16,15 @@ SDL_Surface *screen = NULL;
 
 #define szerokosc 640
 #define wysokosc 400
-
 #define szerokoscObrazka (szerokosc / 2)
 #define wysokoscObrazka (wysokosc / 2)
-
 #define tytul "GK2023 - Projekt - Zespol 33"
 
+#define PALETA_SIZE 32      // 2^5
+#define OBRAZEK_SIZE 64000  // 320 * 200
+
 typedef std::vector<std::vector<SDL_Color>> Canvas;
+typedef std::vector<SDL_Color> Canvas1D;
 
 enum SkladowaRGB {
     R,
@@ -32,30 +32,35 @@ enum SkladowaRGB {
     B,
 };
 
+// 1 i 2 oznaczają, że przy czytaniu obrazu będzie używana paleta WBUDOWANA W
+// PROGRAM w 2, 3, 4 paleta jest dołączona do pliku
 enum TrybObrazu {
-    PaletaNarzucona = 1,
-    SzaroscNarzucona = 2,
-    SzaroscDedykowana = 3,
-    PaletaWykryta = 4,
-    PaletaDedykowana = 5
+    PaletaNarzucona = 1,    // przejście z 24bit obrazka na 5bit
+    SzaroscNarzucona = 2,   // przejście z 24bit obrazka na 5bit szarosci
+    SzaroscDedykowana = 3,  // utworzenie palety z 32 odcieniami szarosci i
+                            // zapisanie obrazka jako indeksy do palety
+    PaletaWykryta = 4,      // ?????????
+    PaletaDedykowana = 5  // utworzenie palety z 32 kolorami i zapisanie obrazka
+                          // jako indeksy do palety
 };
-
-bool czyTrybJestZPaleta(TrybObrazu tryb) { return tryb >= 3; }
-
 enum Dithering { Brak = 0, Bayer = 1, Floyd = 2 };
 
-SkladowaRGB najwiekszaRoznica(int start, int koniec);
+constexpr int maxKolorow = 320 * 600;
+int ileKubelkow = 0;
+
+bool czyTrybJestZPaleta(TrybObrazu tryb) { return tryb >= 3; }
+SkladowaRGB najwiekszaRoznica(int start, int koniec, Canvas1D& obrazek);
 
 void setPixel(int x, int y, Uint8 R, Uint8 G, Uint8 B);
 SDL_Color getPixel(int x, int y);
 
-Uint8 z24RGBna8RGB(SDL_Color kolor);
-SDL_Color z8RGBna24RGB(Uint8 kolor8bit);
-
 Uint8 z24RGBna5RGB(SDL_Color kolor);
 SDL_Color z5RGBna24RGB(Uint8 kolor5bit);
 
+void ZapisDoPliku(TrybObrazu tryb, Dithering dithering, Canvas &obrazek, Canvas1D &paleta);
 void czyscEkran(Uint8 R, Uint8 G, Uint8 B);
+
+void KonwertujBmpNaKfc(const char *bmpZrodlo);
 
 Uint8 normalizacja(int wartosc) {
     if (wartosc < 0) return 0;
@@ -63,16 +68,7 @@ Uint8 normalizacja(int wartosc) {
     return wartosc;
 }
 
-void Funkcja1();
-void Funkcja2();
-void Funkcja3();
-void Funkcja4();
-void Funkcja5();
-void Funkcja6();
-void Funkcja7();
-void Funkcja8();
-void Funkcja9();
-void FunkcjaQ();
+void FunkcjaQ() {}
 void FunkcjaW();
 void FunkcjaE();
 void FunkcjaR();
@@ -80,32 +76,6 @@ void FunkcjaT();
 
 void ladujBMPDoPamieci(char const *nazwa, Canvas &obrazek);
 bool porownajKolory(SDL_Color kolor1, SDL_Color kolor2);
-
-#define OBRAZEK_SIZE 64000
-
-SDL_Color obrazek[OBRAZEK_SIZE];
-SDL_Color obrazekT[OBRAZEK_SIZE];
-SDL_Color paleta[OBRAZEK_SIZE];
-constexpr int maxKolorow = 320 * 600;
-SDL_Color paleta8[maxKolorow];
-int ileKubelkow = 0;
-
-Uint8 z24RGBna8RGB(SDL_Color kolor) {
-    Uint8 nowyR, nowyG, nowyB;
-    nowyR = round(kolor.r * 7.0 / 255.0);
-    nowyG = round(kolor.g * 7.0 / 255.0);
-    nowyB = round(kolor.b * 3.0 / 255.0);
-
-    return (nowyR << 5) | (nowyG << 2) | (nowyB);
-}
-
-SDL_Color z8RGBna24RGB(Uint8 kolor8bit) {
-    SDL_Color kolor;
-    kolor.r = kolor8bit & 0b11100000;
-    kolor.g = (kolor8bit & 0b00011100) << 3;
-    kolor.b = (kolor8bit & 0b00000011) << 6;
-    return kolor;
-}
 
 Uint8 z24RGBna5RGB(SDL_Color kolor) {
     Uint8 nowyR, nowyG, nowyB;
@@ -139,172 +109,6 @@ SDL_Color z5BWna24RGB(Uint8 kolor) {
     return kolor24bit;
 }
 
-void Funkcja1() {
-    SDL_Color kolor;
-    uint8_t R, G, B, nowyR, nowyG, nowyB;
-    for (int y = 0; y < wysokosc / 2; y++) {
-        for (int x = 0; x < szerokosc / 2; x++) {
-            kolor = getPixel(x, y);
-            R = kolor.r;
-            G = kolor.g;
-            B = kolor.b;
-
-            // 111 111 11
-            nowyR = R >> 5;
-            nowyG = G >> 5;
-            nowyB = B >> 6;
-
-            R = nowyR << 5;
-            G = nowyG << 5;
-            B = nowyB << 6;
-            setPixel(x + szerokosc / 2, y, R, G, B);
-        }
-    }
-
-    SDL_UpdateWindowSurface(window);
-}
-
-void Funkcja2() {
-    SDL_Color kolor;
-    uint8_t R, G, B, nowyR, nowyG, nowyB;
-    for (int x = 0; x < szerokosc / 2; x++) {
-        for (int y = 0; y < wysokosc / 2; y++) {
-            kolor = getPixel(x, y);
-            R = kolor.r;
-            G = kolor.g;
-            B = kolor.b;
-
-            // 111 111 11
-            nowyR = R >> 5;
-            nowyG = G >> 5;
-            nowyB = B >> 6;
-
-            R = nowyR * 255.0 / 7.0;
-            G = nowyG * 255.0 / 7.0;
-            B = nowyB * 255.0 / 3.0;
-            setPixel(x, y + wysokosc / 2, R, G, B);
-        }
-    }
-
-    SDL_UpdateWindowSurface(window);
-}
-
-void Funkcja3() {
-    SDL_Color kolor;
-    uint8_t R, G, B, nowyR, nowyG, nowyB;
-    int kolor8bit;
-    for (int x = 0; x < szerokosc / 2; x++) {
-        for (int y = 0; y < wysokosc / 2; y++) {
-            kolor = getPixel(x, y);
-            R = kolor.r;
-            G = kolor.g;
-            B = kolor.b;
-
-            // 111 111 11
-            nowyR = round(R * 7.0 / 255.0);
-            nowyG = round(G * 7.0 / 255.0);
-            nowyB = round(B * 3.0 / 255.0);
-
-            kolor8bit = (nowyR << 5) | (nowyG << 2) | (nowyB);
-            cout << kolor8bit << endl;
-
-            R = nowyR * 255.0 / 7.0;
-            G = nowyG * 255.0 / 7.0;
-            B = nowyB * 255.0 / 3.0;
-            setPixel(x + szerokosc / 2, y + wysokosc / 2, R, G, B);
-        }
-    }
-
-    SDL_UpdateWindowSurface(window);
-}
-
-void Funkcja4() {
-    Uint8 kolor8bit;
-    SDL_Color kolor, nowyKolor;
-
-    for (int x = 0; x < szerokosc / 2; x++) {
-        for (int y = 0; y < wysokosc / 2; y++) {
-            kolor = getPixel(x, y);
-            kolor8bit = z24RGBna5RGB(kolor);
-            nowyKolor = z5RGBna24RGB(kolor8bit);
-            setPixel(x + szerokosc / 2, y, nowyKolor.r, nowyKolor.g,
-                     nowyKolor.b);
-        }
-    }
-
-    SDL_UpdateWindowSurface(window);
-}
-
-void Funkcja5() {
-    SDL_Color kolor;
-    kolor.r = 165;
-    kolor.g = 210;
-    kolor.b = 96;
-    cout << bitset<8>(kolor.r) << " " << bitset<8>(kolor.g) << " "
-         << bitset<8>(kolor.b) << endl;
-    Uint8 kolor8bit = z24RGBna8RGB(kolor);
-    cout << bitset<8>(kolor8bit) << endl;
-    SDL_Color kolor2 = z8RGBna24RGB(kolor8bit);
-    cout << bitset<8>(kolor2.r) << " " << bitset<8>(kolor2.g) << " "
-         << bitset<8>(kolor2.b) << endl;
-
-    SDL_UpdateWindowSurface(window);
-}
-
-void Funkcja6() {
-    // zamienianie z 24bit na 3bit i z powrotem (wyświetlanie na rożnych
-    // kwadrantach)
-    for (int y = 0; y < wysokosc / 2; y++) {
-        for (int x = 0; x < szerokosc / 2; x++) {
-            SDL_Color kolor = getPixel(x, y);
-
-            Uint8 szary5bit = z24RGBna5BW(kolor);
-            SDL_Color kolor24bit = z5BWna24RGB(szary5bit);
-
-            setPixel(x + szerokosc / 2, y, kolor24bit.r, kolor24bit.g,
-                     kolor24bit.b);
-        }
-    }
-
-    SDL_UpdateWindowSurface(window);
-}
-
-void Funkcja7() {
-    Uint8 przesuniecie = 1;
-
-    float bledy[(szerokosc / 2) + 2][wysokosc / 2 + 2];
-    memset(bledy, 0, sizeof(bledy));
-
-    for (int yy = 0; yy < wysokosc / 2; yy++) {
-        for (int xx = 0; xx < szerokosc / 2; xx++) {
-            SDL_Color kolor = getPixel(xx, yy);
-
-            Uint8 szaryOrg =
-                0.299 * kolor.r + 0.587 * kolor.g + 0.114 * kolor.b;
-
-            Uint8 szaryZBledem =
-                normalizacja(szaryOrg + bledy[xx + przesuniecie][yy]);
-
-            SDL_Color tempColor =
-                SDL_Color{szaryZBledem, szaryZBledem, szaryZBledem};
-            Uint8 szary5bit = z24RGBna5BW(tempColor);
-            SDL_Color nowyKolor = z5BWna24RGB(szary5bit);
-
-            int blad = szaryOrg - nowyKolor.r;
-
-            setPixel(xx + szerokosc / 2, yy, nowyKolor.r, nowyKolor.g,
-                     nowyKolor.b);
-
-            bledy[xx + 1 + przesuniecie][yy] += (blad * 7.0 / 16.0);
-            bledy[xx - 1 + przesuniecie][yy + 1] += (blad * 3.0 / 16.0);
-            bledy[xx + przesuniecie][yy + 1] += (blad * 5.0 / 16.0);
-            bledy[xx + 1 + przesuniecie][yy + 1] += (blad * 1.0 / 16.0);
-        }
-    }
-
-    SDL_UpdateWindowSurface(window);
-}
-
 void updateBledy(int xx, int yy, float (*bledy)[wysokosc / 2 + 2][3], int blad,
                  int colorIndex, int przesuniecie) {
     bledy[xx + 1 + przesuniecie][yy][colorIndex] += (blad * 7.0 / 16.0);
@@ -313,150 +117,22 @@ void updateBledy(int xx, int yy, float (*bledy)[wysokosc / 2 + 2][3], int blad,
     bledy[xx + 1 + przesuniecie][yy + 1][colorIndex] += (blad * 1.0 / 16.0);
 }
 
-void Funkcja8() {
-    Uint8 przesuniecie = 1;
-
-    float bledy[(szerokosc / 2) + 2][wysokosc / 2 + 2][3];
-    memset(bledy, 0, sizeof(bledy));
-
-    for (int yy = 0; yy < wysokosc / 2; yy++) {
-        for (int xx = 0; xx < szerokosc / 2; xx++) {
-            SDL_Color kolor = getPixel(xx, yy);
-
-            Uint8 rZBledem =
-                normalizacja(kolor.r + bledy[xx + przesuniecie][yy][0]);
-            Uint8 gZBledem =
-                normalizacja(kolor.g + bledy[xx + przesuniecie][yy][1]);
-            Uint8 bZBledem =
-                normalizacja(kolor.b + bledy[xx + przesuniecie][yy][2]);
-
-            SDL_Color tempColor = SDL_Color{rZBledem, gZBledem, bZBledem};
-            Uint8 kolor8bit = z24RGBna8RGB(tempColor);
-            SDL_Color nowyKolor = z8RGBna24RGB(kolor8bit);
-
-            int rBlad = rZBledem - nowyKolor.r;
-            int gBlad = gZBledem - nowyKolor.g;
-            int bBlad = bZBledem - nowyKolor.b;
-
-            setPixel(xx + szerokosc / 2, yy, nowyKolor.r, nowyKolor.g,
-                     nowyKolor.b);
-
-            updateBledy(xx, yy, bledy, rBlad, 0, przesuniecie);
-            updateBledy(xx, yy, bledy, gBlad, 1, przesuniecie);
-            updateBledy(xx, yy, bledy, bBlad, 2, przesuniecie);
-        }
-    }
-
-    SDL_UpdateWindowSurface(window);
-}
-
 bool porownajKolory(SDL_Color kolor1, SDL_Color kolor2) {
     return kolor1.r == kolor2.r && kolor1.g == kolor2.g && kolor1.b == kolor2.b;
 }
 
-int dodajKolor(SDL_Color kolor) {
-    int aktualnyKolor = ileKubelkow;
-    if (ileKubelkow < maxKolorow) {
-        paleta[ileKubelkow] = kolor;
-    }
-    // cout << aktualnyKolor << ": " << (int)kolor.r << " " << (int)kolor.g << "
-    // " << (int)kolor.b << endl;
-    ileKubelkow++;
-    return aktualnyKolor;
-}
-
-int sprawdzKolor(SDL_Color kolor) {
-    if (ileKubelkow > 0) {
-        for (int k = 0; k < ileKubelkow; k++) {
-            if (porownajKolory(kolor, paleta[k])) return k;
-        }
-    }
-
-    return dodajKolor(kolor);
-}
-
-void Funkcja9() {
-
-    cout << endl << "ile kolorow: " << ileKubelkow << endl;
-    if (ileKubelkow <= maxKolorow)
-        cout << "Paleta spelnia ograniczenia 8-bit/piksel" << endl;
-    else
-        cout << "Paleta przekracza ograniczenia 8-bit/piksel" << endl;
-
-    const int gridRows = std::sqrt(ileKubelkow);
-    const int gridCols = (ileKubelkow + gridRows - 1) / gridRows;  // Ceiling division
-    const int cellWidth = round((szerokosc / 2) / (float)gridCols);
-    const int cellHeight = round((wysokosc / 2) / (float)gridRows);
-
-    cout << "gridRows: " << gridRows << " gridCols: " << gridCols
-         << " cellWidth: " << cellWidth << " cellHeight: " << cellHeight
-         << endl;
-
-    for (int i = 0; i < ileKubelkow; i++) {
-        int row = i / gridCols;
-        int col = i % gridCols;
-        SDL_Color color = paleta[i];
-
-        int startY = row * cellHeight;
-        int endY = std::min((row + 1) * cellHeight, wysokosc / 2);
-        int startX = (szerokosc / 2) + col * cellWidth;
-        int endX = std::min((szerokosc / 2) + (col + 1) * cellWidth, szerokosc);
-
-        for (int y = startY; y < endY; y++) {
-            for (int x = startX; x < endX; x++) {
-                setPixel(x, y, color.r, color.g, color.b);
-            }
-        }
-    }
-
-    SDL_UpdateWindowSurface(window);
-}
-
-void losujWartosci() {
-    Uint8 wartosc;
-    for (int i = 0; i < OBRAZEK_SIZE; i++) {
-        wartosc = rand() % OBRAZEK_SIZE;
-        obrazek[i] = {wartosc, wartosc, wartosc};
-        obrazekT[i] = {wartosc, wartosc, wartosc};
-    }
-
-    cout << endl;
-}
-
-void wyswietlWartosci() {
-    for (int i = 0; i < OBRAZEK_SIZE; i++) {
-        cout << (int)obrazek[i].r << " ";
-    }
-    cout << endl;
-}
-
-void sortujKubelekKFC(int start, int koniec) {
-    sort(obrazek + start, obrazek + koniec,
-         [](SDL_Color a, SDL_Color b) { return a.r < b.r; });
-}
-
-void sortujKubelekKFCKolor(int start, int koniec, SkladowaRGB skladowa) {
-    // sort by rgb using skladowa parameter
-    sort(obrazek + start, obrazek + koniec,
-         [skladowa](SDL_Color a, SDL_Color b) {
-             if (skladowa == R) return a.r < b.r;
-             if (skladowa == G) return a.g < b.g;
-             if (skladowa == B) return a.b < b.b;
-         });
-}
-
-void medianCut(int start, int koniec, int iteracja) {
-    cout << "start: " << start << ", koniec: " << koniec
-         << ", iteracja: " << iteracja << endl;
+void medianCutBW(int start, int koniec, int iteracja, Canvas1D &obrazek,
+                 Canvas1D &paleta) {
     if (iteracja > 0) {
         // sortowanie wtorkowego kubełka kfc za 22 zł
-        sortujKubelekKFC(start, koniec);
+        sort(obrazek.begin() + start, obrazek.begin() + koniec,
+             [](SDL_Color a, SDL_Color b) { return a.r < b.r; });
 
         cout << "Dzielenie kubełka KFC na poziomie " << iteracja << endl;
 
         int srodek = (start + koniec + 1) / 2;
-        medianCut(start, srodek - 1, iteracja - 1);
-        medianCut(srodek, koniec, iteracja - 1);
+        medianCutBW(start, srodek - 1, iteracja - 1, obrazek, paleta);
+        medianCutBW(srodek, koniec, iteracja - 1, obrazek, paleta);
     } else {
         // budowanie palety uśredniając kolory z określonego kubełka KFC
         int sumaBW = 0;
@@ -465,31 +141,35 @@ void medianCut(int start, int koniec, int iteracja) {
         }
         Uint8 noweBW = sumaBW / (koniec + 1 - start);
         SDL_Color nowyKolor = {noweBW, noweBW, noweBW};
-        paleta[ileKubelkow] = nowyKolor;
+        paleta.push_back(nowyKolor);
 
         printf("\n");
-        cout << "🍿 Kubełek " << ileKubelkow << "(" << start << "," << koniec
+        cout << "🍿 Kubełek " << paleta.size() << "(" << start << "," << koniec
              << ") = 🍗 " << (int)noweBW << endl;
         cout << "🎨 Kolor " << ileKubelkow << ": " << (int)nowyKolor.r << " "
              << (int)nowyKolor.g << " " << (int)nowyKolor.b << endl;
 
-        ileKubelkow++;
     }
 }
 
-void medianCutRGB(int start, int koniec, int iteracja) {
-    cout << "start: " << start << ", koniec: " << koniec
-         << ", iteracja: " << iteracja << endl;
+void medianCutRGB(int start, int koniec, int iteracja, Canvas1D& obrazek,
+                             Canvas1D &paleta) {
     if (iteracja > 0) {
         // sortowanie wtorkowego kubełka kfc za 22 zł
-        SkladowaRGB skladowa = najwiekszaRoznica(start, koniec);
-        sortujKubelekKFCKolor(start, koniec, skladowa);
+        SkladowaRGB skladowa = najwiekszaRoznica(start, koniec, obrazek);
+
+        sort(obrazek.begin() + start, obrazek.begin() + koniec,
+             [skladowa](SDL_Color a, SDL_Color b) {
+                 if (skladowa == R) return a.r < b.r;
+                 if (skladowa == G) return a.g < b.g;
+                 if (skladowa == B) return a.b < b.b;
+             });
 
         cout << "Dzielenie kubełka KFC na poziomie " << iteracja << endl;
 
         int srodek = (start + koniec + 1) / 2;
-        medianCutRGB(start, srodek - 1, iteracja - 1);
-        medianCutRGB(srodek, koniec, iteracja - 1);
+        medianCutRGB(start, srodek - 1, iteracja - 1, obrazek, paleta);
+        medianCutRGB(srodek, koniec, iteracja - 1, obrazek, paleta);
     } else {
         // budowanie palety uśredniając kolory z określonego kubełka KFC
         int sumaR = 0;
@@ -504,21 +184,20 @@ void medianCutRGB(int start, int koniec, int iteracja) {
         int ilosc = koniec + 1 - start;
         SDL_Color nowyKolor = {Uint8(sumaR / ilosc), Uint8(sumaG / ilosc),
                                Uint8(sumaB / ilosc)};
-        paleta[ileKubelkow] = nowyKolor;
+        paleta.push_back(nowyKolor);
 
         printf("\n");
-        cout << "🍿 Kubełek / 🎨 Kolor " << ileKubelkow << ": "
+        cout << "🍿 Kubełek / 🎨 Kolor " << paleta.size() << ": "
              << (int)nowyKolor.r << " " << (int)nowyKolor.g << " "
              << (int)nowyKolor.b << endl;
 
-        ileKubelkow++;
     }
 }
 
-int znajdzNajblizszyKolorIndex(SDL_Color kolor) {
+int znajdzNajblizszyKolorIndex(SDL_Color kolor, Canvas1D& paleta) {
     int najblizszyKolor = 0;
     int najmniejszaRoznica = 255;
-    for (int j = 0; j < ileKubelkow; j++) {
+    for (int j = 0; j < paleta.size(); j++) {
         int roznica = abs(paleta[j].r - kolor.r) + abs(paleta[j].g - kolor.g) +
                       abs(paleta[j].b - kolor.b);
         if (roznica < najmniejszaRoznica) {
@@ -529,16 +208,16 @@ int znajdzNajblizszyKolorIndex(SDL_Color kolor) {
     return najblizszyKolor;
 }
 
-int znajdzNajblizszyKolorIndex(Uint8 szary) {
+int znajdzNajblizszyKolorBWIndex(Uint8 szary, Canvas1D& paleta) {
     SDL_Color c;
     c.r = szary;
-    return znajdzNajblizszyKolorIndex(c);
+    return znajdzNajblizszyKolorIndex(c, paleta);
 }
 
-SDL_Color znajdzNajblizszyKolor(SDL_Color kolor) {
+SDL_Color znajdzNajblizszyKolor(SDL_Color kolor, Canvas1D& paleta) {
     int najblizszyKolor = 0;
     int najmniejszaRoznica = 255;
-    for (int j = 0; j < ileKubelkow; j++) {
+    for (int j = 0; j < paleta.size(); j++) {
         int roznica = abs(paleta[j].r - kolor.r);
         if (roznica < najmniejszaRoznica) {
             najmniejszaRoznica = roznica;
@@ -549,7 +228,7 @@ SDL_Color znajdzNajblizszyKolor(SDL_Color kolor) {
 }
 
 // in obrazek[start..koniec], find the color with highest difference
-SkladowaRGB najwiekszaRoznica(int start, int koniec) {
+SkladowaRGB najwiekszaRoznica(int start, int koniec, Canvas1D& obrazek) {
     SDL_Color min = {255, 255, 255};
     SDL_Color max = {0, 0, 0};
 
@@ -571,100 +250,85 @@ SkladowaRGB najwiekszaRoznica(int start, int koniec) {
     if (diffG >= diffR && diffG >= diffB) return G;
     if (diffB >= diffR && diffB >= diffG) return B;
 
-    printf("wtorkowe kubelki wyprzedaly sie :(");
-    throw std::exception();
+    throw std::invalid_argument("Nieznana skladowa RGB");
 }
 
-/* Note: The comments and some variable names are in Polish,
-and there are some humorous references to KFC buckets.
-The actual functionality of the code doesn't
-have anything to do with KFC or chicken.*/
-// Copilot, 2023
-// https://www.youtube.com/watch?v=5e9tj9eqgs0
-
-void FunkcjaQ() {
-    SDL_UpdateWindowSurface(window);
-    losujWartosci();
-    wyswietlWartosci();
-    medianCut(0, 255, 2);
-    for (int i = 0; i < OBRAZEK_SIZE; i++) {
-        obrazek[i] = znajdzNajblizszyKolor(obrazekT[i]);
-        cout << znajdzNajblizszyKolorIndex(obrazekT[i]) << " ";
-        // setPixel(i, wysokosc / 2, obrazek[i].r, obrazek[i].g,
-        //          obrazek[i].b);
-    }
-
-    wyswietlWartosci();
-}
-
+// Co robi funkcja W
+// 1. Dzieli kubełki KFC na poziomie 2
+// 2. Buduje paletę uśredniając kolory z określonego kubełka KFC
+// 3. Dla każdego piksela znajduje najbliższy kolor z palety
+// 4. Wyświetla wartości
 void FunkcjaW() {
-    SDL_Color kolor;
-    Uint8 szary;
-    int numer = 0, indeks = 0;
-    for (int y = 0; y < wysokosc / 2; y++) {
-        for (int x = 0; x < szerokosc / 2; x++) {
-            kolor = getPixel(x, y);
-            szary = 0.299 * kolor.r + 0.587 * kolor.g + 0.114 * kolor.b;
-            obrazek[numer] = {szary, szary, szary};
-            setPixel(x + szerokosc / 2, y, szary, szary, szary);
-            numer++;
-        }
-    }
-    SDL_UpdateWindowSurface(window);
-    medianCut(0, numer - 1, 2);
+    // SDL_Color kolor;
+    // Uint8 szary;
+    // int numer = 0, indeks = 0;
+    // for (int y = 0; y < wysokosc / 2; y++) {
+    //     for (int x = 0; x < szerokosc / 2; x++) {
+    //         kolor = getPixel(x, y);
+    //         szary = 0.299 * kolor.r + 0.587 * kolor.g + 0.114 * kolor.b;
+    //         obrazek[numer] = {szary, szary, szary};
+    //         setPixel(x + szerokosc / 2, y, szary, szary, szary);
+    //         numer++;
+    //     }
+    // }
+    // SDL_UpdateWindowSurface(window);
+    // medianCutBW(0, numer - 1, 2);
 
-    for (int y = 0; y < wysokosc / 2; y++) {
-        for (int x = 0; x < szerokosc / 2; x++) {
-            kolor = getPixel(x, y);
-            szary = 0.299 * kolor.r + 0.587 * kolor.g + 0.114 * kolor.b;
-            indeks = znajdzNajblizszyKolorIndex(szary);
+    // for (int y = 0; y < wysokosc / 2; y++) {
+    //     for (int x = 0; x < szerokosc / 2; x++) {
+    //         kolor = getPixel(x, y);
+    //         szary = 0.299 * kolor.r + 0.587 * kolor.g + 0.114 * kolor.b;
+    //         indeks = znajdzNajblizszyKolorBWIndex(szary);
 
-            setPixel(x + szerokosc / 2, y + wysokosc / 2, paleta[indeks].r,
-                     paleta[indeks].g, paleta[indeks].b);
-        }
-    }
+    //         setPixel(x + szerokosc / 2, y + wysokosc / 2, paleta[indeks].r,
+    //                  paleta[indeks].g, paleta[indeks].b);
+    //     }
+    // }
 
     SDL_UpdateWindowSurface(window);
 }
+
+// Co robi funkcja E
+// 1. Dzieli kubełki KFC na poziomie 2
+// 2. Buduje paletę uśredniając kolory z określonego kubełka KFC
+// 3. Dla każdego piksela znajduje najbliższy kolor z palety
+// 4. Wyświetla wartości
+// dobra, tak bez pierdolenia, ta funkcja robi to samo co funkcja W, tylko
+// zamiast szarości używa RGB
 
 void FunkcjaE() {
-    SDL_Color kolor;
-    SDL_Color nowyKolor;
-    int numer = 0, indeks = 0;
-    for (int y = 0; y < wysokosc / 2; y++) {
-        for (int x = 0; x < szerokosc / 2; x++) {
-            kolor = getPixel(x, y);
-            obrazek[numer] = kolor;
-            numer++;
-        }
-    }
-    medianCutRGB(0, numer - 1, 5);
+    // SDL_Color kolor;
+    // SDL_Color nowyKolor;
+    // int numer = 0, indeks = 0;
+    // for (int y = 0; y < wysokosc / 2; y++) {
+    //     for (int x = 0; x < szerokosc / 2; x++) {
+    //         kolor = getPixel(x, y);
+    //         obrazek[numer] = kolor;
+    //         numer++;
+    //     }
+    // }
+    // medianCutRGB(0, numer - 1, 5);
 
-    for (int y = 0; y < wysokosc / 2; y++) {
-        for (int x = 0; x < szerokosc / 2; x++) {
-            kolor = getPixel(x, y);
-            indeks = znajdzNajblizszyKolorIndex(kolor);
+    // for (int y = 0; y < wysokosc / 2; y++) {
+    //     for (int x = 0; x < szerokosc / 2; x++) {
+    //         kolor = getPixel(x, y);
+    //         indeks = znajdzNajblizszyKolorIndex(kolor);
 
-            cout << "Dla " << x << ", " << y << " wybrano kolor index "
-                 << indeks << endl;
+    //         cout << "Dla " << x << ", " << y << " wybrano kolor index "
+    //              << indeks << endl;
 
-            setPixel(x + szerokosc / 2, y + wysokosc / 2, paleta[indeks].r,
-                     paleta[indeks].g, paleta[indeks].b);
-        }
-    }
+    //         setPixel(x + szerokosc / 2, y + wysokosc / 2, paleta[indeks].r,
+    //                  paleta[indeks].g, paleta[indeks].b);
+    //     }
+    // }
 
     SDL_UpdateWindowSurface(window);
 }
 
 // pakowanie bitowe (dla 2 pierwszych trybow chyba, reszta paleta)
 
-void ZapisDoPliku(TrybObrazu tryb, Dithering dithering, Canvas &obrazek);
-
 void FunkcjaR() {
-    Canvas obrazek(wysokoscObrazka, std::vector<SDL_Color>(szerokoscObrazka));
-
-    ladujBMPDoPamieci("obrazek1.bmp", obrazek);
-    ZapisDoPliku(TrybObrazu::PaletaNarzucona, Dithering::Brak, obrazek);
+    KonwertujBmpNaKfc("obrazek1.bmp");
 }
 
 /// takes a path to bmp file, and creates a converted version of it
@@ -676,9 +340,10 @@ void KonwertujBmpNaKfc(const char *bmpZrodlo) {
 
     // dithering itd
     // tutaj powstaje paleta
+    Canvas1D paleta;
 
     // podaje obrazek + palete
-    ZapisDoPliku(TrybObrazu::PaletaNarzucona, Dithering::Brak, obrazek);
+    ZapisDoPliku(TrybObrazu::SzaroscNarzucona, Dithering::Brak, obrazek, paleta);
 }
 
 // jest jakieś dzielenie na bloki? funkcja tworząca i odczytująca tablicę
@@ -699,125 +364,112 @@ void KonwertujBmpNaKfc(const char *bmpZrodlo) {
  * @param dithering Informacja o tym, z jakim ditheringiem jest podany Canvas
  * @param obrazek Canvas, który zostanie zapisany do pliku
  */
-void ZapisDoPliku(TrybObrazu tryb, Dithering dithering, Canvas &obrazek) {
+void ZapisDoPliku(TrybObrazu tryb, Dithering dithering, Canvas &obrazek, Canvas1D &paleta) {
     Uint16 szerokoscObrazu = szerokosc / 2;
     Uint16 wysokoscObrazu = wysokosc / 2;
     cout << "Zapisuje obrazek do pliku" << endl;
-
     // Data założenia KFC - September 24, 1952; 71 years ago
-    char id[2] = {0x19, 0x52};
 
-    ofstream wyjscie("obraz.z33", ios::binary);
+    char id[2] = {0x19, 0x52};
+    ofstream wyjscie("obraz.kfc", ios::binary);
     wyjscie.write((char *)&id, sizeof(char) * 2);
     wyjscie.write((char *)&szerokoscObrazu, sizeof(char) * 2);
     wyjscie.write((char *)&wysokoscObrazu, sizeof(char) * 2);
     wyjscie.write((char *)&tryb, sizeof(Uint8));
+    wyjscie.write((char *)&dithering, sizeof(Uint8));
 
-    // 1, 2 - tryby bez palety (zapisywanie pikseli z pakowaniem bitowym)
-    // 3, 4, 5 - tryby z paletą
+    // 1, 2 - tryby bez palety -> rozmiar danych
+    // 3, 4, 5 - tryby z paletą -> poleta, rozmiar danych.
     if (czyTrybJestZPaleta(tryb)) {
-        wyjscie.write((char *)&paleta, sizeof(paleta) / sizeof(paleta[0]));
-        // yyyy nie wiem czy to na dole powinno byc
-    } else {
-        wyjscie.write((char *)&dithering, sizeof(Uint8));
+        // TODO: PALETA_SIZEE moze byc tutaj bledne
+        wyjscie.write((char *)&paleta, PALETA_SIZE);
     }
 
-    if (czyTrybJestZPaleta(tryb)) {
-        int iloscBitowDoZapisania = 5 * szerokoscObrazka * wysokoscObrazka;
+    // ilosc bitow zawsze taka sama niezaleznie od trybu
+    int iloscBitowDoZapisania = 5 * szerokoscObrazka * wysokoscObrazka;
 
-        vector<bitset<5>> bitset5(iloscBitowDoZapisania);
+    vector<bitset<5>> bitset5(iloscBitowDoZapisania);
 
-
-        // Nowa wersja - zapisuje po kolumnach ale max 8 rzędów
-        // i potem przechodzi 8 rzedów niżej i znowu wszystkie kolumny itd......
-        int maxSteps = wysokoscObrazka / 8;
-        int bitIndex = 0;
-        for (int step = 0; step < maxSteps; step++) {
-            int offset = step * 8;
-            for (int k = 0; k < szerokoscObrazu; k++) {
-                for (int r = 0; r < 8; r++) {
-                    int columnAbsolute = k;
-                    int rowAbsolute = offset + r;
-
-                    if (tryb == TrybObrazu::PaletaNarzucona) {
-                        bitset5[bitIndex] = z24RGBna5RGB(obrazek[columnAbsolute][rowAbsolute]) >> 3;
-                    } else {
-                        bitset5[bitIndex] = z24RGBna5BW(obrazek[columnAbsolute][rowAbsolute]) >> 3;
-                    }
-
-                    bitIndex++;
-                }
-            }
-        }
-
-        // Stara wersja - zapisuje od lewej do prawej i gory na dol
-        /*
-            for (int y; y < wysokoscObrazka; y++) {
-                for (int x; x < szerokoscObrazka; x++) {
-                    int index = y * szerokoscObrazka + x;
-
-                    if (tryb == TrybObrazu::PaletaNarzucona) {
-                        bitset5[index] = z24RGBna5RGB(obrazek[y][x]) >> 3;
-                    } else {
-                        bitset5[index] = z24RGBna5BW(obrazek[y][x]) >> 3;
-                    }
-                }
-            }
-        */
-
-        std::vector<uint8_t> packedBits;
-        int bitCounter = 0;
-        uint8_t currentByte = 0;
-
-        for (const auto &bit5 : bitset5) {
-            // Convert the 5-bit value to an unsigned long and then to an 8-bit
-            // value
-            uint8_t value = bit5.to_ulong();
-
-            // Check if adding 5 bits to the current byte exceeds 8 bits
-            if (bitCounter + 5 <= 8) {
-                // If not, shift the 5-bit value left by the number of empty bit
-                // positions in the current byte and OR it with the current byte
-                // to add these bits to the byte.
-                currentByte |= (value << (8 - bitCounter - 5));
-                // Increase the bit counter by 5 since we have added 5 more
-                // bits.
-                bitCounter += 5;
-            } else {
-                // If adding 5 bits exceeds 8 bits, calculate how many bits will
-                // overflow
-                int overflow = bitCounter + 5 - 8;
-                // Add the non-overflowing part of the value to the current byte
-                currentByte |= (value >> overflow);
-                // Push the completed 8-bit byte to the packedBits vector
-                packedBits.push_back(currentByte);
-                // Create a new byte with the overflow bits, shifted left to
-                // their position in the new byte
-
-                currentByte = (value & ((1 << overflow) - 1)) << (8 - overflow);
-                // Set the bit counter to the number of bits in the overflow
-                bitCounter = overflow;
-            }
-        }
-
-        if (bitCounter > 0) {
-            packedBits.push_back(currentByte);
-        }
-
-        // save to file
-        wyjscie.write((char *)&packedBits[0], packedBits.size());
+    if (szerokoscObrazka % 8 != 0) {
+        throw std::invalid_argument(
+            "Szerokosc obrazka nie jest wielokrotnoscia 8");
     }
 
-    int maxSteps = wysokoscObrazu / 8;
+    // Nowa wersja - zapisuje po kolumnach ale max 8 rzędów
+    // i potem przechodzi 8 rzedów niżej i znowu wszystkie kolumny itd......
+    int maxSteps = wysokoscObrazka / 8;
+    int bitIndex = 0;
     for (int step = 0; step < maxSteps; step++) {
         int offset = step * 8;
         for (int k = 0; k < szerokoscObrazu; k++) {
             for (int r = 0; r < 8; r++) {
                 int columnAbsolute = k;
                 int rowAbsolute = offset + r;
+
+                if (tryb == TrybObrazu::PaletaNarzucona) {
+                    bitset5[bitIndex] =
+                        z24RGBna5RGB(obrazek[columnAbsolute][rowAbsolute]) >> 3;
+                } else if (tryb == TrybObrazu::SzaroscNarzucona) {
+                    bitset5[bitIndex] =
+                        z24RGBna5BW(obrazek[columnAbsolute][rowAbsolute]) >> 3;
+                } else if (tryb == TrybObrazu::PaletaDedykowana) {
+                    // adresy do palety
+                    bitset5[bitIndex] = znajdzNajblizszyKolorIndex(
+                        obrazek[columnAbsolute][rowAbsolute], paleta);
+                } else if (tryb == TrybObrazu::SzaroscDedykowana) {
+                    // też adresy do palety (która jest poprostu szara xD)
+                    bitset5[bitIndex] = znajdzNajblizszyKolorIndex(
+                        obrazek[columnAbsolute][rowAbsolute], paleta);
+                } else if (tryb == TrybObrazu::PaletaWykryta) {
+                    // ?????????
+                } else {
+                    throw std::invalid_argument("Nieznany tryb obrazu");
+                }
+
+                bitIndex++;
             }
         }
     }
+
+    std::vector<uint8_t> packedBits;
+    int bitCounter = 0;
+    uint8_t currentByte = 0;
+
+    for (const auto &bit5 : bitset5) {
+        // Konwertuj 5-bitową wartość na unsigned long, a następnie na 8-bitową
+        // wartość
+        uint8_t value = bit5.to_ulong();
+
+        // Sprawdź, czy dodanie 5 bitów do bieżącego bajtu przekracza 8 bitów
+        if (bitCounter + 5 <= 8) {
+            // Jeśli nie, przesuń wartość 5-bitową w lewo o liczbę pustych
+            // pozycji bitowych w bieżącym bajcie i wykonaj operację OR z
+            // bieżącym bajtem, aby dodać te bity do bajtu.
+            currentByte |= (value << (8 - bitCounter - 5));
+            // Zwiększ licznik bitów o 5, ponieważ dodaliśmy kolejne 5 bitów.
+            bitCounter += 5;
+        } else {
+            // Jeśli dodanie 5 bitów przekracza 8 bitów, oblicz, ile bitów
+            // zostanie przekroczone
+            int overflow = bitCounter + 5 - 8;
+            // Dodaj część wartości, która nie przekracza, do bieżącego bajtu
+            currentByte |= (value >> overflow);
+            // Dodaj ukończony 8-bitowy bajt do wektora packedBits
+            packedBits.push_back(currentByte);
+            // Utwórz nowy bajt z przekraczającymi bitami, przesuniętymi w lewo
+            // do ich pozycji w nowym bajcie
+
+            currentByte = (value & ((1 << overflow) - 1)) << (8 - overflow);
+            // Ustaw licznik bitów na liczbę bitów w przekroczeniu
+            bitCounter = overflow;
+        }
+    }
+
+    if (bitCounter > 0) {
+        packedBits.push_back(currentByte);
+    }
+
+    wyjscie.write((char *)&packedBits[0], packedBits.size());
 
     if (tryb == TrybObrazu::PaletaNarzucona) {
     }
@@ -1084,7 +736,8 @@ int main(int argc, char *argv[]) {
     bool done = false;
     SDL_Event event;
     // główna pętla programu
-    while (SDL_WaitEvent(&event)) {
+    while (true) {
+        SDL_WaitEvent(&event);
         // sprawdzamy czy pojawiło się zdarzenie
         switch (event.type) {
             case SDL_QUIT:
@@ -1097,15 +750,6 @@ int main(int argc, char *argv[]) {
                 // wychodzimy, gdy wciśnięto ESC
                 if (event.key.keysym.sym == SDLK_ESCAPE) done = true;
 
-                if (event.key.keysym.sym == SDLK_1) Funkcja1();
-                if (event.key.keysym.sym == SDLK_2) Funkcja2();
-                if (event.key.keysym.sym == SDLK_3) Funkcja3();
-                if (event.key.keysym.sym == SDLK_4) Funkcja4();
-                if (event.key.keysym.sym == SDLK_5) Funkcja5();
-                if (event.key.keysym.sym == SDLK_6) Funkcja6();
-                if (event.key.keysym.sym == SDLK_7) Funkcja7();
-                if (event.key.keysym.sym == SDLK_8) Funkcja8();
-                if (event.key.keysym.sym == SDLK_9) Funkcja9();
                 if (event.key.keysym.sym == SDLK_q) FunkcjaQ();
                 if (event.key.keysym.sym == SDLK_w) FunkcjaW();
                 if (event.key.keysym.sym == SDLK_e) FunkcjaE();
