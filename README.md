@@ -20,3 +20,6 @@ Czy masz dość zawiłości C++? Spróbuj czegoś nowego i pysznego! W każdy wt
 Przyjdź we wtorek i przekonaj się, że nasz kubełek jest jak Rust w świecie fast foodów - nowoczesny, bezpieczny i po prostu lepszy! 🍗
 
 *Oferta ważna we wtorki w wybranych restauracjach KFC. Nie koduj na pusty żołądek!*
+
+Ubuntu compile:
+```g++ GK2023-Projekt.cpp -o kfc `sdl2-config --cflags --libs` -lSDL2 -lSDL2_image```
