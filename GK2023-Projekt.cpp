@@ -1,6 +1,4 @@
-#include <SDL2/SDL.h>
 #include <stdio.h>
-
 #include <algorithm>
 #include <bitset>
 #include <exception>
@@ -8,23 +6,29 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <math.h>
+#include <cmath>
+#include <unordered_set>
+#include "SDL_surface.h"
+#include <string.h>
+#include <map>
 
 using namespace std;
 
-SDL_Window *window = NULL;
-SDL_Surface *screen = NULL;
 
 #define szerokosc 640
 #define wysokosc 400
 #define szerokoscObrazka (szerokosc / 2)
 #define wysokoscObrazka (wysokosc / 2)
-#define tytul "GK2023 - Projekt - Zespol 33"
+#define PALETA_SIZE 32
+#define OBRAZEK_SIZE 64000
 
-#define PALETA_SIZE 32      // 2^5
-#define OBRAZEK_SIZE 64000  // 320 * 200
+struct Color {
+    Uint8 r, g, b;
+};
 
-typedef std::vector<std::vector<SDL_Color>> Canvas;
-typedef std::vector<SDL_Color> Canvas1D;
+typedef std::vector<std::vector<Color>> Canvas;
+typedef std::vector<Color> Canvas1D;
 
 enum SkladowaRGB {
     R,
@@ -34,6 +38,7 @@ enum SkladowaRGB {
 
 // 1 i 2 oznaczają, że przy czytaniu obrazu będzie używana paleta WBUDOWANA W
 // PROGRAM w 2, 3, 4 paleta jest dołączona do pliku
+// 3 i 5 MEDIANCUT
 enum TrybObrazu {
     PaletaNarzucona = 1,    // przejście z 24bit obrazka na 5bit
     SzaroscNarzucona = 2,   // przejście z 24bit obrazka na 5bit szarosci
@@ -46,21 +51,21 @@ enum TrybObrazu {
 enum Dithering { Brak = 0, Bayer = 1, Floyd = 2 };
 
 constexpr int maxKolorow = 320 * 600;
-int ileKubelkow = 0;
 
 bool czyTrybJestZPaleta(TrybObrazu tryb) { return tryb >= 3; }
 SkladowaRGB najwiekszaRoznica(int start, int koniec, Canvas1D& obrazek);
 
 void setPixel(int x, int y, Uint8 R, Uint8 G, Uint8 B);
-SDL_Color getPixel(int x, int y);
+Color getPixel(int x, int y);
 
-Uint8 z24RGBna5RGB(SDL_Color kolor);
-SDL_Color z5RGBna24RGB(Uint8 kolor5bit);
+Uint8 z24RGBna5RGB(Color kolor);
+Color z5RGBna24RGB(Uint8 kolor5bit);
 
 void ZapisDoPliku(TrybObrazu tryb, Dithering dithering, Canvas &obrazek, Canvas1D &paleta);
 void czyscEkran(Uint8 R, Uint8 G, Uint8 B);
 
-void KonwertujBmpNaKfc(const char *bmpZrodlo);
+void KonwertujBmpNaKfc(const char *bmpZrodlo, TrybObrazu tryb);
+Canvas1D wyprostujCanvas(Canvas &obrazek);
 
 Uint8 normalizacja(int wartosc) {
     if (wartosc < 0) return 0;
@@ -75,9 +80,9 @@ void FunkcjaR();
 void FunkcjaT();
 
 void ladujBMPDoPamieci(char const *nazwa, Canvas &obrazek);
-bool porownajKolory(SDL_Color kolor1, SDL_Color kolor2);
+bool porownajKolory(Color kolor1, Color kolor2);
 
-Uint8 z24RGBna5RGB(SDL_Color kolor) {
+Uint8 z24RGBna5RGB(Color kolor) {
     Uint8 nowyR, nowyG, nowyB;
     nowyR = round(kolor.r * 3.0 / 255.0);
     nowyG = round(kolor.g * 3.0 / 255.0);
@@ -86,8 +91,8 @@ Uint8 z24RGBna5RGB(SDL_Color kolor) {
     return (nowyR << 6) | (nowyG << 4) | (nowyB << 3);
 }
 
-SDL_Color z5RGBna24RGB(Uint8 kolor5bit) {
-    SDL_Color kolor;
+Color z5RGBna24RGB(Uint8 kolor5bit) {
+    Color kolor;
     kolor.r = ((kolor5bit & 0b11000000) >> 6) * 255.0 / 3.0;
     kolor.g = ((kolor5bit & 0b00110000) >> 4) * 255.0 / 3.0;
     kolor.b = ((kolor5bit & 0b00001000) >> 3) * 255.0 / 1.0;
@@ -95,17 +100,17 @@ SDL_Color z5RGBna24RGB(Uint8 kolor5bit) {
     return kolor;
 }
 
-Uint8 z24RGBna5BW(SDL_Color kolor) {
+Uint8 z24RGBna5BW(Color kolor) {
     int szary8bit = 0.299 * kolor.r + 0.587 * kolor.g + 0.114 * kolor.b;
     int szary5bit = round(szary8bit * 31.0 / 255.0);
 
     return szary5bit;
 }
 
-SDL_Color z5BWna24RGB(Uint8 kolor) {
+Color z5BWna24RGB(Uint8 kolor) {
     Uint8 szary8bit = round(kolor * 255.0 / 31.0);
 
-    SDL_Color kolor24bit = {szary8bit, szary8bit, szary8bit};
+    Color kolor24bit = {szary8bit, szary8bit, szary8bit};
     return kolor24bit;
 }
 
@@ -117,16 +122,15 @@ void updateBledy(int xx, int yy, float (*bledy)[wysokosc / 2 + 2][3], int blad,
     bledy[xx + 1 + przesuniecie][yy + 1][colorIndex] += (blad * 1.0 / 16.0);
 }
 
-bool porownajKolory(SDL_Color kolor1, SDL_Color kolor2) {
+bool porownajKolory(Color kolor1, Color kolor2) {
     return kolor1.r == kolor2.r && kolor1.g == kolor2.g && kolor1.b == kolor2.b;
 }
 
 void medianCutBW(int start, int koniec, int iteracja, Canvas1D &obrazek,
                  Canvas1D &paleta) {
     if (iteracja > 0) {
-        // sortowanie wtorkowego kubełka kfc za 22 zł
         sort(obrazek.begin() + start, obrazek.begin() + koniec,
-             [](SDL_Color a, SDL_Color b) { return a.r < b.r; });
+             [](Color a, Color b) { return a.r < b.r; });
 
         cout << "Dzielenie kubełka KFC na poziomie " << iteracja << endl;
 
@@ -134,21 +138,17 @@ void medianCutBW(int start, int koniec, int iteracja, Canvas1D &obrazek,
         medianCutBW(start, srodek - 1, iteracja - 1, obrazek, paleta);
         medianCutBW(srodek, koniec, iteracja - 1, obrazek, paleta);
     } else {
-        // budowanie palety uśredniając kolory z określonego kubełka KFC
+        // budowanie palety uśredniając kolory z określonego kubełka
         int sumaBW = 0;
         for (int p = start; p < koniec; p++) {
             sumaBW += obrazek[p].r;
         }
         Uint8 noweBW = sumaBW / (koniec + 1 - start);
-        SDL_Color nowyKolor = {noweBW, noweBW, noweBW};
+        Color nowyKolor = {noweBW, noweBW, noweBW};
         paleta.push_back(nowyKolor);
 
-        printf("\n");
-        cout << "🍿 Kubełek " << paleta.size() << "(" << start << "," << koniec
-             << ") = 🍗 " << (int)noweBW << endl;
-        cout << "🎨 Kolor " << ileKubelkow << ": " << (int)nowyKolor.r << " "
-             << (int)nowyKolor.g << " " << (int)nowyKolor.b << endl;
-
+        cout << "🍿 Kubełek " << paleta.size() << " (" << start << "," << koniec
+             << ") kolorBW: " << (int)noweBW << endl;
     }
 }
 
@@ -159,7 +159,7 @@ void medianCutRGB(int start, int koniec, int iteracja, Canvas1D& obrazek,
         SkladowaRGB skladowa = najwiekszaRoznica(start, koniec, obrazek);
 
         sort(obrazek.begin() + start, obrazek.begin() + koniec,
-             [skladowa](SDL_Color a, SDL_Color b) {
+             [skladowa](Color a, Color b) {
                  if (skladowa == R) return a.r < b.r;
                  if (skladowa == G) return a.g < b.g;
                  if (skladowa == B) return a.b < b.b;
@@ -182,19 +182,18 @@ void medianCutRGB(int start, int koniec, int iteracja, Canvas1D& obrazek,
             sumaB += obrazek[p].b;
         }
         int ilosc = koniec + 1 - start;
-        SDL_Color nowyKolor = {Uint8(sumaR / ilosc), Uint8(sumaG / ilosc),
+        Color nowyKolor = {Uint8(sumaR / ilosc), Uint8(sumaG / ilosc),
                                Uint8(sumaB / ilosc)};
         paleta.push_back(nowyKolor);
 
-        printf("\n");
-        cout << "🍿 Kubełek / 🎨 Kolor " << paleta.size() << ": "
-             << (int)nowyKolor.r << " " << (int)nowyKolor.g << " "
+        cout << "🍿 Kubełek " << paleta.size() << " (" << start << "," << koniec
+            << ") koloryRGB: " << (int)nowyKolor.r << " " << (int)nowyKolor.g << " "
              << (int)nowyKolor.b << endl;
 
     }
 }
 
-int znajdzNajblizszyKolorIndex(SDL_Color kolor, Canvas1D& paleta) {
+int znajdzNajblizszyKolorIndex(Color kolor, Canvas1D& paleta) {
     int najblizszyKolor = 0;
     int najmniejszaRoznica = 255;
     for (int j = 0; j < paleta.size(); j++) {
@@ -209,12 +208,12 @@ int znajdzNajblizszyKolorIndex(SDL_Color kolor, Canvas1D& paleta) {
 }
 
 int znajdzNajblizszyKolorBWIndex(Uint8 szary, Canvas1D& paleta) {
-    SDL_Color c;
+    Color c;
     c.r = szary;
     return znajdzNajblizszyKolorIndex(c, paleta);
 }
 
-SDL_Color znajdzNajblizszyKolor(SDL_Color kolor, Canvas1D& paleta) {
+Color znajdzNajblizszyKolor(Color kolor, Canvas1D& paleta) {
     int najblizszyKolor = 0;
     int najmniejszaRoznica = 255;
     for (int j = 0; j < paleta.size(); j++) {
@@ -229,8 +228,8 @@ SDL_Color znajdzNajblizszyKolor(SDL_Color kolor, Canvas1D& paleta) {
 
 // in obrazek[start..koniec], find the color with highest difference
 SkladowaRGB najwiekszaRoznica(int start, int koniec, Canvas1D& obrazek) {
-    SDL_Color min = {255, 255, 255};
-    SDL_Color max = {0, 0, 0};
+    Color min = {255, 255, 255};
+    Color max = {0, 0, 0};
 
     for (int i = start; i <= koniec; i++) {
         if (obrazek[i].r < min.r) min.r = obrazek[i].r;
@@ -259,7 +258,7 @@ SkladowaRGB najwiekszaRoznica(int start, int koniec, Canvas1D& obrazek) {
 // 3. Dla każdego piksela znajduje najbliższy kolor z palety
 // 4. Wyświetla wartości
 void FunkcjaW() {
-    // SDL_Color kolor;
+    // Color kolor;
     // Uint8 szary;
     // int numer = 0, indeks = 0;
     // for (int y = 0; y < wysokosc / 2; y++) {
@@ -285,7 +284,6 @@ void FunkcjaW() {
     //     }
     // }
 
-    SDL_UpdateWindowSurface(window);
 }
 
 // Co robi funkcja E
@@ -297,8 +295,8 @@ void FunkcjaW() {
 // zamiast szarości używa RGB
 
 void FunkcjaE() {
-    // SDL_Color kolor;
-    // SDL_Color nowyKolor;
+    // Color kolor;
+    // Color nowyKolor;
     // int numer = 0, indeks = 0;
     // for (int y = 0; y < wysokosc / 2; y++) {
     //     for (int x = 0; x < szerokosc / 2; x++) {
@@ -322,28 +320,49 @@ void FunkcjaE() {
     //     }
     // }
 
-    SDL_UpdateWindowSurface(window);
 }
 
-// pakowanie bitowe (dla 2 pierwszych trybow chyba, reszta paleta)
-
 void FunkcjaR() {
-    KonwertujBmpNaKfc("obrazek1.bmp");
+    KonwertujBmpNaKfc("obrazek1.bmp", TrybObrazu::SzaroscNarzucona);
 }
 
 /// takes a path to bmp file, and creates a converted version of it
 /// abc.bmp -> abc.kfc
-void KonwertujBmpNaKfc(const char *bmpZrodlo) {
-    Canvas obrazek(wysokoscObrazka, std::vector<SDL_Color>(szerokoscObrazka));
-
+void KonwertujBmpNaKfc(const char *bmpZrodlo, TrybObrazu tryb) {
+    Canvas obrazek(wysokoscObrazka, std::vector<Color>(szerokoscObrazka));
     ladujBMPDoPamieci(bmpZrodlo, obrazek);
 
     // dithering itd
     // tutaj powstaje paleta
-    Canvas1D paleta;
+    
+    // * switch tymczasowo zakomentowany by sie kompilowało
 
-    // podaje obrazek + palete
-    ZapisDoPliku(TrybObrazu::SzaroscNarzucona, Dithering::Brak, obrazek, paleta);
+    Canvas1D obrazek1D = wyprostujCanvas(obrazek);
+    Canvas1D paleta;
+    /*switch(tryb) {
+        case TrybObrazu::PaletaDedykowana:
+            medianCutRGB(0, obrazek1D.size() - 1, 5, obrazek1D, paleta);
+        break;
+        case TrybObrazu::SzaroscDedykowana:
+            medianCutBW(0, obrazek1D.size() - 1, 5, obrazek1D, paleta);
+        break;
+        case TrybObrazu::PaletaWykryta:
+            // PaletaWykryta z tego co patrzylem na stare commity
+            // to poprostu iteracja po kolorach w obrazie i jak nie ma go juz w palecie to go dodajemy
+            // jak juz jest 256 to wiecej nie dodajemyp 
+            // mozna to by bylo zrobic find_if ale chyba tez tak git
+            std::unordered_set<Color> paletaSet;
+            for(const auto& c: obrazek1D) {
+                paletaSet.insert(c);
+                // mamy tutaj 256 kolorow max, w dokumentacji jest ze paleta ma 256 * 3 (bo RGB)  
+                if(paletaSet.size() > 256) break;
+            }
+            paleta = Canvas1D(paletaSet.begin(), paletaSet.end());
+        break;
+        default:
+        break;
+    }*/
+    ZapisDoPliku(tryb, Dithering::Brak, obrazek, paleta);
 }
 
 // jest jakieś dzielenie na bloki? funkcja tworząca i odczytująca tablicę
@@ -368,8 +387,9 @@ void ZapisDoPliku(TrybObrazu tryb, Dithering dithering, Canvas &obrazek, Canvas1
     Uint16 szerokoscObrazu = szerokosc / 2;
     Uint16 wysokoscObrazu = wysokosc / 2;
     cout << "Zapisuje obrazek do pliku" << endl;
-    // Data założenia KFC - September 24, 1952; 71 years ago
 
+
+    // lepszy sens by bylo gdyby id to bylo 3 i 3 jako liczba zespolu cnie
     char id[2] = {0x19, 0x52};
     ofstream wyjscie("obraz.kfc", ios::binary);
     wyjscie.write((char *)&id, sizeof(char) * 2);
@@ -387,7 +407,6 @@ void ZapisDoPliku(TrybObrazu tryb, Dithering dithering, Canvas &obrazek, Canvas1
 
     // ilosc bitow zawsze taka sama niezaleznie od trybu
     int iloscBitowDoZapisania = 5 * szerokoscObrazka * wysokoscObrazka;
-
     vector<bitset<5>> bitset5(iloscBitowDoZapisania);
 
     if (szerokoscObrazka % 8 != 0) {
@@ -412,16 +431,17 @@ void ZapisDoPliku(TrybObrazu tryb, Dithering dithering, Canvas &obrazek, Canvas1
                 } else if (tryb == TrybObrazu::SzaroscNarzucona) {
                     bitset5[bitIndex] =
                         z24RGBna5BW(obrazek[columnAbsolute][rowAbsolute]) >> 3;
-                } else if (tryb == TrybObrazu::PaletaDedykowana) {
-                    // adresy do palety
-                    bitset5[bitIndex] = znajdzNajblizszyKolorIndex(
-                        obrazek[columnAbsolute][rowAbsolute], paleta);
                 } else if (tryb == TrybObrazu::SzaroscDedykowana) {
                     // też adresy do palety (która jest poprostu szara xD)
+                    
                     bitset5[bitIndex] = znajdzNajblizszyKolorIndex(
                         obrazek[columnAbsolute][rowAbsolute], paleta);
                 } else if (tryb == TrybObrazu::PaletaWykryta) {
-                    // ?????????
+                    // TODO: funkcja ktora da index z palety
+                    // nie wiem co jezeli nie ma koloru w palecie bo max 256 xd 
+                } else if (tryb == TrybObrazu::PaletaDedykowana) {
+                    bitset5[bitIndex] = znajdzNajblizszyKolorIndex(
+                        obrazek[columnAbsolute][rowAbsolute], paleta);
                 } else {
                     throw std::invalid_argument("Nieznany tryb obrazu");
                 }
@@ -477,11 +497,11 @@ void ZapisDoPliku(TrybObrazu tryb, Dithering dithering, Canvas &obrazek, Canvas1
     wyjscie.close();
 }
 
-// read
-void FunkcjaT() {
-    cout << "Wczytaj obrazek z pliku" << endl;
 
-    ifstream wejscie("obraz.z33", ios::binary);
+void OdczytZPliku(const std::string& filename) {
+    std::cout << "Wczytuje obrazek " << filename << " z pliku..." << std::endl;
+
+    ifstream wejscie(filename, ios::binary);
     char id[2];
     Uint16 szerokoscObrazu;
     Uint16 wysokoscObrazu;
@@ -504,7 +524,6 @@ void FunkcjaT() {
     // } else {
     // }
 
-    // ZapisDoPliku(1,0,);
 
     cout << "id: " << id[0] << id[1] << endl;
     cout << "szerokosc: " << szerokoscObrazka << endl;
@@ -515,141 +534,11 @@ void FunkcjaT() {
     wejscie.close();
 }
 
-void setPixel(int x, int y, Uint8 R, Uint8 G, Uint8 B) {
-    if ((x >= 0) && (x < szerokosc) && (y >= 0) && (y < wysokosc)) {
-        /* Zamieniamy poszczególne składowe koloru na format koloru piksela */
-        Uint32 pixel = SDL_MapRGB(screen->format, R, G, B);
-
-        /* Pobieramy informację ile bajtów zajmuje jeden piksel */
-        int bpp = screen->format->BytesPerPixel;
-
-        /* Obliczamy adres piksela */
-        Uint8 *p1 =
-            (Uint8 *)screen->pixels + (y * 2) * screen->pitch + (x * 2) * bpp;
-        Uint8 *p2 = (Uint8 *)screen->pixels + (y * 2 + 1) * screen->pitch +
-                    (x * 2) * bpp;
-        Uint8 *p3 = (Uint8 *)screen->pixels + (y * 2) * screen->pitch +
-                    (x * 2 + 1) * bpp;
-        Uint8 *p4 = (Uint8 *)screen->pixels + (y * 2 + 1) * screen->pitch +
-                    (x * 2 + 1) * bpp;
-
-        /* Ustawiamy wartość piksela, w zależnoœci od formatu powierzchni*/
-        switch (bpp) {
-            case 1:  // 8-bit
-                *p1 = pixel;
-                *p2 = pixel;
-                *p3 = pixel;
-                *p4 = pixel;
-                break;
-
-            case 2:  // 16-bit
-                *(Uint16 *)p1 = pixel;
-                *(Uint16 *)p2 = pixel;
-                *(Uint16 *)p3 = pixel;
-                *(Uint16 *)p4 = pixel;
-                break;
-
-            case 3:  // 24-bit
-                if (SDL_BYTEORDER == SDL_BIG_ENDIAN) {
-                    p1[0] = (pixel >> 16) & 0xff;
-                    p1[1] = (pixel >> 8) & 0xff;
-                    p1[2] = pixel & 0xff;
-                    p2[0] = (pixel >> 16) & 0xff;
-                    p2[1] = (pixel >> 8) & 0xff;
-                    p2[2] = pixel & 0xff;
-                    p3[0] = (pixel >> 16) & 0xff;
-                    p3[1] = (pixel >> 8) & 0xff;
-                    p3[2] = pixel & 0xff;
-                    p4[0] = (pixel >> 16) & 0xff;
-                    p4[1] = (pixel >> 8) & 0xff;
-                    p4[2] = pixel & 0xff;
-                } else {
-                    p1[0] = pixel & 0xff;
-                    p1[1] = (pixel >> 8) & 0xff;
-                    p1[2] = (pixel >> 16) & 0xff;
-                    p2[0] = pixel & 0xff;
-                    p2[1] = (pixel >> 8) & 0xff;
-                    p2[2] = (pixel >> 16) & 0xff;
-                    p3[0] = pixel & 0xff;
-                    p3[1] = (pixel >> 8) & 0xff;
-                    p3[2] = (pixel >> 16) & 0xff;
-                    p4[0] = pixel & 0xff;
-                    p4[1] = (pixel >> 8) & 0xff;
-                    p4[2] = (pixel >> 16) & 0xff;
-                }
-                break;
-
-            case 4:  // 32-bit
-                *(Uint32 *)p1 = pixel;
-                *(Uint32 *)p2 = pixel;
-                *(Uint32 *)p3 = pixel;
-                *(Uint32 *)p4 = pixel;
-                break;
-        }
-    }
+void FunkcjaT() {
+    const std::string filename = "obrazek.kfc";
+    OdczytZPliku(filename);
 }
 
-void setPixelSurface(int x, int y, Uint8 R, Uint8 G, Uint8 B) {
-    if ((x >= 0) && (x < szerokosc * 2) && (y >= 0) && (y < wysokosc * 2)) {
-        /* Zamieniamy poszczególne składowe koloru na format koloru piksela */
-        Uint32 pixel = SDL_MapRGB(screen->format, R, G, B);
-
-        /* Pobieramy informację ile bajtów zajmuje jeden piksel */
-        int bpp = screen->format->BytesPerPixel;
-
-        /* Obliczamy adres piksela */
-        Uint8 *p = (Uint8 *)screen->pixels + y * screen->pitch + x * bpp;
-
-        /* Ustawiamy wartość piksela, w zależności od formatu powierzchni*/
-        switch (bpp) {
-            case 1:  // 8-bit
-                *p = pixel;
-                break;
-
-            case 2:  // 16-bit
-                *(Uint16 *)p = pixel;
-                break;
-
-            case 3:  // 24-bit
-                if (SDL_BYTEORDER == SDL_BIG_ENDIAN) {
-                    p[0] = (pixel >> 16) & 0xff;
-                    p[1] = (pixel >> 8) & 0xff;
-                    p[2] = pixel & 0xff;
-                } else {
-                    p[0] = pixel & 0xff;
-                    p[1] = (pixel >> 8) & 0xff;
-                    p[2] = (pixel >> 16) & 0xff;
-                }
-                break;
-
-            case 4:  // 32-bit
-                *(Uint32 *)p = pixel;
-                break;
-        }
-    }
-}
-
-SDL_Color getPixel(int x, int y) {
-    SDL_Color color;
-    Uint32 col = 0;
-    if ((x >= 0) && (x < szerokosc) && (y >= 0) && (y < wysokosc)) {
-        // określamy pozycję
-        char *pPosition = (char *)screen->pixels;
-
-        // przesunięcie względem y
-        pPosition += (screen->pitch * y * 2);
-
-        // przesunięcie względem x
-        pPosition += (screen->format->BytesPerPixel * x * 2);
-
-        // kopiujemy dane piksela
-        memcpy(&col, pPosition, screen->format->BytesPerPixel);
-
-        // konwertujemy kolor
-        SDL_GetRGB(col, screen->format, &color.r, &color.g, &color.b);
-    }
-    return (color);
-}
 
 SDL_Color getPixelSurface(int x, int y, SDL_Surface *surface) {
     SDL_Color color;
@@ -673,124 +562,192 @@ SDL_Color getPixelSurface(int x, int y, SDL_Surface *surface) {
     return (color);
 }
 
-void ladujBMP(char const *nazwa, int x, int y) {
-    SDL_Surface *bmp = SDL_LoadBMP(nazwa);
-    if (!bmp) {
-        printf("Unable to load bitmap: %s\n", SDL_GetError());
-    } else {
-        SDL_Color kolor;
-        for (int yy = 0; yy < bmp->h; yy++) {
-            for (int xx = 0; xx < bmp->w; xx++) {
-                kolor = getPixelSurface(xx, yy, bmp);
-                setPixel(xx, yy, kolor.r, kolor.g, kolor.b);
-            }
-        }
-        SDL_FreeSurface(bmp);
-        SDL_UpdateWindowSurface(window);
-    }
-}
-
 void ladujBMPDoPamieci(char const *nazwa, Canvas &obrazek) {
     SDL_Surface *bmp = SDL_LoadBMP(nazwa);
     if (!bmp) {
         printf("Unable to load bitmap: %s\n", SDL_GetError());
     } else {
-        SDL_Color kolor;
+        Color kolor;
         for (int yy = 0; yy < bmp->h; yy++) {
             for (int xx = 0; xx < bmp->w; xx++) {
-                kolor = getPixelSurface(xx, yy, bmp);
+                SDL_Color kolorSDL = getPixelSurface(xx, yy, bmp);
+                kolor.r = kolorSDL.r;
+                kolor.g = kolorSDL.g;
+                kolor.b = kolorSDL.b;
                 obrazek[yy][xx] = kolor;
             }
         }
         SDL_FreeSurface(bmp);
+        std::cout << "zaladowano obrazek essa" << std::endl;
     }
 }
 
-void czyscEkran(Uint8 R, Uint8 G, Uint8 B) {
-    SDL_FillRect(screen, 0, SDL_MapRGB(screen->format, R, G, B));
-    SDL_UpdateWindowSurface(window);
+
+// flatten canvas
+Canvas1D wyprostujCanvas(Canvas &obrazek) {
+    Canvas1D obrazek1D;
+    obrazek1D.reserve(szerokoscObrazka * wysokoscObrazka);
+
+    for(const auto& r: obrazek) {
+        for(const auto& c: r) {
+            obrazek1D.push_back(c);
+        }   
+    }
+
+    return obrazek1D;
+}
+
+
+typedef std::map<int, std::vector<std::string>> CommandAliasMap;
+
+template <typename T>
+using ParameterMap = std::map<char, T>;
+
+int findCommand(CommandAliasMap& commandsAliases, std::string command) {
+    for (auto& aliases : commandsAliases) {
+        for (auto& alias : aliases.second) {
+            if (alias == command)
+                return aliases.first;
+        }
+    }
+    return 0;
+}
+
+/* Czyta parametry -t, -s itd.. oraz ich wartości do mapy parametrów */
+void readParameterMap(ParameterMap<std::string> &parameterMap, int offset, int argc, char *argv[]) {
+    for (int i = offset; i < argc; i++) {
+        if (sizeof(argv[i]) < 2) continue;
+        if (argv[i][0] == '-' && i + 1 < argc)
+            parameterMap[argv[i][1]] = std::string(argv[i + 1]);
+    }
+}
+
+bool hasParameter(ParameterMap<std::string> &parameterMap, char parameter) {
+    return parameterMap.find(parameter) != parameterMap.end();
 }
 
 int main(int argc, char *argv[]) {
-    if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
-        printf("SDL_Init Error: %s\n", SDL_GetError());
-        return EXIT_FAILURE;
-    }
+    CommandAliasMap commandsAliases;
 
-    window =
-        SDL_CreateWindow(tytul, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-                         szerokosc * 2, wysokosc * 2, SDL_WINDOW_SHOWN);
+    /* tobmp - odczytuje plik kfc, zapisuje plik bmp */
+    commandsAliases[1] = {"tobmp", "-t", "-tobmp"};
+    /* frombmp - odczytuje plik bmp, zapisuje plik kfc */
+    commandsAliases[2] = {"frombmp", "-f", "-frombmp"}; 
+    
+    const std::string appName = argc<1 ? "kfc" : argv[0];
 
-    if (window == NULL) {
-        printf("SDL_CreateWindow Error: %s\n", SDL_GetError());
-        return EXIT_FAILURE;
-    }
-
-    screen = SDL_GetWindowSurface(window);
-    if (screen == NULL) {
-        fprintf(stderr, "SDL_GetWindowSurface Error: %s\n", SDL_GetError());
-        return false;
-    }
-    SDL_UpdateWindowSurface(window);
-
-    bool done = false;
-    SDL_Event event;
-    // główna pętla programu
-    while (true) {
-        SDL_WaitEvent(&event);
-        // sprawdzamy czy pojawiło się zdarzenie
-        switch (event.type) {
-            case SDL_QUIT:
-                cout << "esc" << endl;
-                done = true;
+    /* Wypisuje wszystkie dostępne komendy bez opisu */
+    if (argc <= 1 
+    || (argc == 2 && (std::string(argv[1]) == "help" || std::string(argv[1]) == "-help"))) {
+        std::cout << "  Witamy w konwerterze obrazów 🍗 KFC <-> 🎨 BMP.\n"
+        << "Dostępne operacje:\n"
+        << "1. Konwersja formatu KFC na BMP\n"
+        << "> "<<appName<<" tobmp <ścieżka_pliku_kfc> [-s ścieżka_pliku_bmp]\n"
+        << "Wyświetl więcej informacji używając 'kfc -help tobmp'\n"
+        << "2. Konwersja formatu BMP na KFC\n"
+        << "> "<<appName<<" frombmp <ścieżka_pliku_bmp> [-s ścieżka_pliku_kfc] [-t tryb(1-5)] [-d dithering(none/bayer/floyd)]\n"
+        << "Wyświetl więcej informacji używając 'kfc -help tobmp'\n";
+    } 
+    
+    /* W przypadku wysłania 'kfc help <command_name>' wyświetlony zostanie opis komendy */
+    else if (argc == 3 && (std::string(argv[1]) == "help" || std::string(argv[1]) == "-help")) {
+        int primaryCommandId = findCommand(commandsAliases, argv[2]);
+        switch(primaryCommandId) {
+            case 1: { /* tobmp */
+                std::cout << "> "<<appName<<" tobmp <ścieżka_pliku_kfc> [ścieżka_pliku_bmp]\n"
+                << "Opis: Komenda 'tobmp' konwertuje plik w formacie KFC na format BMP \n"
+                << "Parametry obowiązkowe:\n"
+                << "\t<ścieżka_pliku_kfc> - ścieżka do pliku w formacie kfc (relatywna lub absolutna)\n"
+                << "Parametry opcjonalne:\n"
+                << "\t[-s ścieżka_pliku_bmp] - ścieżka do nowo utworzonego pliku (domyślnie plik kfc ze zmienionym rozszerzeniem)\n";
                 break;
-
-            // sprawdzamy czy został wciśnięty klawisz
-            case SDL_KEYDOWN: {
-                // wychodzimy, gdy wciśnięto ESC
-                if (event.key.keysym.sym == SDLK_ESCAPE) done = true;
-
-                if (event.key.keysym.sym == SDLK_q) FunkcjaQ();
-                if (event.key.keysym.sym == SDLK_w) FunkcjaW();
-                if (event.key.keysym.sym == SDLK_e) FunkcjaE();
-                if (event.key.keysym.sym == SDLK_r) FunkcjaR();
-                if (event.key.keysym.sym == SDLK_t) FunkcjaT();
-
-                if (event.key.keysym.sym == SDLK_a)
-                    ladujBMP("obrazek1.bmp", 0, 0);
-                if (event.key.keysym.sym == SDLK_s)
-                    ladujBMP("obrazek2.bmp", 0, 0);
-                if (event.key.keysym.sym == SDLK_d)
-                    ladujBMP("obrazek3.bmp", 0, 0);
-                if (event.key.keysym.sym == SDLK_f)
-                    ladujBMP("obrazek4.bmp", 0, 0);
-                if (event.key.keysym.sym == SDLK_g)
-                    ladujBMP("obrazek5.bmp", 0, 0);
-                if (event.key.keysym.sym == SDLK_h)
-                    ladujBMP("obrazek6.bmp", 0, 0);
-                if (event.key.keysym.sym == SDLK_j)
-                    ladujBMP("obrazek7.bmp", 0, 0);
-                if (event.key.keysym.sym == SDLK_k)
-                    ladujBMP("obrazek8.bmp", 0, 0);
-                if (event.key.keysym.sym == SDLK_l)
-                    ladujBMP("obrazek9.bmp", 0, 0);
-                if (event.key.keysym.sym == SDLK_b)
-                    czyscEkran(0, 0, 0);
-                else
-                    break;
+            }
+            case 2: { /* frombmp*/
+                std::cout << "> "<<appName<<" frombmp <ścieżka_pliku_kfc> [ścieżka_pliku_bmp] [tryb(1-5)] [dithering(none/bayer/floyd)]\n"
+                << "Opis: Komenda 'frombmp' konwertuje plik w formacie BMP na format KFC \n"
+                << "Parametry obowiązkowe:\n"
+                << "\t<ścieżka_pliku_bmp> - ścieżka do pliku w formacie bmp (relatywna lub absolutna)\n"
+                << "Parametry opcjonalne:\n"
+                << "\t[-s ścieżka_pliku_kfc] - ścieżka do nowo utworzonego pliku (domyślnie plik bmp ze zmienionym rozszerzeniem)\n"
+                << "\t[-t tryb(1-5)] - tryb konwersji obrazu (domyślnie 1), dostępne tryby:\n"
+                << "\t\t1 - Paleta narzucona\n"
+                << "\t\t2 - Szarość narzucona\n"
+                << "\t\t3 - Paleta wykryta\n"
+                << "\t\t4 - Szarość wykryta\n"
+                << "\t\t5 - Paleta dedykowana\n"
+                << "\t[-d dithering(none/bayer/floyd)] - tryb ditheringu (domyślnie none - bez ditheringu)\n";
+                break;
+            }
+            default: {
+                std::cout << "Nieznana komenda. Użyj '"<<appName<<" help' aby dowiedzieć się o istniejących komendach." << std::endl;
+                break;
             }
         }
-        if (done) break;
     }
 
-    if (screen) {
-        SDL_FreeSurface(screen);
-    }
+    /* W pozostałych przypadkach będzie próba rozpoznania komendy z 1 argumentu i jej wykonanie */
+    else if (argc > 1) {
+        int primaryCommandId = findCommand(commandsAliases, argv[1]);
 
-    if (window) {
-        SDL_DestroyWindow(window);
-    }
+        switch(primaryCommandId) {
+            case 1: { /* tobmp <ścieżka_pliku_kfc> [-s ścieżka_pliku_bmp] */
+                if (argc < 3) {
+                    std::cout << "Nie podano ścieżki do pliku kfc. Użyj '"<<appName<<" help tobmp' aby dowiedzieć się więcej." << std::endl;
+                    break;
+                }
+                std::string kfcPath = argv[2];
+                ParameterMap<std::string> parameterMap;
+                readParameterMap(parameterMap, 3, argc, argv);
+                /* parametr s - scieżka pliku kfc */
+                std::string bmpPath = hasParameter(parameterMap, 's') 
+                                    ? parameterMap['s'] 
+                                    : kfcPath.substr(0, kfcPath.find_last_of('.')) + ".bmp";
 
-    SDL_Quit();
+                std::cout << "< placeholder tobmp("+kfcPath+", "+bmpPath+") >" << std::endl;
+                break;
+            }
+            case 2: { /* frombmp <ścieżka_pliku_kfc> [-s ścieżka_pliku_bmp] [-t tryb(1-5)] [-d dithering(none/bayer/floyd)] */
+                if (argc < 3) {
+                    std::cout << "Nie podano ścieżki do pliku bmp. Użyj '"<<appName<<" help frombmp' aby dowiedzieć się więcej." << std::endl;
+                    break;
+                }
+                std::string bmpPath = argv[2];
+                ParameterMap<std::string> parameterMap;
+                readParameterMap(parameterMap, 3, argc, argv);
+                /* parametr s - scieżka pliku kfc */
+                std::string kfcPath = hasParameter(parameterMap, 's') 
+                                    ? parameterMap['s'] 
+                                    : bmpPath.substr(0, bmpPath.find_last_of('.')) + ".kfc";
+                /* parametr t - tryb obrazu */
+                TrybObrazu tryb = TrybObrazu::PaletaNarzucona;
+                if (hasParameter(parameterMap, 't')) {
+                    int _tryb = std::stoi(parameterMap['t']);
+                    if (_tryb < 1 || _tryb > 5) {
+                        std::cout << "Nieprawidłowy tryb konwersji. Użyj '"<<appName<<" help frombmp' aby dowiedzieć się więcej." << std::endl;
+                        break;
+                    }
+                    tryb = static_cast<TrybObrazu>(_tryb);
+                }
+                /* parametr d - dithering*/
+                Dithering dithering = Dithering::Brak;
+                if (hasParameter(parameterMap, 'd')) {
+                    std::string _dithering = parameterMap['d'];
+                    if (_dithering == "none") dithering = Dithering::Brak;
+                    else if (_dithering == "bayer") dithering = Dithering::Bayer;
+                    else if (_dithering == "floyd") dithering = Dithering::Floyd;
+                    else {
+                        std::cout << "Nieprawidłowy tryb ditheringu. Użyj '"<<appName<<" help frombmp' aby dowiedzieć się więcej." << std::endl;
+                        break;
+                    }
+                }
+                std::cout << "< placeholder frombmp("+bmpPath+", "+kfcPath+", "<<tryb<<", "<<dithering<<") >" << std::endl;
+                break;
+            }
+            default: {
+                std::cout << "Nieznana komenda. Użyj '"<<appName<<" help' aby dowiedzieć się o dostępnych komendach." << std::endl;
+                break;
+            }
+        }
+    }
     return 0;
 }
