@@ -654,7 +654,7 @@ int main(int argc, char *argv[]) {
         int primaryCommandId = findCommand(commandsAliases, argv[2]);
         switch(primaryCommandId) {
             case 1: { /* tobmp */
-                std::cout << "> "<<appName<<" tobmp <ścieżka_pliku_kfc> [ścieżka_pliku_bmp]\n"
+                std::cout << "> "<<appName<<" tobmp <ścieżka_pliku_kfc> [-s ścieżka_pliku_bmp]\n"
                 << "Opis: Komenda 'tobmp' konwertuje plik w formacie KFC na format BMP \n"
                 << "Parametry obowiązkowe:\n"
                 << "\t<ścieżka_pliku_kfc> - ścieżka do pliku w formacie kfc (relatywna lub absolutna)\n"
@@ -663,7 +663,7 @@ int main(int argc, char *argv[]) {
                 break;
             }
             case 2: { /* frombmp*/
-                std::cout << "> "<<appName<<" frombmp <ścieżka_pliku_kfc> [ścieżka_pliku_bmp] [tryb(1-5)] [dithering(none/bayer/floyd)]\n"
+                std::cout << "> "<<appName<<" frombmp <ścieżka_pliku_kfc> [-s ścieżka_pliku_bmp] [-t tryb(1-5)] [-d dithering(none/bayer/floyd)]\n"
                 << "Opis: Komenda 'frombmp' konwertuje plik w formacie BMP na format KFC \n"
                 << "Parametry obowiązkowe:\n"
                 << "\t<ścieżka_pliku_bmp> - ścieżka do pliku w formacie bmp (relatywna lub absolutna)\n"
