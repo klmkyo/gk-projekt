@@ -335,9 +335,11 @@ void KonwertujBmpNaKfc(const char *bmpZrodlo, TrybObrazu tryb) {
     // dithering itd
     // tutaj powstaje paleta
     
+    // * switch tymczasowo zakomentowany by sie kompilowało
+
     Canvas1D obrazek1D = wyprostujCanvas(obrazek);
     Canvas1D paleta;
-    switch(tryb) {
+    /*switch(tryb) {
         case TrybObrazu::PaletaDedykowana:
             medianCutRGB(0, obrazek1D.size() - 1, 5, obrazek1D, paleta);
         break;
@@ -359,7 +361,7 @@ void KonwertujBmpNaKfc(const char *bmpZrodlo, TrybObrazu tryb) {
         break;
         default:
         break;
-    }
+    }*/
     ZapisDoPliku(tryb, Dithering::Brak, obrazek, paleta);
 }
 
