@@ -1,6 +1,4 @@
-#include <SDL2/SDL.h>
 #include <stdio.h>
-
 #include <algorithm>
 #include <bitset>
 #include <exception>
@@ -8,23 +6,27 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <math.h>
+#include <cmath>
+#include "SDL_surface.h"
+#include <string.h>
 
 using namespace std;
 
-SDL_Window *window = NULL;
-SDL_Surface *screen = NULL;
 
 #define szerokosc 640
 #define wysokosc 400
 #define szerokoscObrazka (szerokosc / 2)
 #define wysokoscObrazka (wysokosc / 2)
-#define tytul "GK2023 - Projekt - Zespol 33"
+#define PALETA_SIZE 32
+#define OBRAZEK_SIZE 64000
 
-#define PALETA_SIZE 32      // 2^5
-#define OBRAZEK_SIZE 64000  // 320 * 200
+struct Color {
+    Uint8 r, g, b;
+};
 
-typedef std::vector<std::vector<SDL_Color>> Canvas;
-typedef std::vector<SDL_Color> Canvas1D;
+typedef std::vector<std::vector<Color>> Canvas;
+typedef std::vector<Color> Canvas1D;
 
 enum SkladowaRGB {
     R,
@@ -52,10 +54,10 @@ bool czyTrybJestZPaleta(TrybObrazu tryb) { return tryb >= 3; }
 SkladowaRGB najwiekszaRoznica(int start, int koniec, Canvas1D& obrazek);
 
 void setPixel(int x, int y, Uint8 R, Uint8 G, Uint8 B);
-SDL_Color getPixel(int x, int y);
+Color getPixel(int x, int y);
 
-Uint8 z24RGBna5RGB(SDL_Color kolor);
-SDL_Color z5RGBna24RGB(Uint8 kolor5bit);
+Uint8 z24RGBna5RGB(Color kolor);
+Color z5RGBna24RGB(Uint8 kolor5bit);
 
 void ZapisDoPliku(TrybObrazu tryb, Dithering dithering, Canvas &obrazek, Canvas1D &paleta);
 void czyscEkran(Uint8 R, Uint8 G, Uint8 B);
@@ -75,9 +77,9 @@ void FunkcjaR();
 void FunkcjaT();
 
 void ladujBMPDoPamieci(char const *nazwa, Canvas &obrazek);
-bool porownajKolory(SDL_Color kolor1, SDL_Color kolor2);
+bool porownajKolory(Color kolor1, Color kolor2);
 
-Uint8 z24RGBna5RGB(SDL_Color kolor) {
+Uint8 z24RGBna5RGB(Color kolor) {
     Uint8 nowyR, nowyG, nowyB;
     nowyR = round(kolor.r * 3.0 / 255.0);
     nowyG = round(kolor.g * 3.0 / 255.0);
@@ -86,8 +88,8 @@ Uint8 z24RGBna5RGB(SDL_Color kolor) {
     return (nowyR << 6) | (nowyG << 4) | (nowyB << 3);
 }
 
-SDL_Color z5RGBna24RGB(Uint8 kolor5bit) {
-    SDL_Color kolor;
+Color z5RGBna24RGB(Uint8 kolor5bit) {
+    Color kolor;
     kolor.r = ((kolor5bit & 0b11000000) >> 6) * 255.0 / 3.0;
     kolor.g = ((kolor5bit & 0b00110000) >> 4) * 255.0 / 3.0;
     kolor.b = ((kolor5bit & 0b00001000) >> 3) * 255.0 / 1.0;
@@ -95,17 +97,17 @@ SDL_Color z5RGBna24RGB(Uint8 kolor5bit) {
     return kolor;
 }
 
-Uint8 z24RGBna5BW(SDL_Color kolor) {
+Uint8 z24RGBna5BW(Color kolor) {
     int szary8bit = 0.299 * kolor.r + 0.587 * kolor.g + 0.114 * kolor.b;
     int szary5bit = round(szary8bit * 31.0 / 255.0);
 
     return szary5bit;
 }
 
-SDL_Color z5BWna24RGB(Uint8 kolor) {
+Color z5BWna24RGB(Uint8 kolor) {
     Uint8 szary8bit = round(kolor * 255.0 / 31.0);
 
-    SDL_Color kolor24bit = {szary8bit, szary8bit, szary8bit};
+    Color kolor24bit = {szary8bit, szary8bit, szary8bit};
     return kolor24bit;
 }
 
@@ -117,7 +119,7 @@ void updateBledy(int xx, int yy, float (*bledy)[wysokosc / 2 + 2][3], int blad,
     bledy[xx + 1 + przesuniecie][yy + 1][colorIndex] += (blad * 1.0 / 16.0);
 }
 
-bool porownajKolory(SDL_Color kolor1, SDL_Color kolor2) {
+bool porownajKolory(Color kolor1, Color kolor2) {
     return kolor1.r == kolor2.r && kolor1.g == kolor2.g && kolor1.b == kolor2.b;
 }
 
@@ -126,7 +128,7 @@ void medianCutBW(int start, int koniec, int iteracja, Canvas1D &obrazek,
     if (iteracja > 0) {
         // sortowanie wtorkowego kubełka kfc za 22 zł
         sort(obrazek.begin() + start, obrazek.begin() + koniec,
-             [](SDL_Color a, SDL_Color b) { return a.r < b.r; });
+             [](Color a, Color b) { return a.r < b.r; });
 
         cout << "Dzielenie kubełka KFC na poziomie " << iteracja << endl;
 
@@ -140,7 +142,7 @@ void medianCutBW(int start, int koniec, int iteracja, Canvas1D &obrazek,
             sumaBW += obrazek[p].r;
         }
         Uint8 noweBW = sumaBW / (koniec + 1 - start);
-        SDL_Color nowyKolor = {noweBW, noweBW, noweBW};
+        Color nowyKolor = {noweBW, noweBW, noweBW};
         paleta.push_back(nowyKolor);
 
         printf("\n");
@@ -159,7 +161,7 @@ void medianCutRGB(int start, int koniec, int iteracja, Canvas1D& obrazek,
         SkladowaRGB skladowa = najwiekszaRoznica(start, koniec, obrazek);
 
         sort(obrazek.begin() + start, obrazek.begin() + koniec,
-             [skladowa](SDL_Color a, SDL_Color b) {
+             [skladowa](Color a, Color b) {
                  if (skladowa == R) return a.r < b.r;
                  if (skladowa == G) return a.g < b.g;
                  if (skladowa == B) return a.b < b.b;
@@ -182,7 +184,7 @@ void medianCutRGB(int start, int koniec, int iteracja, Canvas1D& obrazek,
             sumaB += obrazek[p].b;
         }
         int ilosc = koniec + 1 - start;
-        SDL_Color nowyKolor = {Uint8(sumaR / ilosc), Uint8(sumaG / ilosc),
+        Color nowyKolor = {Uint8(sumaR / ilosc), Uint8(sumaG / ilosc),
                                Uint8(sumaB / ilosc)};
         paleta.push_back(nowyKolor);
 
@@ -194,7 +196,7 @@ void medianCutRGB(int start, int koniec, int iteracja, Canvas1D& obrazek,
     }
 }
 
-int znajdzNajblizszyKolorIndex(SDL_Color kolor, Canvas1D& paleta) {
+int znajdzNajblizszyKolorIndex(Color kolor, Canvas1D& paleta) {
     int najblizszyKolor = 0;
     int najmniejszaRoznica = 255;
     for (int j = 0; j < paleta.size(); j++) {
@@ -209,12 +211,12 @@ int znajdzNajblizszyKolorIndex(SDL_Color kolor, Canvas1D& paleta) {
 }
 
 int znajdzNajblizszyKolorBWIndex(Uint8 szary, Canvas1D& paleta) {
-    SDL_Color c;
+    Color c;
     c.r = szary;
     return znajdzNajblizszyKolorIndex(c, paleta);
 }
 
-SDL_Color znajdzNajblizszyKolor(SDL_Color kolor, Canvas1D& paleta) {
+Color znajdzNajblizszyKolor(Color kolor, Canvas1D& paleta) {
     int najblizszyKolor = 0;
     int najmniejszaRoznica = 255;
     for (int j = 0; j < paleta.size(); j++) {
@@ -229,8 +231,8 @@ SDL_Color znajdzNajblizszyKolor(SDL_Color kolor, Canvas1D& paleta) {
 
 // in obrazek[start..koniec], find the color with highest difference
 SkladowaRGB najwiekszaRoznica(int start, int koniec, Canvas1D& obrazek) {
-    SDL_Color min = {255, 255, 255};
-    SDL_Color max = {0, 0, 0};
+    Color min = {255, 255, 255};
+    Color max = {0, 0, 0};
 
     for (int i = start; i <= koniec; i++) {
         if (obrazek[i].r < min.r) min.r = obrazek[i].r;
@@ -259,7 +261,7 @@ SkladowaRGB najwiekszaRoznica(int start, int koniec, Canvas1D& obrazek) {
 // 3. Dla każdego piksela znajduje najbliższy kolor z palety
 // 4. Wyświetla wartości
 void FunkcjaW() {
-    // SDL_Color kolor;
+    // Color kolor;
     // Uint8 szary;
     // int numer = 0, indeks = 0;
     // for (int y = 0; y < wysokosc / 2; y++) {
@@ -285,7 +287,6 @@ void FunkcjaW() {
     //     }
     // }
 
-    SDL_UpdateWindowSurface(window);
 }
 
 // Co robi funkcja E
@@ -297,8 +298,8 @@ void FunkcjaW() {
 // zamiast szarości używa RGB
 
 void FunkcjaE() {
-    // SDL_Color kolor;
-    // SDL_Color nowyKolor;
+    // Color kolor;
+    // Color nowyKolor;
     // int numer = 0, indeks = 0;
     // for (int y = 0; y < wysokosc / 2; y++) {
     //     for (int x = 0; x < szerokosc / 2; x++) {
@@ -322,7 +323,6 @@ void FunkcjaE() {
     //     }
     // }
 
-    SDL_UpdateWindowSurface(window);
 }
 
 // pakowanie bitowe (dla 2 pierwszych trybow chyba, reszta paleta)
@@ -334,7 +334,7 @@ void FunkcjaR() {
 /// takes a path to bmp file, and creates a converted version of it
 /// abc.bmp -> abc.kfc
 void KonwertujBmpNaKfc(const char *bmpZrodlo) {
-    Canvas obrazek(wysokoscObrazka, std::vector<SDL_Color>(szerokoscObrazka));
+    Canvas obrazek(wysokoscObrazka, std::vector<Color>(szerokoscObrazka));
 
     ladujBMPDoPamieci(bmpZrodlo, obrazek);
 
@@ -387,7 +387,6 @@ void ZapisDoPliku(TrybObrazu tryb, Dithering dithering, Canvas &obrazek, Canvas1
 
     // ilosc bitow zawsze taka sama niezaleznie od trybu
     int iloscBitowDoZapisania = 5 * szerokoscObrazka * wysokoscObrazka;
-
     vector<bitset<5>> bitset5(iloscBitowDoZapisania);
 
     if (szerokoscObrazka % 8 != 0) {
@@ -477,11 +476,11 @@ void ZapisDoPliku(TrybObrazu tryb, Dithering dithering, Canvas &obrazek, Canvas1
     wyjscie.close();
 }
 
-// read
-void FunkcjaT() {
-    cout << "Wczytaj obrazek z pliku" << endl;
 
-    ifstream wejscie("obraz.z33", ios::binary);
+void OdczytZPliku(const std::string& filename) {
+    std::cout << "Wczytuje obrazek " << filename << " z pliku..." << std::endl;
+
+    ifstream wejscie(filename, ios::binary);
     char id[2];
     Uint16 szerokoscObrazu;
     Uint16 wysokoscObrazu;
@@ -515,141 +514,11 @@ void FunkcjaT() {
     wejscie.close();
 }
 
-void setPixel(int x, int y, Uint8 R, Uint8 G, Uint8 B) {
-    if ((x >= 0) && (x < szerokosc) && (y >= 0) && (y < wysokosc)) {
-        /* Zamieniamy poszczególne składowe koloru na format koloru piksela */
-        Uint32 pixel = SDL_MapRGB(screen->format, R, G, B);
-
-        /* Pobieramy informację ile bajtów zajmuje jeden piksel */
-        int bpp = screen->format->BytesPerPixel;
-
-        /* Obliczamy adres piksela */
-        Uint8 *p1 =
-            (Uint8 *)screen->pixels + (y * 2) * screen->pitch + (x * 2) * bpp;
-        Uint8 *p2 = (Uint8 *)screen->pixels + (y * 2 + 1) * screen->pitch +
-                    (x * 2) * bpp;
-        Uint8 *p3 = (Uint8 *)screen->pixels + (y * 2) * screen->pitch +
-                    (x * 2 + 1) * bpp;
-        Uint8 *p4 = (Uint8 *)screen->pixels + (y * 2 + 1) * screen->pitch +
-                    (x * 2 + 1) * bpp;
-
-        /* Ustawiamy wartość piksela, w zależnoœci od formatu powierzchni*/
-        switch (bpp) {
-            case 1:  // 8-bit
-                *p1 = pixel;
-                *p2 = pixel;
-                *p3 = pixel;
-                *p4 = pixel;
-                break;
-
-            case 2:  // 16-bit
-                *(Uint16 *)p1 = pixel;
-                *(Uint16 *)p2 = pixel;
-                *(Uint16 *)p3 = pixel;
-                *(Uint16 *)p4 = pixel;
-                break;
-
-            case 3:  // 24-bit
-                if (SDL_BYTEORDER == SDL_BIG_ENDIAN) {
-                    p1[0] = (pixel >> 16) & 0xff;
-                    p1[1] = (pixel >> 8) & 0xff;
-                    p1[2] = pixel & 0xff;
-                    p2[0] = (pixel >> 16) & 0xff;
-                    p2[1] = (pixel >> 8) & 0xff;
-                    p2[2] = pixel & 0xff;
-                    p3[0] = (pixel >> 16) & 0xff;
-                    p3[1] = (pixel >> 8) & 0xff;
-                    p3[2] = pixel & 0xff;
-                    p4[0] = (pixel >> 16) & 0xff;
-                    p4[1] = (pixel >> 8) & 0xff;
-                    p4[2] = pixel & 0xff;
-                } else {
-                    p1[0] = pixel & 0xff;
-                    p1[1] = (pixel >> 8) & 0xff;
-                    p1[2] = (pixel >> 16) & 0xff;
-                    p2[0] = pixel & 0xff;
-                    p2[1] = (pixel >> 8) & 0xff;
-                    p2[2] = (pixel >> 16) & 0xff;
-                    p3[0] = pixel & 0xff;
-                    p3[1] = (pixel >> 8) & 0xff;
-                    p3[2] = (pixel >> 16) & 0xff;
-                    p4[0] = pixel & 0xff;
-                    p4[1] = (pixel >> 8) & 0xff;
-                    p4[2] = (pixel >> 16) & 0xff;
-                }
-                break;
-
-            case 4:  // 32-bit
-                *(Uint32 *)p1 = pixel;
-                *(Uint32 *)p2 = pixel;
-                *(Uint32 *)p3 = pixel;
-                *(Uint32 *)p4 = pixel;
-                break;
-        }
-    }
+void FunkcjaT() {
+    const std::string filename = "obrazek.kfc";
+    OdczytZPliku(filename);
 }
 
-void setPixelSurface(int x, int y, Uint8 R, Uint8 G, Uint8 B) {
-    if ((x >= 0) && (x < szerokosc * 2) && (y >= 0) && (y < wysokosc * 2)) {
-        /* Zamieniamy poszczególne składowe koloru na format koloru piksela */
-        Uint32 pixel = SDL_MapRGB(screen->format, R, G, B);
-
-        /* Pobieramy informację ile bajtów zajmuje jeden piksel */
-        int bpp = screen->format->BytesPerPixel;
-
-        /* Obliczamy adres piksela */
-        Uint8 *p = (Uint8 *)screen->pixels + y * screen->pitch + x * bpp;
-
-        /* Ustawiamy wartość piksela, w zależności od formatu powierzchni*/
-        switch (bpp) {
-            case 1:  // 8-bit
-                *p = pixel;
-                break;
-
-            case 2:  // 16-bit
-                *(Uint16 *)p = pixel;
-                break;
-
-            case 3:  // 24-bit
-                if (SDL_BYTEORDER == SDL_BIG_ENDIAN) {
-                    p[0] = (pixel >> 16) & 0xff;
-                    p[1] = (pixel >> 8) & 0xff;
-                    p[2] = pixel & 0xff;
-                } else {
-                    p[0] = pixel & 0xff;
-                    p[1] = (pixel >> 8) & 0xff;
-                    p[2] = (pixel >> 16) & 0xff;
-                }
-                break;
-
-            case 4:  // 32-bit
-                *(Uint32 *)p = pixel;
-                break;
-        }
-    }
-}
-
-SDL_Color getPixel(int x, int y) {
-    SDL_Color color;
-    Uint32 col = 0;
-    if ((x >= 0) && (x < szerokosc) && (y >= 0) && (y < wysokosc)) {
-        // określamy pozycję
-        char *pPosition = (char *)screen->pixels;
-
-        // przesunięcie względem y
-        pPosition += (screen->pitch * y * 2);
-
-        // przesunięcie względem x
-        pPosition += (screen->format->BytesPerPixel * x * 2);
-
-        // kopiujemy dane piksela
-        memcpy(&col, pPosition, screen->format->BytesPerPixel);
-
-        // konwertujemy kolor
-        SDL_GetRGB(col, screen->format, &color.r, &color.g, &color.b);
-    }
-    return (color);
-}
 
 SDL_Color getPixelSurface(int x, int y, SDL_Surface *surface) {
     SDL_Color color;
@@ -673,43 +542,26 @@ SDL_Color getPixelSurface(int x, int y, SDL_Surface *surface) {
     return (color);
 }
 
-void ladujBMP(char const *nazwa, int x, int y) {
-    SDL_Surface *bmp = SDL_LoadBMP(nazwa);
-    if (!bmp) {
-        printf("Unable to load bitmap: %s\n", SDL_GetError());
-    } else {
-        SDL_Color kolor;
-        for (int yy = 0; yy < bmp->h; yy++) {
-            for (int xx = 0; xx < bmp->w; xx++) {
-                kolor = getPixelSurface(xx, yy, bmp);
-                setPixel(xx, yy, kolor.r, kolor.g, kolor.b);
-            }
-        }
-        SDL_FreeSurface(bmp);
-        SDL_UpdateWindowSurface(window);
-    }
-}
-
 void ladujBMPDoPamieci(char const *nazwa, Canvas &obrazek) {
     SDL_Surface *bmp = SDL_LoadBMP(nazwa);
     if (!bmp) {
         printf("Unable to load bitmap: %s\n", SDL_GetError());
     } else {
-        SDL_Color kolor;
+        Color kolor;
         for (int yy = 0; yy < bmp->h; yy++) {
             for (int xx = 0; xx < bmp->w; xx++) {
-                kolor = getPixelSurface(xx, yy, bmp);
+                SDL_Color kolorSDL = getPixelSurface(xx, yy, bmp);
+                kolor.r = kolorSDL.r;
+                kolor.g = kolorSDL.g;
+                kolor.b = kolorSDL.b;
                 obrazek[yy][xx] = kolor;
             }
         }
         SDL_FreeSurface(bmp);
+        std::cout << "zaladowano obrazek essa" << std::endl;
     }
 }
 
-void czyscEkran(Uint8 R, Uint8 G, Uint8 B) {
-    SDL_FillRect(screen, 0, SDL_MapRGB(screen->format, R, G, B));
-    SDL_UpdateWindowSurface(window);
-}
 
 int main(int argc, char *argv[]) {
     std::cout << "Hello World!" << std::endl;
