@@ -8,6 +8,7 @@
 #include <vector>
 #include <math.h>
 #include <cmath>
+#include <unordered_set>
 #include "SDL_surface.h"
 #include <string.h>
 #include <map>
@@ -63,7 +64,8 @@ Color z5RGBna24RGB(Uint8 kolor5bit);
 void ZapisDoPliku(TrybObrazu tryb, Dithering dithering, Canvas &obrazek, Canvas1D &paleta);
 void czyscEkran(Uint8 R, Uint8 G, Uint8 B);
 
-void KonwertujBmpNaKfc(const char *bmpZrodlo);
+void KonwertujBmpNaKfc(const char *bmpZrodlo, TrybObrazu tryb);
+Canvas1D wyprostujCanvas(Canvas &obrazek);
 
 Uint8 normalizacja(int wartosc) {
     if (wartosc < 0) return 0;
@@ -321,22 +323,44 @@ void FunkcjaE() {
 }
 
 void FunkcjaR() {
-    KonwertujBmpNaKfc("obrazek1.bmp");
+    KonwertujBmpNaKfc("obrazek1.bmp", TrybObrazu::SzaroscNarzucona);
 }
 
 /// takes a path to bmp file, and creates a converted version of it
 /// abc.bmp -> abc.kfc
-void KonwertujBmpNaKfc(const char *bmpZrodlo) {
+void KonwertujBmpNaKfc(const char *bmpZrodlo, TrybObrazu tryb) {
     Canvas obrazek(wysokoscObrazka, std::vector<Color>(szerokoscObrazka));
-
     ladujBMPDoPamieci(bmpZrodlo, obrazek);
 
     // dithering itd
     // tutaj powstaje paleta
+    
+    Canvas1D obrazek1D = wyprostujCanvas(obrazek);
     Canvas1D paleta;
-
-    // podaje obrazek + palete
-    ZapisDoPliku(TrybObrazu::SzaroscNarzucona, Dithering::Brak, obrazek, paleta);
+    switch(tryb) {
+        case TrybObrazu::PaletaDedykowana:
+            medianCutRGB(0, obrazek1D.size() - 1, 5, obrazek1D, paleta);
+        break;
+        case TrybObrazu::SzaroscDedykowana:
+            medianCutBW(0, obrazek1D.size() - 1, 5, obrazek1D, paleta);
+        break;
+        case TrybObrazu::PaletaWykryta:
+            // PaletaWykryta z tego co patrzylem na stare commity
+            // to poprostu iteracja po kolorach w obrazie i jak nie ma go juz w palecie to go dodajemy
+            // jak juz jest 256 to wiecej nie dodajemyp 
+            // mozna to by bylo zrobic find_if ale chyba tez tak git
+            std::unordered_set<Color> paletaSet;
+            for(const auto& c: obrazek1D) {
+                paletaSet.insert(c);
+                // mamy tutaj 256 kolorow max, w dokumentacji jest ze paleta ma 256 * 3 (bo RGB)  
+                if(paletaSet.size() > 256) break;
+            }
+            paleta = Canvas1D(paletaSet.begin(), paletaSet.end());
+        break;
+        default:
+        break;
+    }
+    ZapisDoPliku(tryb, Dithering::Brak, obrazek, paleta);
 }
 
 // jest jakieś dzielenie na bloki? funkcja tworząca i odczytująca tablicę
@@ -361,8 +385,9 @@ void ZapisDoPliku(TrybObrazu tryb, Dithering dithering, Canvas &obrazek, Canvas1
     Uint16 szerokoscObrazu = szerokosc / 2;
     Uint16 wysokoscObrazu = wysokosc / 2;
     cout << "Zapisuje obrazek do pliku" << endl;
-    // Data założenia KFC - September 24, 1952; 71 years ago
 
+
+    // lepszy sens by bylo gdyby id to bylo 3 i 3 jako liczba zespolu cnie
     char id[2] = {0x19, 0x52};
     ofstream wyjscie("obraz.kfc", ios::binary);
     wyjscie.write((char *)&id, sizeof(char) * 2);
@@ -406,13 +431,13 @@ void ZapisDoPliku(TrybObrazu tryb, Dithering dithering, Canvas &obrazek, Canvas1
                         z24RGBna5BW(obrazek[columnAbsolute][rowAbsolute]) >> 3;
                 } else if (tryb == TrybObrazu::SzaroscDedykowana) {
                     // też adresy do palety (która jest poprostu szara xD)
-                    //medianCutBW(0, obrazek.size() - 1, 5, obrazek, paleta);
+                    
                     bitset5[bitIndex] = znajdzNajblizszyKolorIndex(
                         obrazek[columnAbsolute][rowAbsolute], paleta);
                 } else if (tryb == TrybObrazu::PaletaWykryta) {
-                    // czym sie to gowno rozni od palety dedykowanej
+                    // TODO: funkcja ktora da index z palety
+                    // nie wiem co jezeli nie ma koloru w palecie bo max 256 xd 
                 } else if (tryb == TrybObrazu::PaletaDedykowana) {
-                    //medianCutRGB(0, size, obrazek.size() - 1, obrazek, paleta);
                     bitset5[bitIndex] = znajdzNajblizszyKolorIndex(
                         obrazek[columnAbsolute][rowAbsolute], paleta);
                 } else {
@@ -497,7 +522,6 @@ void OdczytZPliku(const std::string& filename) {
     // } else {
     // }
 
-    // ZapisDoPliku(1,0,);
 
     cout << "id: " << id[0] << id[1] << endl;
     cout << "szerokosc: " << szerokoscObrazka << endl;
@@ -557,48 +581,133 @@ void ladujBMPDoPamieci(char const *nazwa, Canvas &obrazek) {
 }
 
 
+// flatten canvas
+Canvas1D wyprostujCanvas(Canvas &obrazek) {
+    Canvas1D obrazek1D;
+    obrazek1D.reserve(szerokoscObrazka * wysokoscObrazka);
+
+    for(const auto& r: obrazek) {
+        for(const auto& c: r) {
+            obrazek1D.push_back(c);
+        }   
+    }
+
+    return obrazek1D;
+}
+
+
+typedef std::map<int, std::vector<std::string>> CommandAliasMap;
+
+template <typename T>
+using ParameterMap = std::map<char, T>;
+
+int findCommand(CommandAliasMap& commandsAliases, std::string command) {
+    for (auto& aliases : commandsAliases) {
+        for (auto& alias : aliases.second) {
+            if (alias == command) {
+                return aliases.first;
+            }
+        }
+    }
+    return 0;
+}
+
+void readParameterMap(ParameterMap<std::string> &parameterMap, int offset, int argc, char *argv[]) {
+    for (int i = offset; i < argc; i++) {
+        if (sizeof(argv[i]) < 2) continue;
+        if (argv[i][0] == '-' && i + 1 < argc)
+            parameterMap[argv[i][1]] = std::string(argv[i + 1]);
+    }
+}
+
 int main(int argc, char *argv[]) {
-    std::map<int, std::vector<std::string>> commandsAliases;
+    CommandAliasMap commandsAliases;
 
     /* tobmp - odczytuje plik kfc, zapisuje plik bmp */
     commandsAliases[1] = {"tobmp", "-t", "-tobmp"};
     /* frombmp - odczytuje plik bmp, zapisuje plik kfc */
     commandsAliases[2] = {"frombmp", "-f", "-frombmp"}; 
+    
+    const std::string appName = argc<1 ? "kfc" : argv[0];
 
-    /* Wypisuje dostępne opcje */
-    if (argc == 0 
-    || (argc > 0 && (argv[0] == "help"))) {
+    /* Wypisuje wszystkie dostępne komendy bez opisu */
+    if (argc <= 1 
+    || (argc == 2 && (std::string(argv[1]) == "help" || std::string(argv[1]) == "-help"))) {
         std::cout << "  Witamy w konwerterze obrazów 🍗 KFC <-> 🎨 BMP.\n"
         << "Dostępne operacje:\n"
         << "1. Konwersja formatu KFC na BMP\n"
-        << "> kfc tobmp <ścieżka_pliku_kfc> [ścieżka_pliku_bmp] [tryb(1-5)] [dithering(none/bayer/floyd)]\n"
+        << "> "<<appName<<" tobmp <ścieżka_pliku_kfc> [ścieżka_pliku_bmp]\n"
         << "Wyświetl więcej informacji używając 'kfc -help tobmp'\n"
         << "2. Konwersja formatu BMP na KFC\n"
-        << "> kfc frombmp <ścieżka_pliku_bmp> [ścieżka_pliku_kfc]" << std::endl;
-    } else if (argc > 0) {
-        std::string primaryCommand = argv[0];
-        int primaryCommandId = 0;
-        
-        for (auto& aliases : commandsAliases) {
-            for (auto& alias : aliases.second) {
-                if (alias == primaryCommand) {
-                    primaryCommandId = aliases.first;
-                    break;
-                }
-            }
-        }
-
+        << "> "<<appName<<" frombmp <ścieżka_pliku_bmp> [ścieżka_pliku_kfc] [tryb(1-5)] [dithering(none/bayer/floyd)]\n"
+        << "Wyświetl więcej informacji używając 'kfc -help tobmp'\n";
+    } 
+    
+    /* W przypadku wysłania 'kfc help <command_name>' wyświetlony zostanie opis komendy */
+    else if (argc == 3 && (std::string(argv[1]) == "help" || std::string(argv[1]) == "-help")) {
+        int primaryCommandId = findCommand(commandsAliases, argv[2]);
         switch(primaryCommandId) {
-            case 1: {
-                std::cout << "Konwertuje z KFC do BMP" << std::endl;
+            case 1: { /* tobmp */
+                std::cout << "> "<<appName<<" tobmp <ścieżka_pliku_kfc> [ścieżka_pliku_bmp]\n"
+                << "Opis: Komenda 'tobmp' konwertuje plik w formacie KFC na format BMP \n"
+                << "Parametry obowiązkowe:\n"
+                << "\t<ścieżka_pliku_kfc> - ścieżka do pliku w formacie kfc (relatywna lub absolutna)\n"
+                << "Parametry opcjonalne:\n"
+                << "\t[ścieżka_pliku_bmp] - ścieżka do nowo utworzonego pliku (domyślnie plik kfc ze zmienionym rozszerzeniem)\n";
                 break;
             }
-            case 2: {
-                std::cout << "Konwertuje z BMP do KFC" << std::endl;
+            case 2: { /* frombmp*/
+                std::cout << "> "<<appName<<" frombmp <ścieżka_pliku_kfc> [ścieżka_pliku_bmp] [tryb(1-5)] [dithering(none/bayer/floyd)]\n"
+                << "Opis: Komenda 'frombmp' konwertuje plik w formacie BMP na format KFC \n"
+                << "Parametry obowiązkowe:\n"
+                << "\t<ścieżka_pliku_bmp> - ścieżka do pliku w formacie bmp (relatywna lub absolutna)\n"
+                << "Parametry opcjonalne:\n"
+                << "\t[ścieżka_pliku_kfc] - ścieżka do nowo utworzonego pliku (domyślnie plik bmp ze zmienionym rozszerzeniem)\n"
+                << "\t[tryb(1-5)] - tryb konwersji obrazu (domyślnie 1), dostępne tryby:\n"
+                << "\t\t1 - Paleta narzucona\n"
+                << "\t\t2 - Szarość narzucona\n"
+                << "\t\t3 - Paleta wykryta\n"
+                << "\t\t4 - Szarość wykryta\n"
+                << "\t\t5 - Paleta dedykowana\n"
+                << "\t[dithering(none/bayer/floyd)] - tryb ditheringu (domyślnie none - bez ditheringu)\n";
                 break;
             }
             default: {
-                std::cout << "Nieznana komenda. Użyj 'kfc help' aby dowiedzieć się o dostępnych komendach." << std::endl;
+                std::cout << "Nieznana komenda. Użyj '"<<appName<<" help' aby dowiedzieć się o istniejących komendach." << std::endl;
+                break;
+            }
+        }
+    }
+
+    /* W pozostałych przypadkach będzie próba rozpoznania komendy z 1 argumentu i jej wykonanie */
+    else if (argc > 1) {
+        int primaryCommandId = findCommand(commandsAliases, argv[1]);
+
+        switch(primaryCommandId) {
+            case 1: { /* tobmp <ścieżka_pliku_kfc> [ścieżka_pliku_bmp] */
+                if (argc < 3) {
+                    std::cout << "Nie podano ścieżki do pliku kfc. Użyj '"<<appName<<" help tobmp' aby dowiedzieć się więcej." << std::endl;
+                    break;
+                }
+                std::string kfcPath = argv[2];
+                std::string bmpPath = argc > 3 ? argv[3] : kfcPath.substr(0, kfcPath.find_last_of('.')) + ".bmp";
+                std::cout << "< placeholder na rezultat konwersji >" << std::endl;
+                break;
+            }
+            case 2: { /* frombmp <ścieżka_pliku_kfc> [ścieżka_pliku_bmp] [-t tryb(1-5)] [-d dithering(none/bayer/floyd)] */
+                if (argc < 3) {
+                    std::cout << "Nie podano ścieżki do pliku bmp. Użyj '"<<appName<<" help frombmp' aby dowiedzieć się więcej." << std::endl;
+                    break;
+                }
+                std::string bmpPath = argv[2];
+                std::string kfcPath = argc > 3 ? argv[3] : bmpPath.substr(0, bmpPath.find_last_of('.')) + ".kfc";
+                int tryb = argc > 4 ? std::stoi(argv[4]) : 1;
+                int dithering = argc > 5 ? std::stoi(argv[5]) : Dithering::Brak;
+                std::cout << "< placeholder na rezultat konwersji >" << std::endl;
+                break;
+            }
+            default: {
+                std::cout << "Nieznana komenda. Użyj '"<<appName<<" help' aby dowiedzieć się o dostępnych komendach." << std::endl;
                 break;
             }
         }
