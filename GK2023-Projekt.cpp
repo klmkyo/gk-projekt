@@ -643,10 +643,10 @@ int main(int argc, char *argv[]) {
         << "Dostępne operacje:\n"
         << "1. Konwersja formatu KFC na BMP\n"
         << "> "<<appName<<" tobmp <ścieżka_pliku_kfc> [-s ścieżka_pliku_bmp]\n"
-        << "Wyświetl więcej informacji używając 'kfc -help tobmp'\n"
+        << "Wyświetl więcej informacji używając '"<<appName<<" -help tobmp'\n"
         << "2. Konwersja formatu BMP na KFC\n"
         << "> "<<appName<<" frombmp <ścieżka_pliku_bmp> [-s ścieżka_pliku_kfc] [-t tryb(1-5)] [-d dithering(none/bayer/floyd)]\n"
-        << "Wyświetl więcej informacji używając 'kfc -help tobmp'\n";
+        << "Wyświetl więcej informacji używając '"<<appName<<" -help tobmp'\n";
     } 
     
     /* W przypadku wysłania 'kfc help <command_name>' wyświetlony zostanie opis komendy */
