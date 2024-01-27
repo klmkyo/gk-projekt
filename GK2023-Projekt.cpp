@@ -10,6 +10,7 @@
 #include <cmath>
 #include "SDL_surface.h"
 #include <string.h>
+#include <map>
 
 using namespace std;
 
@@ -36,6 +37,7 @@ enum SkladowaRGB {
 
 // 1 i 2 oznaczają, że przy czytaniu obrazu będzie używana paleta WBUDOWANA W
 // PROGRAM w 2, 3, 4 paleta jest dołączona do pliku
+// 3 i 5 MEDIANCUT
 enum TrybObrazu {
     PaletaNarzucona = 1,    // przejście z 24bit obrazka na 5bit
     SzaroscNarzucona = 2,   // przejście z 24bit obrazka na 5bit szarosci
@@ -48,7 +50,6 @@ enum TrybObrazu {
 enum Dithering { Brak = 0, Bayer = 1, Floyd = 2 };
 
 constexpr int maxKolorow = 320 * 600;
-int ileKubelkow = 0;
 
 bool czyTrybJestZPaleta(TrybObrazu tryb) { return tryb >= 3; }
 SkladowaRGB najwiekszaRoznica(int start, int koniec, Canvas1D& obrazek);
@@ -126,7 +127,6 @@ bool porownajKolory(Color kolor1, Color kolor2) {
 void medianCutBW(int start, int koniec, int iteracja, Canvas1D &obrazek,
                  Canvas1D &paleta) {
     if (iteracja > 0) {
-        // sortowanie wtorkowego kubełka kfc za 22 zł
         sort(obrazek.begin() + start, obrazek.begin() + koniec,
              [](Color a, Color b) { return a.r < b.r; });
 
@@ -136,7 +136,7 @@ void medianCutBW(int start, int koniec, int iteracja, Canvas1D &obrazek,
         medianCutBW(start, srodek - 1, iteracja - 1, obrazek, paleta);
         medianCutBW(srodek, koniec, iteracja - 1, obrazek, paleta);
     } else {
-        // budowanie palety uśredniając kolory z określonego kubełka KFC
+        // budowanie palety uśredniając kolory z określonego kubełka
         int sumaBW = 0;
         for (int p = start; p < koniec; p++) {
             sumaBW += obrazek[p].r;
@@ -145,12 +145,8 @@ void medianCutBW(int start, int koniec, int iteracja, Canvas1D &obrazek,
         Color nowyKolor = {noweBW, noweBW, noweBW};
         paleta.push_back(nowyKolor);
 
-        printf("\n");
-        cout << "🍿 Kubełek " << paleta.size() << "(" << start << "," << koniec
-             << ") = 🍗 " << (int)noweBW << endl;
-        cout << "🎨 Kolor " << ileKubelkow << ": " << (int)nowyKolor.r << " "
-             << (int)nowyKolor.g << " " << (int)nowyKolor.b << endl;
-
+        cout << "🍿 Kubełek " << paleta.size() << " (" << start << "," << koniec
+             << ") kolorBW: " << (int)noweBW << endl;
     }
 }
 
@@ -188,9 +184,8 @@ void medianCutRGB(int start, int koniec, int iteracja, Canvas1D& obrazek,
                                Uint8(sumaB / ilosc)};
         paleta.push_back(nowyKolor);
 
-        printf("\n");
-        cout << "🍿 Kubełek / 🎨 Kolor " << paleta.size() << ": "
-             << (int)nowyKolor.r << " " << (int)nowyKolor.g << " "
+        cout << "🍿 Kubełek " << paleta.size() << " (" << start << "," << koniec
+            << ") koloryRGB: " << (int)nowyKolor.r << " " << (int)nowyKolor.g << " "
              << (int)nowyKolor.b << endl;
 
     }
@@ -325,8 +320,6 @@ void FunkcjaE() {
 
 }
 
-// pakowanie bitowe (dla 2 pierwszych trybow chyba, reszta paleta)
-
 void FunkcjaR() {
     KonwertujBmpNaKfc("obrazek1.bmp");
 }
@@ -411,16 +404,17 @@ void ZapisDoPliku(TrybObrazu tryb, Dithering dithering, Canvas &obrazek, Canvas1
                 } else if (tryb == TrybObrazu::SzaroscNarzucona) {
                     bitset5[bitIndex] =
                         z24RGBna5BW(obrazek[columnAbsolute][rowAbsolute]) >> 3;
-                } else if (tryb == TrybObrazu::PaletaDedykowana) {
-                    // adresy do palety
-                    bitset5[bitIndex] = znajdzNajblizszyKolorIndex(
-                        obrazek[columnAbsolute][rowAbsolute], paleta);
                 } else if (tryb == TrybObrazu::SzaroscDedykowana) {
                     // też adresy do palety (która jest poprostu szara xD)
+                    //medianCutBW(0, obrazek.size() - 1, 5, obrazek, paleta);
                     bitset5[bitIndex] = znajdzNajblizszyKolorIndex(
                         obrazek[columnAbsolute][rowAbsolute], paleta);
                 } else if (tryb == TrybObrazu::PaletaWykryta) {
-                    // ?????????
+                    // czym sie to gowno rozni od palety dedykowanej
+                } else if (tryb == TrybObrazu::PaletaDedykowana) {
+                    //medianCutRGB(0, size, obrazek.size() - 1, obrazek, paleta);
+                    bitset5[bitIndex] = znajdzNajblizszyKolorIndex(
+                        obrazek[columnAbsolute][rowAbsolute], paleta);
                 } else {
                     throw std::invalid_argument("Nieznany tryb obrazu");
                 }
@@ -564,6 +558,50 @@ void ladujBMPDoPamieci(char const *nazwa, Canvas &obrazek) {
 
 
 int main(int argc, char *argv[]) {
-    std::cout << "Hello World!" << std::endl;
+    std::map<int, std::vector<std::string>> commandsAliases;
+
+    /* tobmp - odczytuje plik kfc, zapisuje plik bmp */
+    commandsAliases[1] = {"tobmp", "-t", "-tobmp"};
+    /* frombmp - odczytuje plik bmp, zapisuje plik kfc */
+    commandsAliases[2] = {"frombmp", "-f", "-frombmp"}; 
+
+    /* Wypisuje dostępne opcje */
+    if (argc == 0 
+    || (argc > 0 && (argv[0] == "help"))) {
+        std::cout << "  Witamy w konwerterze obrazów 🍗 KFC <-> 🎨 BMP.\n"
+        << "Dostępne operacje:\n"
+        << "1. Konwersja formatu KFC na BMP\n"
+        << "> kfc tobmp <ścieżka_pliku_kfc> [ścieżka_pliku_bmp] [tryb(1-5)] [dithering(none/bayer/floyd)]\n"
+        << "Wyświetl więcej informacji używając 'kfc -help tobmp'\n"
+        << "2. Konwersja formatu BMP na KFC\n"
+        << "> kfc frombmp <ścieżka_pliku_bmp> [ścieżka_pliku_kfc]" << std::endl;
+    } else if (argc > 0) {
+        std::string primaryCommand = argv[0];
+        int primaryCommandId = 0;
+        
+        for (auto& aliases : commandsAliases) {
+            for (auto& alias : aliases.second) {
+                if (alias == primaryCommand) {
+                    primaryCommandId = aliases.first;
+                    break;
+                }
+            }
+        }
+
+        switch(primaryCommandId) {
+            case 1: {
+                std::cout << "Konwertuje z KFC do BMP" << std::endl;
+                break;
+            }
+            case 2: {
+                std::cout << "Konwertuje z BMP do KFC" << std::endl;
+                break;
+            }
+            default: {
+                std::cout << "Nieznana komenda. Użyj 'kfc help' aby dowiedzieć się o dostępnych komendach." << std::endl;
+                break;
+            }
+        }
+    }
     return 0;
 }
