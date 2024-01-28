@@ -296,7 +296,10 @@ Color znajdzNajblizszyKolor(Color kolor, Canvas1D &paleta) {
     int najblizszyKolor = 0;
     int najmniejszaRoznica = 255;
     for (int j = 0; j < paleta.size(); j++) {
-        int roznica = abs(paleta[j].r - kolor.r);
+        int roznicaR = abs(paleta[j].r - kolor.r);
+        int roznicaG = abs(paleta[j].g - kolor.g);
+        int roznicaB = abs(paleta[j].b - kolor.b);
+        int roznica = roznicaR + roznicaG + roznicaB;
         if (roznica < najmniejszaRoznica) {
             najmniejszaRoznica = roznica;
             najblizszyKolor = j;
@@ -330,6 +333,71 @@ SkladowaRGB najwiekszaRoznica(int start, int koniec, Canvas1D &obrazek) {
 
     throw std::invalid_argument("Nieznana skladowa RGB");
 }
+
+void applyFloydSteinbergDithering(Canvas &image, Canvas1D &palette) {
+    int width = image[0].size();
+    int height = image.size();
+
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+            Color oldPixel = image[y][x];
+            Color newPixel = znajdzNajblizszyKolor(oldPixel, palette); // Find closest color in the palette
+            image[y][x] = newPixel;
+
+            int errR = oldPixel.r - newPixel.r;
+            int errG = oldPixel.g - newPixel.g;
+            int errB = oldPixel.b - newPixel.b;
+
+            if (x + 1 < width) {
+                image[y][x + 1].r = normalizacja(image[y][x + 1].r + errR * 7 / 16);
+                image[y][x + 1].g = normalizacja(image[y][x + 1].g + errG * 7 / 16);
+                image[y][x + 1].b = normalizacja(image[y][x + 1].b + errB * 7 / 16);
+            }
+            if (x - 1 >= 0 && y + 1 < height) {
+                image[y + 1][x - 1].r = normalizacja(image[y + 1][x - 1].r + errR * 3 / 16);
+                image[y + 1][x - 1].g = normalizacja(image[y + 1][x - 1].g + errG * 3 / 16);
+                image[y + 1][x - 1].b = normalizacja(image[y + 1][x - 1].b + errB * 3 / 16);
+            }
+            if (y + 1 < height) {
+                image[y + 1][x].r = normalizacja(image[y + 1][x].r + errR * 5 / 16);
+                image[y + 1][x].g = normalizacja(image[y + 1][x].g + errG * 5 / 16);
+                image[y + 1][x].b = normalizacja(image[y + 1][x].b + errB * 5 / 16);
+            }
+            if (x + 1 < width && y + 1 < height) {
+                image[y + 1][x + 1].r = normalizacja(image[y + 1][x + 1].r + errR / 16);
+                image[y + 1][x + 1].g = normalizacja(image[y + 1][x + 1].g + errG / 16);
+                image[y + 1][x + 1].b = normalizacja(image[y + 1][x + 1].b + errB / 16);
+            }
+        }
+    }
+}
+
+void applyBayerDithering(Canvas &image, Canvas1D &palette) {
+    int bayerMatrix[4][4] = {
+        { 1,  9,  3, 11},
+        {13,  5, 15,  7},
+        { 4, 12,  2, 10},
+        {16,  8, 14,  6}
+    };
+
+    int width = image[0].size();
+    int height = image.size();
+
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+            Color oldPixel = image[y][x];
+
+            // Adjust each color channel based on the Bayer matrix
+            oldPixel.r = min(max(0, oldPixel.r + bayerMatrix[y % 4][x % 4] - 8), 255);
+            oldPixel.g = min(max(0, oldPixel.g + bayerMatrix[y % 4][x % 4] - 8), 255);
+            oldPixel.b = min(max(0, oldPixel.b + bayerMatrix[y % 4][x % 4] - 8), 255);
+
+            Color newPixel = znajdzNajblizszyKolor(oldPixel, palette);
+            image[y][x] = newPixel;
+        }
+    }
+}
+
 
 /// takes a path to bmp file, and creates a converted version of it
 /// abc.bmp -> abc.kfc
@@ -379,6 +447,25 @@ void KonwertujBmpNaKfc(std::string bmpZrodlo, std::string kfcCel, TrybObrazu try
             break;
         }
     }
+
+    switch (d) {
+        case Dithering::Floyd: {
+            if(czyTrybJestZPaleta(tryb)) {
+                applyFloydSteinbergDithering(obrazek, paleta);
+            }
+            break;
+        }
+        case Dithering::Bayer: {
+            if(czyTrybJestZPaleta(tryb)) {
+                applyBayerDithering(obrazek, paleta);
+            }
+            break;
+        }
+        default: {
+            break;
+        }
+    }
+
     
 
     ZapisDoPliku(kfcCel, tryb, d, obrazek, paleta);
