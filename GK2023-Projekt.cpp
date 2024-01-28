@@ -134,72 +134,6 @@ Color z5BWna24RGB(Uint8 kolor) {
     return kolor24bit;
 }
 
-
-void updateBledy(int xx, int yy, float*** bledy, int blad,
-                 int colorIndex, int przesuniecie, int width, int height) {
-    if (xx + 1 + przesuniecie < height)
-        bledy[xx + 1 + przesuniecie][yy][colorIndex] += (blad * 7.0 / 16.0);
-    if (xx - 1 + przesuniecie >= 0 && yy + 1 < width)
-        bledy[xx - 1 + przesuniecie][yy + 1][colorIndex] += (blad * 3.0 / 16.0);
-    if (yy + 1 < width)
-        bledy[xx + przesuniecie][yy + 1][colorIndex] += (blad * 5.0 / 16.0);
-    if (xx + 1 + przesuniecie < height && yy + 1 < width)
-        bledy[xx + 1 + przesuniecie][yy + 1][colorIndex] += (blad * 1.0 / 16.0);
-}
-
-void ApplyFloydDithering(int width, int height, Canvas& current, bool blackWhite) {
-    Uint8 przesuniecie = 1;
-
-    float*** bledy = new float**[height+2];
-    for (int i = 0; i < height+2; ++i) {
-        bledy[i] = new float*[width+2];
-        for (int j = 0; j < width+2; ++j) {
-            bledy[i][j] = new float[3];  // Assuming 3 colors: R, G, B
-        }
-    }
-
-    for (int xx = 0; xx < height; xx++) {
-        for (int yy = 0; yy < width; yy++) {
-            Color kolor = current[xx][yy];
-
-            Uint8 rZBledem =
-                normalizacja(kolor.r + bledy[xx + przesuniecie][yy][0]);
-            Uint8 gZBledem =
-                normalizacja(kolor.g + bledy[xx + przesuniecie][yy][1]);
-            Uint8 bZBledem =
-                normalizacja(kolor.b + bledy[xx + przesuniecie][yy][2]);
-
-            Color tempColor = Color{rZBledem, gZBledem, bZBledem};
-            Uint8 kolor5bit;
-            Color nowyKolor;
-            if (blackWhite) {
-                kolor5bit = z24RGBna5BW(tempColor);
-                nowyKolor = z5BWna24RGB(kolor5bit);
-            } else {
-                kolor5bit = z24RGBna5RGB(tempColor);
-                nowyKolor = z5RGBna24RGB(kolor5bit);
-            }
-            int rBlad = rZBledem - nowyKolor.r;
-            int gBlad = gZBledem - nowyKolor.g;
-            int bBlad = bZBledem - nowyKolor.b;
-
-            current[xx][yy] = nowyKolor;
-
-            updateBledy(xx, yy, bledy, rBlad, 0, przesuniecie, width, height);
-            updateBledy(xx, yy, bledy, gBlad, 1, przesuniecie, width, height);
-            updateBledy(xx, yy, bledy, bBlad, 2, przesuniecie, width, height);
-        }
-    }
-
-    for (int i = 0; i < height+2; ++i) {
-        for (int j = 0; j < width+2; ++j) {
-            delete[] bledy[i][j];
-        }
-        delete[] bledy[i];
-    }
-    delete[] bledy;
-}
-
 bool porownajKolory(Color kolor1, Color kolor2) {
     return kolor1.r == kolor2.r && kolor1.g == kolor2.g && kolor1.b == kolor2.b;
 }
@@ -334,6 +268,81 @@ SkladowaRGB najwiekszaRoznica(int start, int koniec, Canvas1D &obrazek) {
     throw std::invalid_argument("Nieznana skladowa RGB");
 }
 
+void applyFloydSteinbergDithering(Canvas &image, bool blackWhite) {
+    int width = image[0].size();
+    int height = image.size();
+
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+            Color oldPixel = image[y][x];
+            Color newPixel;
+            if (blackWhite) {
+                newPixel = z5BWna24RGB(z24RGBna5BW(oldPixel));
+            } else {
+                newPixel = z5RGBna24RGB(z24RGBna5RGB(oldPixel));
+            }
+            image[y][x] = newPixel;
+
+            int errR = oldPixel.r - newPixel.r;
+            int errG = oldPixel.g - newPixel.g;
+            int errB = oldPixel.b - newPixel.b;
+
+            if (x + 1 < width) {
+                image[y][x + 1].r = normalizacja(image[y][x + 1].r + errR * 7 / 16);
+                image[y][x + 1].g = normalizacja(image[y][x + 1].g + errG * 7 / 16);
+                image[y][x + 1].b = normalizacja(image[y][x + 1].b + errB * 7 / 16);
+            }
+            if (x - 1 >= 0 && y + 1 < height) {
+                image[y + 1][x - 1].r = normalizacja(image[y + 1][x - 1].r + errR * 3 / 16);
+                image[y + 1][x - 1].g = normalizacja(image[y + 1][x - 1].g + errG * 3 / 16);
+                image[y + 1][x - 1].b = normalizacja(image[y + 1][x - 1].b + errB * 3 / 16);
+            }
+            if (y + 1 < height) {
+                image[y + 1][x].r = normalizacja(image[y + 1][x].r + errR * 5 / 16);
+                image[y + 1][x].g = normalizacja(image[y + 1][x].g + errG * 5 / 16);
+                image[y + 1][x].b = normalizacja(image[y + 1][x].b + errB * 5 / 16);
+            }
+            if (x + 1 < width && y + 1 < height) {
+                image[y + 1][x + 1].r = normalizacja(image[y + 1][x + 1].r + errR / 16);
+                image[y + 1][x + 1].g = normalizacja(image[y + 1][x + 1].g + errG / 16);
+                image[y + 1][x + 1].b = normalizacja(image[y + 1][x + 1].b + errB / 16);
+            }
+        }
+    }
+}
+
+void applyBayerDithering(Canvas &image, bool blackWhite) {
+    int bayerMatrix[4][4] = {
+        { 1,  9,  3, 11},
+        {13,  5, 15,  7},
+        { 4, 12,  2, 10},
+        {16,  8, 14,  6}
+    };
+
+    int width = image[0].size();
+    int height = image.size();
+
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+            Color oldPixel = image[y][x];
+
+            // Adjust each color channel based on the Bayer matrix
+            oldPixel.r = min(max(0, oldPixel.r + bayerMatrix[y % 4][x % 4] - 8), 255);
+            oldPixel.g = min(max(0, oldPixel.g + bayerMatrix[y % 4][x % 4] - 8), 255);
+            oldPixel.b = min(max(0, oldPixel.b + bayerMatrix[y % 4][x % 4] - 8), 255);
+
+            Color newPixel;
+            if (blackWhite) {
+                newPixel = z5BWna24RGB(z24RGBna5BW(oldPixel));
+            } else {
+                newPixel = z5RGBna24RGB(z24RGBna5RGB(oldPixel));
+            }
+            image[y][x] = newPixel;
+        }
+    }
+}
+
+
 void applyFloydSteinbergDithering(Canvas &image, Canvas1D &palette) {
     int width = image[0].size();
     int height = image.size();
@@ -452,12 +461,16 @@ void KonwertujBmpNaKfc(std::string bmpZrodlo, std::string kfcCel, TrybObrazu try
         case Dithering::Floyd: {
             if(czyTrybJestZPaleta(tryb)) {
                 applyFloydSteinbergDithering(obrazek, paleta);
+            } else {
+                applyFloydSteinbergDithering(obrazek, tryb == TrybObrazu::SzaroscNarzucona);
             }
             break;
         }
         case Dithering::Bayer: {
             if(czyTrybJestZPaleta(tryb)) {
                 applyBayerDithering(obrazek, paleta);
+            } else {
+                applyBayerDithering(obrazek, tryb == TrybObrazu::SzaroscNarzucona);
             }
             break;
         }
