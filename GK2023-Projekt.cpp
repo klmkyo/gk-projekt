@@ -509,14 +509,17 @@ Canvas OdczytZPliku(const std::string &filename) {
     char id[2];
     Uint16 szerokoscObrazu;
     Uint16 wysokoscObrazu;
-    TrybObrazu tryb;
-    Dithering dithering;
+    
+    char _tryb, _dithering;
 
     wejscie.read((char *)&id, sizeof(char) * 2);
     wejscie.read((char *)&szerokoscObrazu, sizeof(char) * 2);
     wejscie.read((char *)&wysokoscObrazu, sizeof(char) * 2);
-    wejscie.read((char *)&tryb, sizeof(Uint8));
-    wejscie.read((char *)&dithering, sizeof(Uint8));
+    wejscie.read((char *)&_tryb, sizeof(char));
+    wejscie.read((char *)&_dithering, sizeof(char));
+    
+    TrybObrazu tryb = (TrybObrazu)_tryb;
+    Dithering dithering = (Dithering)_dithering;
 
     cout << "id: " << id[0] << id[1] << endl;
     cout << "szerokosc: " << szerokoscObrazu << endl;
@@ -536,7 +539,7 @@ Canvas OdczytZPliku(const std::string &filename) {
     }
 
     int iloscBitowDoOdczytania;
-    wejscie.read((char *)&iloscBitowDoOdczytania, sizeof(int));
+    wejscie.read(reinterpret_cast<char*>(&iloscBitowDoOdczytania), sizeof(int));
     cout << "iloscBitowDoOdczytania: " << iloscBitowDoOdczytania << endl;
 
     vector<bitset<5>> bitset5(iloscBitowDoOdczytania / 5);
@@ -845,7 +848,6 @@ int main(int argc, char *argv[]) {
                         break;
                     }
                 }
-                
                 KonwertujBmpNaKfc(bmpPath, kfcPath, tryb, dithering);
                 break;
             }
