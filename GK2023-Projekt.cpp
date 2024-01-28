@@ -26,7 +26,7 @@ struct Color {
     Uint8 r, g, b;
 };
 
-const char FILE_SIGNATURE[2] = {0x00, 0x33};
+const char FILE_SIGNATURE[2] = {0x33, 0x33};
 
 
 
@@ -85,7 +85,7 @@ void ZapisDoPliku(TrybObrazu tryb, Dithering dithering, Canvas &obrazek,
                   Canvas1D &paleta);
 void czyscEkran(Uint8 R, Uint8 G, Uint8 B);
 
-void KonwertujBmpNaKfc(std::string bmpZrodlo, TrybObrazu tryb);
+void KonwertujBmpNaKfc(std::string bmpZrodlo, TrybObrazu tryb, Dithering d);
 Canvas1D wyprostujCanvas(Canvas &obrazek);
 
 Uint8 normalizacja(int wartosc) {
@@ -276,20 +276,14 @@ SkladowaRGB najwiekszaRoznica(int start, int koniec, Canvas1D &obrazek) {
 
 /// takes a path to bmp file, and creates a converted version of it
 /// abc.bmp -> abc.kfc
-void KonwertujBmpNaKfc(std::string bmpZrodlo, TrybObrazu tryb) {
-    // TODO!!! to jak wychodzi ze scopa i jest destroy to sie psuje
+void KonwertujBmpNaKfc(std::string bmpZrodlo, TrybObrazu tryb, Dithering d) {
     Canvas obrazek = ladujBMPDoPamieci(bmpZrodlo);
-
-    // dithering itd
-    // tutaj powstaje paleta
-
-    // * switch tymczasowo zakomentowany by sie kompilowało
-
     Canvas1D obrazek1D = wyprostujCanvas(obrazek);
     Canvas1D paleta;
+
     switch (tryb) {
         case TrybObrazu::PaletaDedykowana: {
-            medianCutRGB(0, obrazek1D.size() - 1, 5, obrazek1D, paleta); // TODO! tutaj też się sypie
+            medianCutRGB(0, obrazek1D.size() - 1, 5, obrazek1D, paleta); 
             break;
         }
         case TrybObrazu::SzaroscDedykowana: {
@@ -317,8 +311,7 @@ void KonwertujBmpNaKfc(std::string bmpZrodlo, TrybObrazu tryb) {
         }
     }
 
-    ZapisDoPliku(tryb, Dithering::Brak, obrazek, paleta);
-
+    ZapisDoPliku(tryb, d, obrazek, paleta);
     std::cout << "Zapisano obrazek w formacie KFC" << std::endl;
 
 }
@@ -343,11 +336,17 @@ void KonwertujBmpNaKfc(std::string bmpZrodlo, TrybObrazu tryb) {
  */
 void ZapisDoPliku(TrybObrazu tryb, Dithering dithering, Canvas &obrazek,
                   Canvas1D &paleta) {
+    // TODO: moze byc zle znow width z heightem tutaj
     Uint16 szerokoscObrazu = obrazek[0].size();
     Uint16 wysokoscObrazu = obrazek.size();
+    const int iloscBitowDoZapisania = 5 * szerokoscObrazu * wysokoscObrazu;
+
+    if (szerokoscObrazu % 8 != 0) {
+        throw std::invalid_argument(
+            "Szerokosc obrazka nie jest wielokrotnoscia 8");
+    }
+    
     cout << "Zapisuje obrazek do pliku..." << endl;
-
-
 
     ofstream wyjscie("obraz.kfc", ios::binary);
     wyjscie.write((char *)&FILE_SIGNATURE, sizeof(char) * 2);
@@ -362,17 +361,9 @@ void ZapisDoPliku(TrybObrazu tryb, Dithering dithering, Canvas &obrazek,
             wyjscie.write((char *)&c, sizeof(Color));
         }
     }
-
-    // ilosc bitow zawsze taka sama niezaleznie od trybu
-    int iloscBitowDoZapisania = 5 * szerokoscObrazu * wysokoscObrazu;
     wyjscie.write((char*)&iloscBitowDoZapisania, sizeof(int));
 
     vector<bitset<5>> bitset5(iloscBitowDoZapisania / 5);
-
-    if (szerokoscObrazu % 8 != 0) {
-        throw std::invalid_argument(
-            "Szerokosc obrazka nie jest wielokrotnoscia 8");
-    }
 
     // Nowa wersja - zapisuje po kolumnach ale max 8 rzędów
     // i potem przechodzi 8 rzedów niżej i znowu wszystkie kolumny itd......
@@ -384,7 +375,7 @@ void ZapisDoPliku(TrybObrazu tryb, Dithering dithering, Canvas &obrazek,
             for (int r = 0; r < 8; r++) {
                 int columnAbsolute = k;
                 int rowAbsolute = offset + r;
-
+            
                 if (tryb == TrybObrazu::PaletaNarzucona) {
                     bitset5[bitIndex] =
                         z24RGBna5RGB(obrazek[rowAbsolute][columnAbsolute]) >> 3;
@@ -393,7 +384,6 @@ void ZapisDoPliku(TrybObrazu tryb, Dithering dithering, Canvas &obrazek,
                         z24RGBna5BW(obrazek[rowAbsolute][columnAbsolute]) >> 3;
                 } else if (tryb == TrybObrazu::SzaroscDedykowana) {
                     // też adresy do palety (która jest poprostu szara xD)
-
                     bitset5[bitIndex] = znajdzNajblizszyKolorIndex(
                         obrazek[rowAbsolute][columnAbsolute], paleta);
                 } else if (tryb == TrybObrazu::PaletaWykryta) {
@@ -719,10 +709,8 @@ int main(int argc, char *argv[]) {
                         break;
                     }
                 }
-                // std::cout << "< placeholder frombmp(" + bmpPath + ", " +
-                //                  kfcPath + ", "
-                //           << tryb << ", " << dithering << ") >" << std::endl;
-                KonwertujBmpNaKfc(bmpPath, tryb);
+                
+                KonwertujBmpNaKfc(bmpPath, tryb, dithering);
                 break;
             }
             default: {
