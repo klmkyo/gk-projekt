@@ -13,6 +13,7 @@
 #include <unordered_set>
 #include <vector>
 #include <ctime>
+#include <limits.h>
 
 
 #include "SDL_surface.h"
@@ -228,12 +229,12 @@ int znajdzNajblizszyKolorBWIndex(Uint8 szary, Canvas1D &paleta) {
 
 Color znajdzNajblizszyKolor(Color kolor, Canvas1D &paleta) {
     int najblizszyKolor = 0;
-    int najmniejszaRoznica = 255;
+    int najmniejszaRoznica = INT_MAX;
     for (int j = 0; j < paleta.size(); j++) {
-        int roznicaR = abs(paleta[j].r - kolor.r);
-        int roznicaG = abs(paleta[j].g - kolor.g);
-        int roznicaB = abs(paleta[j].b - kolor.b);
-        int roznica = roznicaR + roznicaG + roznicaB;
+        int roznicaR = paleta[j].r - kolor.r;
+        int roznicaG = paleta[j].g - kolor.g;
+        int roznicaB = paleta[j].b - kolor.b;
+        int roznica = roznicaR * roznicaR + roznicaG * roznicaG + roznicaB * roznicaB;
         if (roznica < najmniejszaRoznica) {
             najmniejszaRoznica = roznica;
             najblizszyKolor = j;
@@ -241,6 +242,7 @@ Color znajdzNajblizszyKolor(Color kolor, Canvas1D &paleta) {
     }
     return paleta[najblizszyKolor];
 }
+
 
 // in obrazek[start..koniec], find the color with highest difference
 SkladowaRGB najwiekszaRoznica(int start, int koniec, Canvas1D &obrazek) {
