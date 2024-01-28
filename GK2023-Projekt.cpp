@@ -353,6 +353,9 @@ void ZapisDoPliku(std::string nazwaPliku, TrybObrazu tryb, Dithering dithering,
     wyjscie.write((char *)&tryb, sizeof(Uint8));
     wyjscie.write((char *)&dithering, sizeof(Uint8));
 
+    // print the cursor (where we are at the file)
+    cout << "Cursor: " << wyjscie.tellp() << endl;
+
    
     if (czyTrybJestZPaleta(tryb)) {
         for(const auto& c: paleta) {
@@ -360,6 +363,9 @@ void ZapisDoPliku(std::string nazwaPliku, TrybObrazu tryb, Dithering dithering,
         }
     }
     wyjscie.write((char*)&iloscBitowDoZapisania, sizeof(int));
+
+    // print the cursor (where we are at the file)
+    cout << "Cursor: " << wyjscie.tellp() << endl;
 
     vector<bitset<5>> bitset5(iloscBitowDoZapisania / 5);
 
