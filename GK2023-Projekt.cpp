@@ -301,6 +301,11 @@ void KonwertujBmpNaKfc(std::string bmpZrodlo, std::string kfcCel, TrybObrazu try
                 if (paletaSet.size() >= 32) break;
             }
             paleta = Canvas1D(paletaSet.begin(), paletaSet.end());
+
+            // paddowanie palety, jeśli nie sięga 32 kolorów
+            while (paleta.size() < 32) {
+                paleta.push_back({0, 0, 0});
+            }
             break;
         }
 
@@ -308,6 +313,7 @@ void KonwertujBmpNaKfc(std::string bmpZrodlo, std::string kfcCel, TrybObrazu try
             break;
         }
     }
+    
 
     ZapisDoPliku(kfcCel, tryb, d, obrazek, paleta);
     std::cout << "Zapisano obrazek w formacie KFC" << std::endl;
@@ -355,6 +361,11 @@ void ZapisDoPliku(std::string nazwaPliku, TrybObrazu tryb, Dithering dithering,
 
     // print the cursor (where we are at the file)
     cout << "Cursor: " << wyjscie.tellp() << endl;
+
+    // wypisanie palety
+    for (const auto& c: paleta) {
+        cout << "Paleta: " << (int)c.r << " " << (int)c.g << " " << (int)c.b << endl;
+    }
 
     // UWAGA UWAGA PALETA ZAPISANA PRZEZ 4 JEST PUSTA
     if (czyTrybJestZPaleta(tryb)) {
