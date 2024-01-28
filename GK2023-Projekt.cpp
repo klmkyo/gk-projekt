@@ -12,6 +12,8 @@
 #include <string>
 #include <unordered_set>
 #include <vector>
+#include <ctime>
+
 
 #include "SDL_surface.h"
 
@@ -351,13 +353,19 @@ void KonwertujBmpNaKfc(std::string bmpZrodlo, std::string kfcCel, TrybObrazu try
             // palecie to go dodajemy jak juz jest 256 to wiecej nie dodajemyp
             // mozna to by bylo zrobic find_if ale chyba tez tak git
             std::unordered_set<Color> paletaSet;
-            for (const auto &c : obrazek1D) {
+
+            Canvas1D shuffledObrazek1D(obrazek1D);
+            std::srand(std::time(nullptr));
+            std::random_shuffle(shuffledObrazek1D.begin(), shuffledObrazek1D.end());
+
+            for (const auto &c : shuffledObrazek1D) {
                 paletaSet.insert(c);
                 // mamy tutaj 256 kolorow max, w dokumentacji jest ze paleta ma
                 // 256 * 3 (bo RGB)
                 // ale my mamy 5 bitow wiec 32??
                 if (paletaSet.size() >= 32) break;
             }
+
             paleta = Canvas1D(paletaSet.begin(), paletaSet.end());
 
             // paddowanie palety, jeśli nie sięga 32 kolorów
@@ -425,7 +433,6 @@ void ZapisDoPliku(std::string nazwaPliku, TrybObrazu tryb, Dithering dithering,
         cout << "Paleta: " << (int)c.r << " " << (int)c.g << " " << (int)c.b << endl;
     }
 
-    // UWAGA UWAGA PALETA ZAPISANA PRZEZ 4 JEST PUSTA
     if (czyTrybJestZPaleta(tryb)) {
         for(const auto& c: paleta) {
             wyjscie.write((char *)&c, sizeof(Color));
@@ -460,18 +467,6 @@ void ZapisDoPliku(std::string nazwaPliku, TrybObrazu tryb, Dithering dithering,
                     bitset5[bitIndex] = znajdzNajblizszyKolorIndex(
                         obrazek[rowAbsolute][columnAbsolute], paleta);
                 } else if (tryb == TrybObrazu::PaletaWykryta) {
-                    // TODO: nie wiem co jezeli nie ma koloru w palecie bo max 32 
-                    // aktualnie zapisuje zero poprostu
-                    // auto it = std::find_if(paleta.begin(), paleta.end(), [&](const Color& paletteColor) {
-                    //     return porownajKolory(paletteColor, obrazek[rowAbsolute][columnAbsolute]);
-                    // });
-                    // if (it != paleta.end()) {
-                    //      bitset5[bitIndex] = std::distance(paleta.begin(), it);
-                    // } else {                        
-                    //     std::cout << "Nie ma takiego koloru w palecie wykrytej, zapisuje 0!!!" << std::endl;
-                    //     bitset5[bitIndex] = 0;
-                    // }
-                    // albo to samo i znajdujemy nablizeszego sasiada co nie
                     bitset5[bitIndex] = znajdzNajblizszyKolorIndex(
                         obrazek[rowAbsolute][columnAbsolute], paleta);
 
