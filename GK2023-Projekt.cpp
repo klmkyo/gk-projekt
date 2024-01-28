@@ -147,7 +147,7 @@ void updateBledy(int xx, int yy, float*** bledy, int blad,
         bledy[xx + 1 + przesuniecie][yy + 1][colorIndex] += (blad * 1.0 / 16.0);
 }
 
-void ApplyFloydDithering(int width, int height, Canvas1D &source, Canvas1D &current, bool blackWhite) {
+void ApplyFloydDithering(int width, int height, Canvas& current, bool blackWhite) {
     Uint8 przesuniecie = 1;
 
     float*** bledy = new float**[height+2];
@@ -160,7 +160,7 @@ void ApplyFloydDithering(int width, int height, Canvas1D &source, Canvas1D &curr
 
     for (int xx = 0; xx < height; xx++) {
         for (int yy = 0; yy < width; yy++) {
-            Color kolor = source[xx * width + yy];
+            Color kolor = current[xx][yy];
 
             Uint8 rZBledem =
                 normalizacja(kolor.r + bledy[xx + przesuniecie][yy][0]);
@@ -183,7 +183,7 @@ void ApplyFloydDithering(int width, int height, Canvas1D &source, Canvas1D &curr
             int gBlad = gZBledem - nowyKolor.g;
             int bBlad = bZBledem - nowyKolor.b;
 
-            current[xx * width + yy] = nowyKolor;
+            current[xx][yy] = nowyKolor;
 
             updateBledy(xx, yy, bledy, rBlad, 0, przesuniecie, width, height);
             updateBledy(xx, yy, bledy, gBlad, 1, przesuniecie, width, height);
