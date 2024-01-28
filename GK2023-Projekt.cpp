@@ -84,6 +84,7 @@ Color z5RGBna24RGB(Uint8 kolor5bit);
 void ZapisDoPliku(std::string nazwaPliku, TrybObrazu tryb, Dithering dithering, Canvas &obrazek,
                   Canvas1D &paleta);
 void czyscEkran(Uint8 R, Uint8 G, Uint8 B);
+Canvas OdczytZPliku(const std::string &filename);
 
 void KonwertujBmpNaKfc(std::string bmpZrodlo, std::string kfcCel, TrybObrazu tryb, Dithering d);
 Canvas1D wyprostujCanvas(Canvas &obrazek);
@@ -433,7 +434,63 @@ void ZapisDoPliku(std::string nazwaPliku, TrybObrazu tryb, Dithering dithering,
     wyjscie.close();
 }
 
-void OdczytZPliku(const std::string &filename) {
+void ZapiszCanvasDoBmp(const Canvas& image, const std::string& filename) {
+    int32_t width = image[0].size();
+    int32_t height = image.size();
+    int32_t rowPadding = (4 - (width * 3) % 4) % 4;
+    int32_t fileSize = 54 + (3 * width + rowPadding) * height;
+
+    std::ofstream file(filename, std::ios::out | std::ios::binary);
+
+    // BMP Header
+    file.put('B').put('M');
+    file.write(reinterpret_cast<const char*>(&fileSize), 4);
+    file.write("\0\0\0\0", 4); // Reserved
+    file.write("\x36\0\0\0", 4); // Pixel data offset
+
+    // DIB Header
+    file.write("\x28\0\0\0", 4); // Header size
+    file.write(reinterpret_cast<const char*>(&width), 4);
+    file.write(reinterpret_cast<const char*>(&height), 4);
+    file.write("\1\0", 2); // Planes
+    file.write("\x18\0", 2); // Bits per pixel
+    file.write("\0\0\0\0", 4); // Compression
+    file.write("\0\0\0\0", 4); // Image size (can be 0 for uncompressed)
+    file.write("\x13\0\0\0", 4); // Horizontal resolution (pixels/meter)
+    file.write("\x13\0\0\0", 4); // Vertical resolution (pixels/meter)
+    file.write("\0\0\0\0", 4); // Colors in color table
+    file.write("\0\0\0\0", 4); // Important color count
+
+    // Pixel Data
+    for (int y = 0; y < height; ++y) {
+        for (int x = 0; x < width; ++x) {
+            Color color = image[height-y-1][x];
+            file.put(color.b).put(color.g).put(color.r);
+        }
+        file.write("\0\0\0", rowPadding);
+    }
+
+    file.close();
+}
+
+void KonwertujKfcNaBmp(std::string kfcZrodlo, std::string bmpCel) {
+    Canvas obrazek = OdczytZPliku(kfcZrodlo);
+    cout << "Zapisuje obrazek do pliku..." << endl;
+
+    // // DEBUG make obrazek a white to black, l to r gradient
+    // for (int i = 0; i < obrazek.size(); i++) {
+    //     for (int j = 0; j < obrazek[i].size(); j++) {
+    //         obrazek[i][j] = {Uint8(j * 255.0 / obrazek[i].size()),
+    //                          Uint8(j * 255.0 / obrazek[i].size()),
+    //                          Uint8(j * 255.0 / obrazek[i].size())};
+    //     }
+    // }
+
+    ZapiszCanvasDoBmp(obrazek, bmpCel);
+}
+
+
+Canvas OdczytZPliku(const std::string &filename) {
     std::cout << "Wczytuje obrazek " << filename << " z pliku..." << std::endl;
 
     ifstream wejscie(filename, ios::binary);
@@ -455,8 +512,81 @@ void OdczytZPliku(const std::string &filename) {
     cout << "tryb: " << (int)tryb << endl;
     cout << "dithering: " << (int)dithering << endl;
 
+
+    Canvas1D paleta;
+    if (czyTrybJestZPaleta(tryb)) {
+        paleta = Canvas1D(PALETA_SIZE);
+        for (auto &c : paleta) {
+            wejscie.read((char *)&c, sizeof(Color));
+        }
+
+        cout << "Odczytanio palete" << endl;
+    }
+
+    int iloscBitowDoOdczytania;
+    wejscie.read((char *)&iloscBitowDoOdczytania, sizeof(int));
+    cout << "iloscBitowDoOdczytania: " << iloscBitowDoOdczytania << endl;
+
+    vector<bitset<5>> bitset5(iloscBitowDoOdczytania / 5);
+
+    unsigned char buffer;
+    int bitCount = 0;
+    int bitIndex = 0;
+    while (wejscie.get((char &)buffer)) {
+        for (int i = 0; i < 8; ++i) {
+            // Read the bit from the file
+            bitset5[bitIndex][i] = buffer & (1 << bitCount);
+
+            bitCount++;
+
+            // When buffer is full (8 bits), write it to file and reset
+            if (bitCount == 5) {
+                bitCount = 0;
+                bitIndex++;
+            }
+        }
+    }
+
+    int maxSteps = wysokoscObrazu / 8;
+    bitIndex = 0;
+
+    Canvas obrazek(wysokoscObrazu, std::vector<Color>(szerokoscObrazu));
+
+    for (int step = 0; step < maxSteps; step++) {
+        int offset = step * 8;
+        for (int k = 0; k < szerokoscObrazu; k++) {
+            for (int r = 0; r < 8; r++) {
+                int columnAbsolute = k;
+                int rowAbsolute = offset + r;
+
+                if (tryb == TrybObrazu::PaletaNarzucona) {
+                    obrazek[rowAbsolute][columnAbsolute] =
+                        z5RGBna24RGB(bitset5[bitIndex].to_ulong() << 3);
+                } else if (tryb == TrybObrazu::SzaroscNarzucona) {
+                    obrazek[rowAbsolute][columnAbsolute] =
+                        z5BWna24RGB(bitset5[bitIndex].to_ulong() << 3);
+                } else if (tryb == TrybObrazu::SzaroscDedykowana) {
+                    obrazek[rowAbsolute][columnAbsolute] =
+                        paleta[bitset5[bitIndex].to_ulong()];
+                } else if (tryb == TrybObrazu::PaletaWykryta) {
+                    obrazek[rowAbsolute][columnAbsolute] =
+                        paleta[bitset5[bitIndex].to_ulong()];
+                } else if (tryb == TrybObrazu::PaletaDedykowana) {
+                    obrazek[rowAbsolute][columnAbsolute] =
+                        paleta[bitset5[bitIndex].to_ulong()];
+                } else {
+                    throw std::invalid_argument("Nieznany tryb obrazu");
+                }
+
+                bitIndex++;
+            }
+        }
+    }
+
     wejscie.close();
+    return obrazek;
 }
+
 
 void FunkcjaT() {
     const std::string filename = "obrazek.kfc";
@@ -658,7 +788,7 @@ int main(int argc, char *argv[]) {
                         ? parameterMap['s']
                         : kfcPath.substr(0, kfcPath.find_last_of('.')) + ".bmp";
 
-                OdczytZPliku(kfcPath);
+                KonwertujKfcNaBmp(kfcPath, bmpPath);
                 break;
             }
             case 2: { /* frombmp <ścieżka_pliku_kfc> [-s ścieżka_pliku_bmp] [-t
