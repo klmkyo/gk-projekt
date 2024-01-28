@@ -381,21 +381,21 @@ void ZapisDoPliku(TrybObrazu tryb, Dithering dithering, Canvas &obrazek,
 
                 if (tryb == TrybObrazu::PaletaNarzucona) {
                     bitset5[bitIndex] =
-                        z24RGBna5RGB(obrazek[columnAbsolute][rowAbsolute]) >> 3;
+                        z24RGBna5RGB(obrazek[rowAbsolute][columnAbsolute]) >> 3;
                 } else if (tryb == TrybObrazu::SzaroscNarzucona) {
                     bitset5[bitIndex] =
-                        z24RGBna5BW(obrazek[columnAbsolute][rowAbsolute]) >> 3;
+                        z24RGBna5BW(obrazek[rowAbsolute][columnAbsolute]) >> 3;
                 } else if (tryb == TrybObrazu::SzaroscDedykowana) {
                     // też adresy do palety (która jest poprostu szara xD)
 
                     bitset5[bitIndex] = znajdzNajblizszyKolorIndex(
-                        obrazek[columnAbsolute][rowAbsolute], paleta);
+                        obrazek[rowAbsolute][columnAbsolute], paleta);
                 } else if (tryb == TrybObrazu::PaletaWykryta) {
                     // TODO: funkcja ktora da index z palety
                     // nie wiem co jezeli nie ma koloru w palecie bo max 256 xd
                 } else if (tryb == TrybObrazu::PaletaDedykowana) {
                     bitset5[bitIndex] = znajdzNajblizszyKolorIndex(
-                        obrazek[columnAbsolute][rowAbsolute], paleta);
+                        obrazek[rowAbsolute][columnAbsolute], paleta);
                 } else {
                     throw std::invalid_argument("Nieznany tryb obrazu");
                 }
