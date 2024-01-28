@@ -449,7 +449,7 @@ void OdczytZPliku(const std::string &filename) {
     wejscie.read((char *)&tryb, sizeof(Uint8));
     wejscie.read((char *)&dithering, sizeof(Uint8));
 
-    cout << "id: " << std::hex << (int)id[0] << (int)id[1] << std::dec << endl;
+    cout << "id: " << id[0] << id[1] << endl;
     cout << "szerokosc: " << szerokoscObrazu << endl;
     cout << "wysokosc: " << wysokoscObrazu << endl;
     cout << "tryb: " << (int)tryb << endl;
