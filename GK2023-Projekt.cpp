@@ -301,7 +301,8 @@ void KonwertujBmpNaKfc(std::string bmpZrodlo, std::string kfcCel, TrybObrazu try
                 paletaSet.insert(c);
                 // mamy tutaj 256 kolorow max, w dokumentacji jest ze paleta ma
                 // 256 * 3 (bo RGB)
-                if (paletaSet.size() >= 256) break;
+                // ale my mamy 5 bitow wiec 32??
+                if (paletaSet.size() >= 32) break;
             }
             paleta = Canvas1D(paletaSet.begin(), paletaSet.end());
             break;
@@ -388,8 +389,15 @@ void ZapisDoPliku(std::string nazwaPliku, TrybObrazu tryb, Dithering dithering,
                     bitset5[bitIndex] = znajdzNajblizszyKolorIndex(
                         obrazek[rowAbsolute][columnAbsolute], paleta);
                 } else if (tryb == TrybObrazu::PaletaWykryta) {
-                    // TODO: funkcja ktora da index z palety
-                    // nie wiem co jezeli nie ma koloru w palecie bo max 256 xd
+                    // TODO: nie wiem co jezeli nie ma koloru w palecie bo max 32 
+                    // aktualnie zapisuje zero poprostu
+                    auto it = std::find(paleta.begin(), paleta.end(), obrazek[rowAbsolute][columnAbsolute]);
+                    if (it != myVector.end()) {
+                         bitset5[bitIndex] = std::distance(myVector.begin(), it);
+                    } else {                        
+                        std::cout << "Nie ma takiego koloru w palecie wykrytej, zapisuje 0!!!" << std::endl;
+                        bitset5[bitIndex] = 0;
+                    }
                 } else if (tryb == TrybObrazu::PaletaDedykowana) {
                     bitset5[bitIndex] = znajdzNajblizszyKolorIndex(
                         obrazek[rowAbsolute][columnAbsolute], paleta);
@@ -425,10 +433,6 @@ void ZapisDoPliku(std::string nazwaPliku, TrybObrazu tryb, Dithering dithering,
     // Write remaining bits if there are any
     if (bitCount > 0) {
         wyjscie.put(buffer);
-    }
-
-
-    if (tryb == TrybObrazu::PaletaNarzucona) {
     }
 
     wyjscie.close();
