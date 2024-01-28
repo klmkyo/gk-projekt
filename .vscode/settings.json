@@ -78,7 +78,8 @@
     "stop_token": "cpp",
     "cinttypes": "cpp",
     "map": "cpp",
-    "fstream": "cpp"
+    "fstream": "cpp",
+    "unordered_set": "cpp"
   },
 
   "editor.wordWrapColumn": 160

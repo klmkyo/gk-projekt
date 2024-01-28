@@ -1,20 +1,21 @@
+#include <math.h>
 #include <stdio.h>
+#include <string.h>
+
 #include <algorithm>
 #include <bitset>
+#include <cmath>
 #include <exception>
 #include <fstream>
 #include <iostream>
-#include <string>
-#include <vector>
-#include <math.h>
-#include <cmath>
-#include <unordered_set>
-#include "SDL_surface.h"
-#include <string.h>
 #include <map>
+#include <string>
+#include <unordered_set>
+#include <vector>
+
+#include "SDL_surface.h"
 
 using namespace std;
-
 
 #define szerokosc 640
 #define wysokosc 400
@@ -26,6 +27,23 @@ using namespace std;
 struct Color {
     Uint8 r, g, b;
 };
+
+// wymagane dla unordered_set
+namespace std {
+template <>
+struct hash<Color> {
+    size_t operator()(const Color &k) const {
+        return ((hash<Uint8>()(k.r) ^ (hash<Uint8>()(k.g) << 1)) >> 1) ^
+               (hash<Uint8>()(k.b) << 1);
+    }
+};
+template <>
+struct equal_to<Color> {
+    bool operator()(const Color &lhs, const Color &rhs) const {
+        return lhs.r == rhs.r && lhs.g == rhs.g && lhs.b == rhs.b;
+    }
+};
+}  // namespace std
 
 typedef std::vector<std::vector<Color>> Canvas;
 typedef std::vector<Color> Canvas1D;
@@ -53,7 +71,7 @@ enum Dithering { Brak = 0, Bayer = 1, Floyd = 2 };
 constexpr int maxKolorow = 320 * 600;
 
 bool czyTrybJestZPaleta(TrybObrazu tryb) { return tryb >= 3; }
-SkladowaRGB najwiekszaRoznica(int start, int koniec, Canvas1D& obrazek);
+SkladowaRGB najwiekszaRoznica(int start, int koniec, Canvas1D &obrazek);
 
 void setPixel(int x, int y, Uint8 R, Uint8 G, Uint8 B);
 Color getPixel(int x, int y);
@@ -61,7 +79,8 @@ Color getPixel(int x, int y);
 Uint8 z24RGBna5RGB(Color kolor);
 Color z5RGBna24RGB(Uint8 kolor5bit);
 
-void ZapisDoPliku(TrybObrazu tryb, Dithering dithering, Canvas &obrazek, Canvas1D &paleta);
+void ZapisDoPliku(TrybObrazu tryb, Dithering dithering, Canvas &obrazek,
+                  Canvas1D &paleta);
 void czyscEkran(Uint8 R, Uint8 G, Uint8 B);
 
 void KonwertujBmpNaKfc(const char *bmpZrodlo, TrybObrazu tryb);
@@ -152,8 +171,8 @@ void medianCutBW(int start, int koniec, int iteracja, Canvas1D &obrazek,
     }
 }
 
-void medianCutRGB(int start, int koniec, int iteracja, Canvas1D& obrazek,
-                             Canvas1D &paleta) {
+void medianCutRGB(int start, int koniec, int iteracja, Canvas1D &obrazek,
+                  Canvas1D &paleta) {
     if (iteracja > 0) {
         // sortowanie wtorkowego kubełka kfc za 22 zł
         SkladowaRGB skladowa = najwiekszaRoznica(start, koniec, obrazek);
@@ -183,17 +202,16 @@ void medianCutRGB(int start, int koniec, int iteracja, Canvas1D& obrazek,
         }
         int ilosc = koniec + 1 - start;
         Color nowyKolor = {Uint8(sumaR / ilosc), Uint8(sumaG / ilosc),
-                               Uint8(sumaB / ilosc)};
+                           Uint8(sumaB / ilosc)};
         paleta.push_back(nowyKolor);
 
         cout << "🍿 Kubełek " << paleta.size() << " (" << start << "," << koniec
-            << ") koloryRGB: " << (int)nowyKolor.r << " " << (int)nowyKolor.g << " "
-             << (int)nowyKolor.b << endl;
-
+             << ") koloryRGB: " << (int)nowyKolor.r << " " << (int)nowyKolor.g
+             << " " << (int)nowyKolor.b << endl;
     }
 }
 
-int znajdzNajblizszyKolorIndex(Color kolor, Canvas1D& paleta) {
+int znajdzNajblizszyKolorIndex(Color kolor, Canvas1D &paleta) {
     int najblizszyKolor = 0;
     int najmniejszaRoznica = 255;
     for (int j = 0; j < paleta.size(); j++) {
@@ -207,13 +225,13 @@ int znajdzNajblizszyKolorIndex(Color kolor, Canvas1D& paleta) {
     return najblizszyKolor;
 }
 
-int znajdzNajblizszyKolorBWIndex(Uint8 szary, Canvas1D& paleta) {
+int znajdzNajblizszyKolorBWIndex(Uint8 szary, Canvas1D &paleta) {
     Color c;
     c.r = szary;
     return znajdzNajblizszyKolorIndex(c, paleta);
 }
 
-Color znajdzNajblizszyKolor(Color kolor, Canvas1D& paleta) {
+Color znajdzNajblizszyKolor(Color kolor, Canvas1D &paleta) {
     int najblizszyKolor = 0;
     int najmniejszaRoznica = 255;
     for (int j = 0; j < paleta.size(); j++) {
@@ -227,7 +245,7 @@ Color znajdzNajblizszyKolor(Color kolor, Canvas1D& paleta) {
 }
 
 // in obrazek[start..koniec], find the color with highest difference
-SkladowaRGB najwiekszaRoznica(int start, int koniec, Canvas1D& obrazek) {
+SkladowaRGB najwiekszaRoznica(int start, int koniec, Canvas1D &obrazek) {
     Color min = {255, 255, 255};
     Color max = {0, 0, 0};
 
@@ -252,76 +270,6 @@ SkladowaRGB najwiekszaRoznica(int start, int koniec, Canvas1D& obrazek) {
     throw std::invalid_argument("Nieznana skladowa RGB");
 }
 
-// Co robi funkcja W
-// 1. Dzieli kubełki KFC na poziomie 2
-// 2. Buduje paletę uśredniając kolory z określonego kubełka KFC
-// 3. Dla każdego piksela znajduje najbliższy kolor z palety
-// 4. Wyświetla wartości
-void FunkcjaW() {
-    // Color kolor;
-    // Uint8 szary;
-    // int numer = 0, indeks = 0;
-    // for (int y = 0; y < wysokosc / 2; y++) {
-    //     for (int x = 0; x < szerokosc / 2; x++) {
-    //         kolor = getPixel(x, y);
-    //         szary = 0.299 * kolor.r + 0.587 * kolor.g + 0.114 * kolor.b;
-    //         obrazek[numer] = {szary, szary, szary};
-    //         setPixel(x + szerokosc / 2, y, szary, szary, szary);
-    //         numer++;
-    //     }
-    // }
-    // SDL_UpdateWindowSurface(window);
-    // medianCutBW(0, numer - 1, 2);
-
-    // for (int y = 0; y < wysokosc / 2; y++) {
-    //     for (int x = 0; x < szerokosc / 2; x++) {
-    //         kolor = getPixel(x, y);
-    //         szary = 0.299 * kolor.r + 0.587 * kolor.g + 0.114 * kolor.b;
-    //         indeks = znajdzNajblizszyKolorBWIndex(szary);
-
-    //         setPixel(x + szerokosc / 2, y + wysokosc / 2, paleta[indeks].r,
-    //                  paleta[indeks].g, paleta[indeks].b);
-    //     }
-    // }
-
-}
-
-// Co robi funkcja E
-// 1. Dzieli kubełki KFC na poziomie 2
-// 2. Buduje paletę uśredniając kolory z określonego kubełka KFC
-// 3. Dla każdego piksela znajduje najbliższy kolor z palety
-// 4. Wyświetla wartości
-// dobra, tak bez pierdolenia, ta funkcja robi to samo co funkcja W, tylko
-// zamiast szarości używa RGB
-
-void FunkcjaE() {
-    // Color kolor;
-    // Color nowyKolor;
-    // int numer = 0, indeks = 0;
-    // for (int y = 0; y < wysokosc / 2; y++) {
-    //     for (int x = 0; x < szerokosc / 2; x++) {
-    //         kolor = getPixel(x, y);
-    //         obrazek[numer] = kolor;
-    //         numer++;
-    //     }
-    // }
-    // medianCutRGB(0, numer - 1, 5);
-
-    // for (int y = 0; y < wysokosc / 2; y++) {
-    //     for (int x = 0; x < szerokosc / 2; x++) {
-    //         kolor = getPixel(x, y);
-    //         indeks = znajdzNajblizszyKolorIndex(kolor);
-
-    //         cout << "Dla " << x << ", " << y << " wybrano kolor index "
-    //              << indeks << endl;
-
-    //         setPixel(x + szerokosc / 2, y + wysokosc / 2, paleta[indeks].r,
-    //                  paleta[indeks].g, paleta[indeks].b);
-    //     }
-    // }
-
-}
-
 void FunkcjaR() {
     KonwertujBmpNaKfc("obrazek1.bmp", TrybObrazu::SzaroscNarzucona);
 }
@@ -334,34 +282,40 @@ void KonwertujBmpNaKfc(const char *bmpZrodlo, TrybObrazu tryb) {
 
     // dithering itd
     // tutaj powstaje paleta
-    
+
     // * switch tymczasowo zakomentowany by sie kompilowało
 
     Canvas1D obrazek1D = wyprostujCanvas(obrazek);
     Canvas1D paleta;
-    /*switch(tryb) {
-        case TrybObrazu::PaletaDedykowana:
+    switch (tryb) {
+        case TrybObrazu::PaletaDedykowana: {
             medianCutRGB(0, obrazek1D.size() - 1, 5, obrazek1D, paleta);
-        break;
-        case TrybObrazu::SzaroscDedykowana:
+            break;
+        }
+        case TrybObrazu::SzaroscDedykowana: {
             medianCutBW(0, obrazek1D.size() - 1, 5, obrazek1D, paleta);
-        break;
-        case TrybObrazu::PaletaWykryta:
+            break;
+        }
+        case TrybObrazu::PaletaWykryta: {
             // PaletaWykryta z tego co patrzylem na stare commity
-            // to poprostu iteracja po kolorach w obrazie i jak nie ma go juz w palecie to go dodajemy
-            // jak juz jest 256 to wiecej nie dodajemyp 
+            // to poprostu iteracja po kolorach w obrazie i jak nie ma go juz w
+            // palecie to go dodajemy jak juz jest 256 to wiecej nie dodajemyp
             // mozna to by bylo zrobic find_if ale chyba tez tak git
             std::unordered_set<Color> paletaSet;
-            for(const auto& c: obrazek1D) {
+            for (const auto &c : obrazek1D) {
                 paletaSet.insert(c);
-                // mamy tutaj 256 kolorow max, w dokumentacji jest ze paleta ma 256 * 3 (bo RGB)  
-                if(paletaSet.size() > 256) break;
+                // mamy tutaj 256 kolorow max, w dokumentacji jest ze paleta ma
+                // 256 * 3 (bo RGB)
+                if (paletaSet.size() >= 256) break;
             }
             paleta = Canvas1D(paletaSet.begin(), paletaSet.end());
-        break;
-        default:
-        break;
-    }*/
+            break;
+        }
+
+        default: {
+            break;
+        }
+    }
     ZapisDoPliku(tryb, Dithering::Brak, obrazek, paleta);
 }
 
@@ -383,11 +337,11 @@ void KonwertujBmpNaKfc(const char *bmpZrodlo, TrybObrazu tryb) {
  * @param dithering Informacja o tym, z jakim ditheringiem jest podany Canvas
  * @param obrazek Canvas, który zostanie zapisany do pliku
  */
-void ZapisDoPliku(TrybObrazu tryb, Dithering dithering, Canvas &obrazek, Canvas1D &paleta) {
+void ZapisDoPliku(TrybObrazu tryb, Dithering dithering, Canvas &obrazek,
+                  Canvas1D &paleta) {
     Uint16 szerokoscObrazu = szerokosc / 2;
     Uint16 wysokoscObrazu = wysokosc / 2;
     cout << "Zapisuje obrazek do pliku" << endl;
-
 
     // lepszy sens by bylo gdyby id to bylo 3 i 3 jako liczba zespolu cnie
     char id[2] = {0x19, 0x52};
@@ -433,12 +387,12 @@ void ZapisDoPliku(TrybObrazu tryb, Dithering dithering, Canvas &obrazek, Canvas1
                         z24RGBna5BW(obrazek[columnAbsolute][rowAbsolute]) >> 3;
                 } else if (tryb == TrybObrazu::SzaroscDedykowana) {
                     // też adresy do palety (która jest poprostu szara xD)
-                    
+
                     bitset5[bitIndex] = znajdzNajblizszyKolorIndex(
                         obrazek[columnAbsolute][rowAbsolute], paleta);
                 } else if (tryb == TrybObrazu::PaletaWykryta) {
                     // TODO: funkcja ktora da index z palety
-                    // nie wiem co jezeli nie ma koloru w palecie bo max 256 xd 
+                    // nie wiem co jezeli nie ma koloru w palecie bo max 256 xd
                 } else if (tryb == TrybObrazu::PaletaDedykowana) {
                     bitset5[bitIndex] = znajdzNajblizszyKolorIndex(
                         obrazek[columnAbsolute][rowAbsolute], paleta);
@@ -497,8 +451,7 @@ void ZapisDoPliku(TrybObrazu tryb, Dithering dithering, Canvas &obrazek, Canvas1
     wyjscie.close();
 }
 
-
-void OdczytZPliku(const std::string& filename) {
+void OdczytZPliku(const std::string &filename) {
     std::cout << "Wczytuje obrazek " << filename << " z pliku..." << std::endl;
 
     ifstream wejscie(filename, ios::binary);
@@ -513,17 +466,6 @@ void OdczytZPliku(const std::string& filename) {
     wejscie.read((char *)&wysokoscObrazu, sizeof(char) * 2);
     wejscie.read((char *)&tryb, sizeof(Uint8));
     wejscie.read((char *)&dithering, sizeof(Uint8));
-    // if (tryb >= TrybObrazu::SzaroscDedykowana) {
-    //     // wczytac palete[256???] w offsetcie 8
-    //     // tryb 1 to funkcja 5(tutaj z24 na 8bit) lub 6(tutaj z 24 na 5 bit)
-    //     // tryb 2 to funkcja 7 chyba tylko jakies przesuniecie jest
-    //     // tryb 3 to funkcja ???
-    //     // tryb 4 to funkcja ???
-    //     // tryb 5 to funkcja ???
-
-    // } else {
-    // }
-
 
     cout << "id: " << id[0] << id[1] << endl;
     cout << "szerokosc: " << szerokoscObrazka << endl;
@@ -538,7 +480,6 @@ void FunkcjaT() {
     const std::string filename = "obrazek.kfc";
     OdczytZPliku(filename);
 }
-
 
 SDL_Color getPixelSurface(int x, int y, SDL_Surface *surface) {
     SDL_Color color;
@@ -582,39 +523,37 @@ void ladujBMPDoPamieci(char const *nazwa, Canvas &obrazek) {
     }
 }
 
-
 // flatten canvas
 Canvas1D wyprostujCanvas(Canvas &obrazek) {
     Canvas1D obrazek1D;
     obrazek1D.reserve(szerokoscObrazka * wysokoscObrazka);
 
-    for(const auto& r: obrazek) {
-        for(const auto& c: r) {
+    for (const auto &r : obrazek) {
+        for (const auto &c : r) {
             obrazek1D.push_back(c);
-        }   
+        }
     }
 
     return obrazek1D;
 }
-
 
 typedef std::map<int, std::vector<std::string>> CommandAliasMap;
 
 template <typename T>
 using ParameterMap = std::map<char, T>;
 
-int findCommand(CommandAliasMap& commandsAliases, std::string command) {
-    for (auto& aliases : commandsAliases) {
-        for (auto& alias : aliases.second) {
-            if (alias == command)
-                return aliases.first;
+int findCommand(CommandAliasMap &commandsAliases, std::string command) {
+    for (auto &aliases : commandsAliases) {
+        for (auto &alias : aliases.second) {
+            if (alias == command) return aliases.first;
         }
     }
     return 0;
 }
 
 /* Czyta parametry -t, -s itd.. oraz ich wartości do mapy parametrów */
-void readParameterMap(ParameterMap<std::string> &parameterMap, int offset, int argc, char *argv[]) {
+void readParameterMap(ParameterMap<std::string> &parameterMap, int offset,
+                      int argc, char *argv[]) {
     for (int i = offset; i < argc; i++) {
         if (sizeof(argv[i]) < 2) continue;
         if (argv[i][0] == '-' && i + 1 < argc)
@@ -632,98 +571,138 @@ int main(int argc, char *argv[]) {
     /* tobmp - odczytuje plik kfc, zapisuje plik bmp */
     commandsAliases[1] = {"tobmp", "-t", "-tobmp"};
     /* frombmp - odczytuje plik bmp, zapisuje plik kfc */
-    commandsAliases[2] = {"frombmp", "-f", "-frombmp"}; 
-    
-    const std::string appName = argc<1 ? "kfc" : argv[0];
+    commandsAliases[2] = {"frombmp", "-f", "-frombmp"};
+
+    const std::string appName = argc < 1 ? "kfc" : argv[0];
 
     /* Wypisuje wszystkie dostępne komendy bez opisu */
-    if (argc <= 1 
-    || (argc == 2 && (std::string(argv[1]) == "help" || std::string(argv[1]) == "-help"))) {
+    if (argc <= 1 || (argc == 2 && (std::string(argv[1]) == "help" ||
+                                    std::string(argv[1]) == "-help"))) {
         std::cout << "  Witamy w konwerterze obrazów 🍗 KFC <-> 🎨 BMP.\n"
-        << "Dostępne operacje:\n"
-        << "1. Konwersja formatu KFC na BMP\n"
-        << "> "<<appName<<" tobmp <ścieżka_pliku_kfc> [-s ścieżka_pliku_bmp]\n"
-        << "Wyświetl więcej informacji używając '"<<appName<<" -help tobmp'\n"
-        << "2. Konwersja formatu BMP na KFC\n"
-        << "> "<<appName<<" frombmp <ścieżka_pliku_bmp> [-s ścieżka_pliku_kfc] [-t tryb(1-5)] [-d dithering(none/bayer/floyd)]\n"
-        << "Wyświetl więcej informacji używając '"<<appName<<" -help tobmp'\n";
-    } 
-    
-    /* W przypadku wysłania 'kfc help <command_name>' wyświetlony zostanie opis komendy */
-    else if (argc == 3 && (std::string(argv[1]) == "help" || std::string(argv[1]) == "-help")) {
+                  << "Dostępne operacje:\n"
+                  << "1. Konwersja formatu KFC na BMP\n"
+                  << "> " << appName
+                  << " tobmp <ścieżka_pliku_kfc> [-s ścieżka_pliku_bmp]\n"
+                  << "Wyświetl więcej informacji używając '" << appName
+                  << " -help tobmp'\n"
+                  << "2. Konwersja formatu BMP na KFC\n"
+                  << "> " << appName
+                  << " frombmp <ścieżka_pliku_bmp> [-s ścieżka_pliku_kfc] [-t "
+                     "tryb(1-5)] [-d dithering(none/bayer/floyd)]\n"
+                  << "Wyświetl więcej informacji używając '" << appName
+                  << " -help tobmp'\n";
+    }
+
+    /* W przypadku wysłania 'kfc help <command_name>' wyświetlony zostanie opis
+       komendy */
+    else if (argc == 3 && (std::string(argv[1]) == "help" ||
+                           std::string(argv[1]) == "-help")) {
         int primaryCommandId = findCommand(commandsAliases, argv[2]);
-        switch(primaryCommandId) {
+        switch (primaryCommandId) {
             case 1: { /* tobmp */
-                std::cout << "> "<<appName<<" tobmp <ścieżka_pliku_kfc> [-s ścieżka_pliku_bmp]\n"
-                << "Opis: Komenda 'tobmp' konwertuje plik w formacie KFC na format BMP \n"
-                << "Parametry obowiązkowe:\n"
-                << "\t<ścieżka_pliku_kfc> - ścieżka do pliku w formacie kfc (relatywna lub absolutna)\n"
-                << "Parametry opcjonalne:\n"
-                << "\t[-s ścieżka_pliku_bmp] - ścieżka do nowo utworzonego pliku (domyślnie plik kfc ze zmienionym rozszerzeniem)\n";
+                std::cout
+                    << "> " << appName
+                    << " tobmp <ścieżka_pliku_kfc> [-s ścieżka_pliku_bmp]\n"
+                    << "Opis: Komenda 'tobmp' konwertuje plik w formacie KFC "
+                       "na format BMP \n"
+                    << "Parametry obowiązkowe:\n"
+                    << "\t<ścieżka_pliku_kfc> - ścieżka do pliku w formacie "
+                       "kfc (relatywna lub absolutna)\n"
+                    << "Parametry opcjonalne:\n"
+                    << "\t[-s ścieżka_pliku_bmp] - ścieżka do nowo utworzonego "
+                       "pliku (domyślnie plik kfc ze zmienionym "
+                       "rozszerzeniem)\n";
                 break;
             }
             case 2: { /* frombmp*/
-                std::cout << "> "<<appName<<" frombmp <ścieżka_pliku_kfc> [-s ścieżka_pliku_bmp] [-t tryb(1-5)] [-d dithering(none/bayer/floyd)]\n"
-                << "Opis: Komenda 'frombmp' konwertuje plik w formacie BMP na format KFC \n"
-                << "Parametry obowiązkowe:\n"
-                << "\t<ścieżka_pliku_bmp> - ścieżka do pliku w formacie bmp (relatywna lub absolutna)\n"
-                << "Parametry opcjonalne:\n"
-                << "\t[-s ścieżka_pliku_kfc] - ścieżka do nowo utworzonego pliku (domyślnie plik bmp ze zmienionym rozszerzeniem)\n"
-                << "\t[-t tryb(1-5)] - tryb konwersji obrazu (domyślnie 1), dostępne tryby:\n"
-                << "\t\t1 - Paleta narzucona\n"
-                << "\t\t2 - Szarość narzucona\n"
-                << "\t\t3 - Paleta wykryta\n"
-                << "\t\t4 - Szarość wykryta\n"
-                << "\t\t5 - Paleta dedykowana\n"
-                << "\t[-d dithering(none/bayer/floyd)] - tryb ditheringu (domyślnie none - bez ditheringu)\n";
+                std::cout
+                    << "> " << appName
+                    << " frombmp <ścieżka_pliku_kfc> [-s ścieżka_pliku_bmp] "
+                       "[-t tryb(1-5)] [-d dithering(none/bayer/floyd)]\n"
+                    << "Opis: Komenda 'frombmp' konwertuje plik w formacie BMP "
+                       "na format KFC \n"
+                    << "Parametry obowiązkowe:\n"
+                    << "\t<ścieżka_pliku_bmp> - ścieżka do pliku w formacie "
+                       "bmp (relatywna lub absolutna)\n"
+                    << "Parametry opcjonalne:\n"
+                    << "\t[-s ścieżka_pliku_kfc] - ścieżka do nowo utworzonego "
+                       "pliku (domyślnie plik bmp ze zmienionym "
+                       "rozszerzeniem)\n"
+                    << "\t[-t tryb(1-5)] - tryb konwersji obrazu (domyślnie "
+                       "1), dostępne tryby:\n"
+                    << "\t\t1 - Paleta narzucona\n"
+                    << "\t\t2 - Szarość narzucona\n"
+                    << "\t\t3 - Paleta wykryta\n"
+                    << "\t\t4 - Szarość wykryta\n"
+                    << "\t\t5 - Paleta dedykowana\n"
+                    << "\t[-d dithering(none/bayer/floyd)] - tryb ditheringu "
+                       "(domyślnie none - bez ditheringu)\n";
                 break;
             }
             default: {
-                std::cout << "Nieznana komenda. Użyj '"<<appName<<" help' aby dowiedzieć się o istniejących komendach." << std::endl;
+                std::cout
+                    << "Nieznana komenda. Użyj '" << appName
+                    << " help' aby dowiedzieć się o istniejących komendach."
+                    << std::endl;
                 break;
             }
         }
     }
 
-    /* W pozostałych przypadkach będzie próba rozpoznania komendy z 1 argumentu i jej wykonanie */
+    /* W pozostałych przypadkach będzie próba rozpoznania komendy z 1 argumentu
+       i jej wykonanie */
     else if (argc > 1) {
         int primaryCommandId = findCommand(commandsAliases, argv[1]);
 
-        switch(primaryCommandId) {
+        switch (primaryCommandId) {
             case 1: { /* tobmp <ścieżka_pliku_kfc> [-s ścieżka_pliku_bmp] */
                 if (argc < 3) {
-                    std::cout << "Nie podano ścieżki do pliku kfc. Użyj '"<<appName<<" help tobmp' aby dowiedzieć się więcej." << std::endl;
+                    std::cout << "Nie podano ścieżki do pliku kfc. Użyj '"
+                              << appName
+                              << " help tobmp' aby dowiedzieć się więcej."
+                              << std::endl;
                     break;
                 }
                 std::string kfcPath = argv[2];
                 ParameterMap<std::string> parameterMap;
                 readParameterMap(parameterMap, 3, argc, argv);
                 /* parametr s - scieżka pliku kfc */
-                std::string bmpPath = hasParameter(parameterMap, 's') 
-                                    ? parameterMap['s'] 
-                                    : kfcPath.substr(0, kfcPath.find_last_of('.')) + ".bmp";
+                std::string bmpPath =
+                    hasParameter(parameterMap, 's')
+                        ? parameterMap['s']
+                        : kfcPath.substr(0, kfcPath.find_last_of('.')) + ".bmp";
 
-                std::cout << "< placeholder tobmp("+kfcPath+", "+bmpPath+") >" << std::endl;
+                std::cout << "< placeholder tobmp(" + kfcPath + ", " + bmpPath +
+                                 ") >"
+                          << std::endl;
                 break;
             }
-            case 2: { /* frombmp <ścieżka_pliku_kfc> [-s ścieżka_pliku_bmp] [-t tryb(1-5)] [-d dithering(none/bayer/floyd)] */
+            case 2: { /* frombmp <ścieżka_pliku_kfc> [-s ścieżka_pliku_bmp] [-t
+                         tryb(1-5)] [-d dithering(none/bayer/floyd)] */
                 if (argc < 3) {
-                    std::cout << "Nie podano ścieżki do pliku bmp. Użyj '"<<appName<<" help frombmp' aby dowiedzieć się więcej." << std::endl;
+                    std::cout << "Nie podano ścieżki do pliku bmp. Użyj '"
+                              << appName
+                              << " help frombmp' aby dowiedzieć się więcej."
+                              << std::endl;
                     break;
                 }
                 std::string bmpPath = argv[2];
                 ParameterMap<std::string> parameterMap;
                 readParameterMap(parameterMap, 3, argc, argv);
                 /* parametr s - scieżka pliku kfc */
-                std::string kfcPath = hasParameter(parameterMap, 's') 
-                                    ? parameterMap['s'] 
-                                    : bmpPath.substr(0, bmpPath.find_last_of('.')) + ".kfc";
+                std::string kfcPath =
+                    hasParameter(parameterMap, 's')
+                        ? parameterMap['s']
+                        : bmpPath.substr(0, bmpPath.find_last_of('.')) + ".kfc";
                 /* parametr t - tryb obrazu */
                 TrybObrazu tryb = TrybObrazu::PaletaNarzucona;
                 if (hasParameter(parameterMap, 't')) {
                     int _tryb = std::stoi(parameterMap['t']);
                     if (_tryb < 1 || _tryb > 5) {
-                        std::cout << "Nieprawidłowy tryb konwersji. Użyj '"<<appName<<" help frombmp' aby dowiedzieć się więcej." << std::endl;
+                        std::cout << "Nieprawidłowy tryb konwersji. Użyj '"
+                                  << appName
+                                  << " help frombmp' aby dowiedzieć się więcej."
+                                  << std::endl;
                         break;
                     }
                     tryb = static_cast<TrybObrazu>(_tryb);
@@ -732,19 +711,29 @@ int main(int argc, char *argv[]) {
                 Dithering dithering = Dithering::Brak;
                 if (hasParameter(parameterMap, 'd')) {
                     std::string _dithering = parameterMap['d'];
-                    if (_dithering == "none") dithering = Dithering::Brak;
-                    else if (_dithering == "bayer") dithering = Dithering::Bayer;
-                    else if (_dithering == "floyd") dithering = Dithering::Floyd;
+                    if (_dithering == "none")
+                        dithering = Dithering::Brak;
+                    else if (_dithering == "bayer")
+                        dithering = Dithering::Bayer;
+                    else if (_dithering == "floyd")
+                        dithering = Dithering::Floyd;
                     else {
-                        std::cout << "Nieprawidłowy tryb ditheringu. Użyj '"<<appName<<" help frombmp' aby dowiedzieć się więcej." << std::endl;
+                        std::cout << "Nieprawidłowy tryb ditheringu. Użyj '"
+                                  << appName
+                                  << " help frombmp' aby dowiedzieć się więcej."
+                                  << std::endl;
                         break;
                     }
                 }
-                std::cout << "< placeholder frombmp("+bmpPath+", "+kfcPath+", "<<tryb<<", "<<dithering<<") >" << std::endl;
+                std::cout << "< placeholder frombmp(" + bmpPath + ", " +
+                                 kfcPath + ", "
+                          << tryb << ", " << dithering << ") >" << std::endl;
                 break;
             }
             default: {
-                std::cout << "Nieznana komenda. Użyj '"<<appName<<" help' aby dowiedzieć się o dostępnych komendach." << std::endl;
+                std::cout << "Nieznana komenda. Użyj '" << appName
+                          << " help' aby dowiedzieć się o dostępnych komendach."
+                          << std::endl;
                 break;
             }
         }
