@@ -171,6 +171,8 @@ void medianCutBW(int start, int koniec, int iteracja, Canvas1D &obrazek,
 
 void medianCutRGB(int start, int koniec, int iteracja, Canvas1D &obrazek,
                   Canvas1D &paleta) {
+    std::cout << "medianCutRGB start: " << start << " koniec: " << koniec
+              << " iteracja: " << iteracja << std::endl;
     if (iteracja > 0) {
         // sortowanie wtorkowego kubełka kfc za 22 zł
         SkladowaRGB skladowa = najwiekszaRoznica(start, koniec, obrazek);
@@ -283,7 +285,7 @@ void KonwertujBmpNaKfc(std::string bmpZrodlo, TrybObrazu tryb) {
     Canvas1D paleta;
     switch (tryb) {
         case TrybObrazu::PaletaDedykowana: {
-            medianCutRGB(0, obrazek1D.size() - 1, 5, obrazek1D, paleta);
+            medianCutRGB(0, obrazek1D.size() - 1, 5, obrazek1D, paleta); // TODO! tutaj też się sypie
             break;
         }
         case TrybObrazu::SzaroscDedykowana: {
@@ -312,16 +314,15 @@ void KonwertujBmpNaKfc(std::string bmpZrodlo, TrybObrazu tryb) {
     }
 
     ZapisDoPliku(tryb, Dithering::Brak, obrazek, paleta);
-
+    // a bez tego dziala?
+    // nah
+    
     // manually destroy the canvas
     paleta.~Canvas1D();
     obrazek1D.~Canvas1D();
-    for (auto &row : obrazek) {
-        // prin the address of the row
-        std::cout << &row << std::endl;
-        // TO SIĘ WYWALA PRZY DRUGIEJ ITERACJI
-        row.~vector<Color>();
-    }
+    obrazek[2].~vector<Color>(); // crashuje
+    obrazek[1].~vector<Color>(); // crashuje
+    obrazek[0].~vector<Color>(); // nie crashuje
     obrazek.~Canvas();
     std::cout << "Zapisano obrazek w formacie KFC" << std::endl;
 
@@ -694,7 +695,7 @@ int main(int argc, char *argv[]) {
                         ? parameterMap['s']
                         : bmpPath.substr(0, bmpPath.find_last_of('.')) + ".kfc";
                 /* parametr t - tryb obrazu */
-                TrybObrazu tryb = TrybObrazu::PaletaNarzucona;
+                TrybObrazu tryb = TrybObrazu::PaletaDedykowana;
                 if (hasParameter(parameterMap, 't')) {
                     int _tryb = std::stoi(parameterMap['t']);
                     if (_tryb < 1 || _tryb > 5) {
