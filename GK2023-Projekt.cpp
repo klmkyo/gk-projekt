@@ -26,6 +26,10 @@ struct Color {
     Uint8 r, g, b;
 };
 
+const char FILE_SIGNATURE[2] = {0x00, 0x33};
+
+
+
 // wymagane dla unordered_set
 namespace std {
 template <>
@@ -341,26 +345,28 @@ void ZapisDoPliku(TrybObrazu tryb, Dithering dithering, Canvas &obrazek,
                   Canvas1D &paleta) {
     Uint16 szerokoscObrazu = obrazek[0].size();
     Uint16 wysokoscObrazu = obrazek.size();
-    cout << "Zapisuje obrazek do pliku" << endl;
+    cout << "Zapisuje obrazek do pliku..." << endl;
 
-    // lepszy sens by bylo gdyby id to bylo 3 i 3 jako liczba zespolu cnie
-    char id[2] = {0x19, 0x52};
+
+
     ofstream wyjscie("obraz.kfc", ios::binary);
-    wyjscie.write((char *)&id, sizeof(char) * 2);
+    wyjscie.write((char *)&FILE_SIGNATURE, sizeof(char) * 2);
     wyjscie.write((char *)&szerokoscObrazu, sizeof(char) * 2);
     wyjscie.write((char *)&wysokoscObrazu, sizeof(char) * 2);
     wyjscie.write((char *)&tryb, sizeof(Uint8));
     wyjscie.write((char *)&dithering, sizeof(Uint8));
 
-    // 1, 2 - tryby bez palety -> rozmiar danych
-    // 3, 4, 5 - tryby z paletą -> poleta, rozmiar danych.
+   
     if (czyTrybJestZPaleta(tryb)) {
-        // TODO: PALETA_SIZEE moze byc tutaj bledne
-        wyjscie.write((char *)&paleta, PALETA_SIZE);
+        for(const auto& c: paleta) {
+            wyjscie.write((char *)&c, sizeof(Color));
+        }
     }
 
     // ilosc bitow zawsze taka sama niezaleznie od trybu
     int iloscBitowDoZapisania = 5 * szerokoscObrazu * wysokoscObrazu;
+    wyjscie.write((char*)&iloscBitowDoZapisania, sizeof(int));
+
     vector<bitset<5>> bitset5(iloscBitowDoZapisania);
 
     if (szerokoscObrazu % 8 != 0) {
