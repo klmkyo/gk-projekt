@@ -243,6 +243,20 @@ Color znajdzNajblizszyKolor(Color kolor, Canvas1D &paleta) {
     return paleta[najblizszyKolor];
 }
 
+Color znajdzNajblizszyKolorBW(Color kolor, Canvas1D &paleta) {
+    int najblizszyKolor = 0;
+    int najmniejszaRoznica = INT_MAX;
+    for (int j = 0; j < paleta.size(); j++) {
+        int roznica = abs(paleta[j].r - kolor.r);
+        if (roznica < najmniejszaRoznica) {
+            najmniejszaRoznica = roznica;
+            najblizszyKolor = j;
+        }
+    }
+    return paleta[najblizszyKolor];
+}
+
+
 
 // in obrazek[start..koniec], find the color with highest difference
 SkladowaRGB najwiekszaRoznica(int start, int koniec, Canvas1D &obrazek) {
@@ -345,14 +359,17 @@ void applyBayerDithering(Canvas &image, bool blackWhite) {
 }
 
 
-void applyFloydSteinbergDithering(Canvas &image, Canvas1D &palette) {
+void applyFloydSteinbergDithering(Canvas &image, Canvas1D &palette, bool BW = false) {
     int width = image[0].size();
     int height = image.size();
 
     for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
             Color oldPixel = image[y][x];
-            Color newPixel = znajdzNajblizszyKolor(oldPixel, palette); // Find closest color in the palette
+            Color newPixel;
+
+                newPixel = znajdzNajblizszyKolor(oldPixel, palette);
+
             image[y][x] = newPixel;
 
             int errR = oldPixel.r - newPixel.r;
@@ -462,7 +479,7 @@ void KonwertujBmpNaKfc(std::string bmpZrodlo, std::string kfcCel, TrybObrazu try
     switch (d) {
         case Dithering::Floyd: {
             if(czyTrybJestZPaleta(tryb)) {
-                applyFloydSteinbergDithering(obrazek, paleta);
+                applyFloydSteinbergDithering(obrazek, paleta, tryb == TrybObrazu::SzaroscDedykowana);
             } else {
                 applyFloydSteinbergDithering(obrazek, tryb == TrybObrazu::SzaroscNarzucona);
             }
