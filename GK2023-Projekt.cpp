@@ -316,6 +316,12 @@ void KonwertujBmpNaKfc(std::string bmpZrodlo, TrybObrazu tryb) {
     // manually destroy the canvas
     paleta.~Canvas1D();
     obrazek1D.~Canvas1D();
+    for (auto &row : obrazek) {
+        // prin the address of the row
+        std::cout << &row << std::endl;
+        // TO SIĘ WYWALA PRZY DRUGIEJ ITERACJI
+        row.~vector<Color>();
+    }
     obrazek.~Canvas();
     std::cout << "Zapisano obrazek w formacie KFC" << std::endl;
 
@@ -521,7 +527,7 @@ Canvas1D wyprostujCanvas(Canvas &obrazek) {
     Canvas1D obrazek1D;
     obrazek1D.reserve(obrazek.size() * obrazek[0].size());
 
-    for (const auto &r : obrazek) {
+    for (const auto r : obrazek) {
         for (const auto c : r) {
             obrazek1D.push_back(c);
         }
