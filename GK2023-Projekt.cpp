@@ -83,7 +83,7 @@ void ZapisDoPliku(TrybObrazu tryb, Dithering dithering, Canvas &obrazek,
                   Canvas1D &paleta);
 void czyscEkran(Uint8 R, Uint8 G, Uint8 B);
 
-void KonwertujBmpNaKfc(const char *bmpZrodlo, TrybObrazu tryb);
+void KonwertujBmpNaKfc(std::string bmpZrodlo, TrybObrazu tryb);
 Canvas1D wyprostujCanvas(Canvas &obrazek);
 
 Uint8 normalizacja(int wartosc) {
@@ -98,7 +98,7 @@ void FunkcjaE();
 void FunkcjaR();
 void FunkcjaT();
 
-void ladujBMPDoPamieci(char const *nazwa, Canvas &obrazek);
+void ladujBMPDoPamieci(std::string nazwa, Canvas &obrazek);
 bool porownajKolory(Color kolor1, Color kolor2);
 
 Uint8 z24RGBna5RGB(Color kolor) {
@@ -270,13 +270,9 @@ SkladowaRGB najwiekszaRoznica(int start, int koniec, Canvas1D &obrazek) {
     throw std::invalid_argument("Nieznana skladowa RGB");
 }
 
-void FunkcjaR() {
-    KonwertujBmpNaKfc("obrazek1.bmp", TrybObrazu::SzaroscNarzucona);
-}
-
 /// takes a path to bmp file, and creates a converted version of it
 /// abc.bmp -> abc.kfc
-void KonwertujBmpNaKfc(const char *bmpZrodlo, TrybObrazu tryb) {
+void KonwertujBmpNaKfc(std::string bmpZrodlo, TrybObrazu tryb) {
     Canvas obrazek(wysokoscObrazka, std::vector<Color>(szerokoscObrazka));
     ladujBMPDoPamieci(bmpZrodlo, obrazek);
 
@@ -503,8 +499,8 @@ SDL_Color getPixelSurface(int x, int y, SDL_Surface *surface) {
     return (color);
 }
 
-void ladujBMPDoPamieci(char const *nazwa, Canvas &obrazek) {
-    SDL_Surface *bmp = SDL_LoadBMP(nazwa);
+void ladujBMPDoPamieci(std::string nazwa, Canvas &obrazek) {
+    SDL_Surface *bmp = SDL_LoadBMP(nazwa.c_str());
     if (!bmp) {
         printf("Unable to load bitmap: %s\n", SDL_GetError());
     } else {
@@ -725,9 +721,10 @@ int main(int argc, char *argv[]) {
                         break;
                     }
                 }
-                std::cout << "< placeholder frombmp(" + bmpPath + ", " +
-                                 kfcPath + ", "
-                          << tryb << ", " << dithering << ") >" << std::endl;
+                // std::cout << "< placeholder frombmp(" + bmpPath + ", " +
+                //                  kfcPath + ", "
+                //           << tryb << ", " << dithering << ") >" << std::endl;
+                KonwertujBmpNaKfc(bmpPath, tryb);
                 break;
             }
             default: {
