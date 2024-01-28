@@ -544,10 +544,13 @@ Canvas OdczytZPliku(const std::string &filename) {
     unsigned char buffer;
     int bitCount = 0;
     int bitIndex = 0;
+
     while (wejscie.get((char &)buffer)) {
         for (int i = 0; i < 8; ++i) {
-            // Read the bit from the file
-            bitset5[bitIndex][i] = buffer & (1 << bitCount);
+            int bit = (buffer >> i) & 1;
+
+            // Set the bit in the buffer
+            bitset5[bitIndex].set(bitCount, bit);
 
             bitCount++;
 
@@ -573,7 +576,7 @@ Canvas OdczytZPliku(const std::string &filename) {
 
                 if (tryb == TrybObrazu::PaletaNarzucona) {
                     obrazek[rowAbsolute][columnAbsolute] =
-                        z5RGBna24RGB(bitset5[bitIndex].to_ulong() << 3);
+                        z5RGBna24RGB(bitset5[bitIndex].to_ulong());
                 } else if (tryb == TrybObrazu::SzaroscNarzucona) {
                     obrazek[rowAbsolute][columnAbsolute] =
                         z5BWna24RGB(bitset5[bitIndex].to_ulong() << 3);
