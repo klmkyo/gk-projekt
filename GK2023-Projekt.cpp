@@ -102,9 +102,9 @@ bool porownajKolory(Color kolor1, Color kolor2);
 
 Uint8 z24RGBna5RGB(Color kolor) {
     Uint8 nowyR, nowyG, nowyB;
-    nowyR = round(kolor.r * 3.0 / 255.0);
-    nowyG = round(kolor.g * 3.0 / 255.0);
-    nowyB = round(kolor.b * 1.0 / 255.0);
+    nowyR = round(kolor.r * 3.0 / 255.0); // 100 -> 300 -> 1
+    nowyG = round(kolor.g * 3.0 / 255.0); // 100 -> 300 -> 1
+    nowyB = round(kolor.b * 1.0 / 255.0); // 100 -> 100 -> 1
 
     return (nowyR << 6) | (nowyG << 4) | (nowyB << 3);
 }
@@ -578,7 +578,7 @@ Canvas OdczytZPliku(const std::string &filename) {
 
                 if (tryb == TrybObrazu::PaletaNarzucona) {
                     obrazek[rowAbsolute][columnAbsolute] =
-                        z5RGBna24RGB(bitset5[bitIndex].to_ulong());
+                        z5RGBna24RGB(bitset5[bitIndex].to_ulong() << 3);
                 } else if (tryb == TrybObrazu::SzaroscNarzucona) {
                     obrazek[rowAbsolute][columnAbsolute] =
                         z5BWna24RGB(bitset5[bitIndex].to_ulong() << 3);
