@@ -314,16 +314,7 @@ void KonwertujBmpNaKfc(std::string bmpZrodlo, TrybObrazu tryb) {
     }
 
     ZapisDoPliku(tryb, Dithering::Brak, obrazek, paleta);
-    // a bez tego dziala?
-    // nah
-    
-    // manually destroy the canvas
-    paleta.~Canvas1D();
-    obrazek1D.~Canvas1D();
-    obrazek[2].~vector<Color>(); // crashuje
-    obrazek[1].~vector<Color>(); // crashuje
-    obrazek[0].~vector<Color>(); // nie crashuje
-    obrazek.~Canvas();
+
     std::cout << "Zapisano obrazek w formacie KFC" << std::endl;
 
 }
@@ -505,9 +496,9 @@ Canvas ladujBMPDoPamieci(std::string nazwa) {
         printf("Unable to load bitmap: %s\n", SDL_GetError());
         exit(1);
     } else {
-        Canvas obrazek(bmp->w, std::vector<Color>(bmp->h));
-
+        Canvas obrazek(bmp->h, std::vector<Color>(bmp->w));
         Color kolor;
+        
         for (int yy = 0; yy < bmp->h; yy++) {
             for (int xx = 0; xx < bmp->w; xx++) {
                 SDL_Color kolorSDL = getPixelSurface(xx, yy, bmp);
