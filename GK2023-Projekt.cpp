@@ -132,12 +132,70 @@ Color z5BWna24RGB(Uint8 kolor) {
     return kolor24bit;
 }
 
-void updateBledy(int xx, int yy, float (*bledy)[wysokosc / 2 + 2][3], int blad,
-                 int colorIndex, int przesuniecie) {
-    bledy[xx + 1 + przesuniecie][yy][colorIndex] += (blad * 7.0 / 16.0);
-    bledy[xx - 1 + przesuniecie][yy + 1][colorIndex] += (blad * 3.0 / 16.0);
-    bledy[xx + przesuniecie][yy + 1][colorIndex] += (blad * 5.0 / 16.0);
-    bledy[xx + 1 + przesuniecie][yy + 1][colorIndex] += (blad * 1.0 / 16.0);
+
+void updateBledy(int xx, int yy, float*** bledy, int blad,
+                 int colorIndex, int przesuniecie, int width, int height) {
+    if (xx + 1 + przesuniecie < height)
+        bledy[xx + 1 + przesuniecie][yy][colorIndex] += (blad * 7.0 / 16.0);
+    if (xx - 1 + przesuniecie >= 0 && yy + 1 < width)
+        bledy[xx - 1 + przesuniecie][yy + 1][colorIndex] += (blad * 3.0 / 16.0);
+    if (yy + 1 < width)
+        bledy[xx + przesuniecie][yy + 1][colorIndex] += (blad * 5.0 / 16.0);
+    if (xx + 1 + przesuniecie < height && yy + 1 < width)
+        bledy[xx + 1 + przesuniecie][yy + 1][colorIndex] += (blad * 1.0 / 16.0);
+}
+
+void ApplyFloydDithering(int width, int height, Canvas1D &source, Canvas1D &current, bool blackWhite) {
+    Uint8 przesuniecie = 1;
+
+    float*** bledy = new float**[height+2];
+    for (int i = 0; i < height+2; ++i) {
+        bledy[i] = new float*[width+2];
+        for (int j = 0; j < width+2; ++j) {
+            bledy[i][j] = new float[3];  // Assuming 3 colors: R, G, B
+        }
+    }
+
+    for (int xx = 0; xx < height; xx++) {
+        for (int yy = 0; yy < width; yy++) {
+            Color kolor = source[xx * width + yy];
+
+            Uint8 rZBledem =
+                normalizacja(kolor.r + bledy[xx + przesuniecie][yy][0]);
+            Uint8 gZBledem =
+                normalizacja(kolor.g + bledy[xx + przesuniecie][yy][1]);
+            Uint8 bZBledem =
+                normalizacja(kolor.b + bledy[xx + przesuniecie][yy][2]);
+
+            Color tempColor = Color{rZBledem, gZBledem, bZBledem};
+            Uint8 kolor5bit;
+            Color nowyKolor;
+            if (blackWhite) {
+                kolor5bit = z24RGBna5BW(tempColor);
+                nowyKolor = z5BWna24RGB(kolor5bit);
+            } else {
+                kolor5bit = z24RGBna5RGB(tempColor);
+                nowyKolor = z5RGBna24RGB(kolor5bit);
+            }
+            int rBlad = rZBledem - nowyKolor.r;
+            int gBlad = gZBledem - nowyKolor.g;
+            int bBlad = bZBledem - nowyKolor.b;
+
+            current[xx * width + yy] = nowyKolor;
+
+            updateBledy(xx, yy, bledy, rBlad, 0, przesuniecie, width, height);
+            updateBledy(xx, yy, bledy, gBlad, 1, przesuniecie, width, height);
+            updateBledy(xx, yy, bledy, bBlad, 2, przesuniecie, width, height);
+        }
+    }
+
+    for (int i = 0; i < height+2; ++i) {
+        for (int j = 0; j < width+2; ++j) {
+            delete[] bledy[i][j];
+        }
+        delete[] bledy[i];
+    }
+    delete[] bledy;
 }
 
 bool porownajKolory(Color kolor1, Color kolor2) {
