@@ -360,8 +360,7 @@ void ZapisDoPliku(TrybObrazu tryb, Dithering dithering, Canvas &obrazek,
     }
 
     // ilosc bitow zawsze taka sama niezaleznie od trybu
-    int iloscBitowDoZapisania = 5 * szerokoscObrazu * wysokoscObrazu;
-    vector<bitset<5>> bitset5(iloscBitowDoZapisania);
+    vector<bitset<5>> bitset5(szerokoscObrazu * wysokoscObrazu);
 
     if (szerokoscObrazu % 8 != 0) {
         throw std::invalid_argument(
@@ -407,7 +406,6 @@ void ZapisDoPliku(TrybObrazu tryb, Dithering dithering, Canvas &obrazek,
 
     unsigned char buffer = 0;
     int bitCount = 0;
-
     for (const auto& bs : bitset5) {
         for (int i = 0; i < 5; ++i) {
             // Set the bit in the buffer
@@ -454,7 +452,7 @@ void OdczytZPliku(const std::string &filename) {
     wejscie.read((char *)&tryb, sizeof(Uint8));
     wejscie.read((char *)&dithering, sizeof(Uint8));
 
-    cout << "id: " << id[0] << id[1] << endl;
+    cout << "id: " << std::hex << (int)id[0] << (int)id[1] << std::dec << endl;
     cout << "szerokosc: " << szerokoscObrazu << endl;
     cout << "wysokosc: " << wysokoscObrazu << endl;
     cout << "tryb: " << (int)tryb << endl;
@@ -663,9 +661,7 @@ int main(int argc, char *argv[]) {
                         ? parameterMap['s']
                         : kfcPath.substr(0, kfcPath.find_last_of('.')) + ".bmp";
 
-                std::cout << "< placeholder tobmp(" + kfcPath + ", " + bmpPath +
-                                 ") >"
-                          << std::endl;
+                OdczytZPliku(kfcPath);
                 break;
             }
             case 2: { /* frombmp <ścieżka_pliku_kfc> [-s ścieżka_pliku_bmp] [-t
