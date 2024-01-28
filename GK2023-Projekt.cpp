@@ -313,7 +313,12 @@ void KonwertujBmpNaKfc(std::string bmpZrodlo, TrybObrazu tryb) {
 
     ZapisDoPliku(tryb, Dithering::Brak, obrazek, paleta);
 
+    // manually destroy the canvas
+    paleta.~Canvas1D();
+    obrazek1D.~Canvas1D();
+    obrazek.~Canvas();
     std::cout << "Zapisano obrazek w formacie KFC" << std::endl;
+
 }
 
 // jest jakieś dzielenie na bloki? funkcja tworząca i odczytująca tablicę
@@ -517,7 +522,7 @@ Canvas1D wyprostujCanvas(Canvas &obrazek) {
     obrazek1D.reserve(obrazek.size() * obrazek[0].size());
 
     for (const auto &r : obrazek) {
-        for (const auto &c : r) {
+        for (const auto c : r) {
             obrazek1D.push_back(c);
         }
     }
