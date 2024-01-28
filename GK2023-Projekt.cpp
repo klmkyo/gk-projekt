@@ -19,8 +19,6 @@ using namespace std;
 
 #define szerokosc 640
 #define wysokosc 400
-#define szerokoscObrazka (szerokosc / 2)
-#define wysokoscObrazka (wysokosc / 2)
 #define PALETA_SIZE 32
 #define OBRAZEK_SIZE 64000
 
@@ -98,7 +96,7 @@ void FunkcjaE();
 void FunkcjaR();
 void FunkcjaT();
 
-void ladujBMPDoPamieci(std::string nazwa, Canvas &obrazek);
+Canvas ladujBMPDoPamieci(std::string nazwa);
 bool porownajKolory(Color kolor1, Color kolor2);
 
 Uint8 z24RGBna5RGB(Color kolor) {
@@ -273,8 +271,8 @@ SkladowaRGB najwiekszaRoznica(int start, int koniec, Canvas1D &obrazek) {
 /// takes a path to bmp file, and creates a converted version of it
 /// abc.bmp -> abc.kfc
 void KonwertujBmpNaKfc(std::string bmpZrodlo, TrybObrazu tryb) {
-    Canvas obrazek(wysokoscObrazka, std::vector<Color>(szerokoscObrazka));
-    ladujBMPDoPamieci(bmpZrodlo, obrazek);
+    // TODO!!! to jak wychodzi ze scopa i jest destroy to sie psuje
+    Canvas obrazek = ladujBMPDoPamieci(bmpZrodlo);
 
     // dithering itd
     // tutaj powstaje paleta
@@ -312,7 +310,10 @@ void KonwertujBmpNaKfc(std::string bmpZrodlo, TrybObrazu tryb) {
             break;
         }
     }
+
     ZapisDoPliku(tryb, Dithering::Brak, obrazek, paleta);
+
+    std::cout << "Zapisano obrazek w formacie KFC" << std::endl;
 }
 
 // jest jakieś dzielenie na bloki? funkcja tworząca i odczytująca tablicę
@@ -335,8 +336,8 @@ void KonwertujBmpNaKfc(std::string bmpZrodlo, TrybObrazu tryb) {
  */
 void ZapisDoPliku(TrybObrazu tryb, Dithering dithering, Canvas &obrazek,
                   Canvas1D &paleta) {
-    Uint16 szerokoscObrazu = szerokosc / 2;
-    Uint16 wysokoscObrazu = wysokosc / 2;
+    Uint16 szerokoscObrazu = obrazek[0].size();
+    Uint16 wysokoscObrazu = obrazek.size();
     cout << "Zapisuje obrazek do pliku" << endl;
 
     // lepszy sens by bylo gdyby id to bylo 3 i 3 jako liczba zespolu cnie
@@ -356,17 +357,17 @@ void ZapisDoPliku(TrybObrazu tryb, Dithering dithering, Canvas &obrazek,
     }
 
     // ilosc bitow zawsze taka sama niezaleznie od trybu
-    int iloscBitowDoZapisania = 5 * szerokoscObrazka * wysokoscObrazka;
+    int iloscBitowDoZapisania = 5 * szerokoscObrazu * wysokoscObrazu;
     vector<bitset<5>> bitset5(iloscBitowDoZapisania);
 
-    if (szerokoscObrazka % 8 != 0) {
+    if (szerokoscObrazu % 8 != 0) {
         throw std::invalid_argument(
             "Szerokosc obrazka nie jest wielokrotnoscia 8");
     }
 
     // Nowa wersja - zapisuje po kolumnach ale max 8 rzędów
     // i potem przechodzi 8 rzedów niżej i znowu wszystkie kolumny itd......
-    int maxSteps = wysokoscObrazka / 8;
+    int maxSteps = wysokoscObrazu / 8;
     int bitIndex = 0;
     for (int step = 0; step < maxSteps; step++) {
         int offset = step * 8;
@@ -401,45 +402,32 @@ void ZapisDoPliku(TrybObrazu tryb, Dithering dithering, Canvas &obrazek,
         }
     }
 
-    std::vector<uint8_t> packedBits;
-    int bitCounter = 0;
-    uint8_t currentByte = 0;
+    unsigned char buffer = 0;
+    int bitCount = 0;
 
-    for (const auto &bit5 : bitset5) {
-        // Konwertuj 5-bitową wartość na unsigned long, a następnie na 8-bitową
-        // wartość
-        uint8_t value = bit5.to_ulong();
+    for (const auto& bs : bitset5) {
+        for (int i = 0; i < 5; ++i) {
+            // Set the bit in the buffer
+            if (bs.test(i)) {
+                buffer |= (1 << bitCount);
+            }
 
-        // Sprawdź, czy dodanie 5 bitów do bieżącego bajtu przekracza 8 bitów
-        if (bitCounter + 5 <= 8) {
-            // Jeśli nie, przesuń wartość 5-bitową w lewo o liczbę pustych
-            // pozycji bitowych w bieżącym bajcie i wykonaj operację OR z
-            // bieżącym bajtem, aby dodać te bity do bajtu.
-            currentByte |= (value << (8 - bitCounter - 5));
-            // Zwiększ licznik bitów o 5, ponieważ dodaliśmy kolejne 5 bitów.
-            bitCounter += 5;
-        } else {
-            // Jeśli dodanie 5 bitów przekracza 8 bitów, oblicz, ile bitów
-            // zostanie przekroczone
-            int overflow = bitCounter + 5 - 8;
-            // Dodaj część wartości, która nie przekracza, do bieżącego bajtu
-            currentByte |= (value >> overflow);
-            // Dodaj ukończony 8-bitowy bajt do wektora packedBits
-            packedBits.push_back(currentByte);
-            // Utwórz nowy bajt z przekraczającymi bitami, przesuniętymi w lewo
-            // do ich pozycji w nowym bajcie
+            bitCount++;
 
-            currentByte = (value & ((1 << overflow) - 1)) << (8 - overflow);
-            // Ustaw licznik bitów na liczbę bitów w przekroczeniu
-            bitCounter = overflow;
+            // When buffer is full (8 bits), write it to file and reset
+            if (bitCount == 8) {
+                wyjscie.put(buffer);
+                buffer = 0;
+                bitCount = 0;
+            }
         }
     }
 
-    if (bitCounter > 0) {
-        packedBits.push_back(currentByte);
+    // Write remaining bits if there are any
+    if (bitCount > 0) {
+        wyjscie.put(buffer);
     }
 
-    wyjscie.write((char *)&packedBits[0], packedBits.size());
 
     if (tryb == TrybObrazu::PaletaNarzucona) {
     }
@@ -464,8 +452,8 @@ void OdczytZPliku(const std::string &filename) {
     wejscie.read((char *)&dithering, sizeof(Uint8));
 
     cout << "id: " << id[0] << id[1] << endl;
-    cout << "szerokosc: " << szerokoscObrazka << endl;
-    cout << "wysokosc: " << wysokoscObrazka << endl;
+    cout << "szerokosc: " << szerokoscObrazu << endl;
+    cout << "wysokosc: " << wysokoscObrazu << endl;
     cout << "tryb: " << (int)tryb << endl;
     cout << "dithering: " << (int)dithering << endl;
 
@@ -499,11 +487,14 @@ SDL_Color getPixelSurface(int x, int y, SDL_Surface *surface) {
     return (color);
 }
 
-void ladujBMPDoPamieci(std::string nazwa, Canvas &obrazek) {
+Canvas ladujBMPDoPamieci(std::string nazwa) {
     SDL_Surface *bmp = SDL_LoadBMP(nazwa.c_str());
     if (!bmp) {
         printf("Unable to load bitmap: %s\n", SDL_GetError());
+        exit(1);
     } else {
+        Canvas obrazek(bmp->w, std::vector<Color>(bmp->h));
+
         Color kolor;
         for (int yy = 0; yy < bmp->h; yy++) {
             for (int xx = 0; xx < bmp->w; xx++) {
@@ -516,13 +507,14 @@ void ladujBMPDoPamieci(std::string nazwa, Canvas &obrazek) {
         }
         SDL_FreeSurface(bmp);
         std::cout << "zaladowano obrazek essa" << std::endl;
+        return obrazek;
     }
 }
 
 // flatten canvas
 Canvas1D wyprostujCanvas(Canvas &obrazek) {
     Canvas1D obrazek1D;
-    obrazek1D.reserve(szerokoscObrazka * wysokoscObrazka);
+    obrazek1D.reserve(obrazek.size() * obrazek[0].size());
 
     for (const auto &r : obrazek) {
         for (const auto &c : r) {
