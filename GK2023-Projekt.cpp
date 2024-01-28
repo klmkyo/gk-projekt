@@ -81,11 +81,11 @@ Color getPixel(int x, int y);
 Uint8 z24RGBna5RGB(Color kolor);
 Color z5RGBna24RGB(Uint8 kolor5bit);
 
-void ZapisDoPliku(TrybObrazu tryb, Dithering dithering, Canvas &obrazek,
+void ZapisDoPliku(std::string nazwaPliku, TrybObrazu tryb, Dithering dithering, Canvas &obrazek,
                   Canvas1D &paleta);
 void czyscEkran(Uint8 R, Uint8 G, Uint8 B);
 
-void KonwertujBmpNaKfc(std::string bmpZrodlo, TrybObrazu tryb, Dithering d);
+void KonwertujBmpNaKfc(std::string bmpZrodlo, std::string kfcCel, TrybObrazu tryb, Dithering d);
 Canvas1D wyprostujCanvas(Canvas &obrazek);
 
 Uint8 normalizacja(int wartosc) {
@@ -276,7 +276,7 @@ SkladowaRGB najwiekszaRoznica(int start, int koniec, Canvas1D &obrazek) {
 
 /// takes a path to bmp file, and creates a converted version of it
 /// abc.bmp -> abc.kfc
-void KonwertujBmpNaKfc(std::string bmpZrodlo, TrybObrazu tryb, Dithering d) {
+void KonwertujBmpNaKfc(std::string bmpZrodlo, std::string kfcCel, TrybObrazu tryb, Dithering d) {
     Canvas obrazek = ladujBMPDoPamieci(bmpZrodlo);
     Canvas1D obrazek1D = wyprostujCanvas(obrazek);
     Canvas1D paleta;
@@ -311,7 +311,7 @@ void KonwertujBmpNaKfc(std::string bmpZrodlo, TrybObrazu tryb, Dithering d) {
         }
     }
 
-    ZapisDoPliku(tryb, d, obrazek, paleta);
+    ZapisDoPliku(kfcCel, tryb, d, obrazek, paleta);
     std::cout << "Zapisano obrazek w formacie KFC" << std::endl;
 
 }
@@ -334,8 +334,8 @@ void KonwertujBmpNaKfc(std::string bmpZrodlo, TrybObrazu tryb, Dithering d) {
  * @param dithering Informacja o tym, z jakim ditheringiem jest podany Canvas
  * @param obrazek Canvas, który zostanie zapisany do pliku
  */
-void ZapisDoPliku(TrybObrazu tryb, Dithering dithering, Canvas &obrazek,
-                  Canvas1D &paleta) {
+void ZapisDoPliku(std::string nazwaPliku, TrybObrazu tryb, Dithering dithering,
+                  Canvas &obrazek, Canvas1D &paleta) {
     // TODO: moze byc zle znow width z heightem tutaj
     Uint16 szerokoscObrazu = obrazek[0].size();
     Uint16 wysokoscObrazu = obrazek.size();
@@ -348,7 +348,7 @@ void ZapisDoPliku(TrybObrazu tryb, Dithering dithering, Canvas &obrazek,
     
     cout << "Zapisuje obrazek do pliku..." << endl;
 
-    ofstream wyjscie("obraz.kfc", ios::binary);
+    ofstream wyjscie(nazwaPliku, ios::binary);
     wyjscie.write((char *)&FILE_SIGNATURE, sizeof(char) * 2);
     wyjscie.write((char *)&szerokoscObrazu, sizeof(char) * 2);
     wyjscie.write((char *)&wysokoscObrazu, sizeof(char) * 2);
@@ -710,7 +710,7 @@ int main(int argc, char *argv[]) {
                     }
                 }
                 
-                KonwertujBmpNaKfc(bmpPath, tryb, dithering);
+                KonwertujBmpNaKfc(bmpPath, kfcPath, tryb, dithering);
                 break;
             }
             default: {
