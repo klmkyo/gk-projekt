@@ -94,11 +94,7 @@ Uint8 normalizacja(int wartosc) {
     return wartosc;
 }
 
-void FunkcjaQ() {}
-void FunkcjaW();
-void FunkcjaE();
-void FunkcjaR();
-void FunkcjaT();
+
 
 Canvas ladujBMPDoPamieci(std::string nazwa);
 bool porownajKolory(Color kolor1, Color kolor2);
@@ -390,9 +386,11 @@ void ZapisDoPliku(std::string nazwaPliku, TrybObrazu tryb, Dithering dithering,
                 } else if (tryb == TrybObrazu::PaletaWykryta) {
                     // TODO: nie wiem co jezeli nie ma koloru w palecie bo max 32 
                     // aktualnie zapisuje zero poprostu
-                    auto it = std::find(paleta.begin(), paleta.end(), obrazek[rowAbsolute][columnAbsolute]);
-                    if (it != myVector.end()) {
-                         bitset5[bitIndex] = std::distance(myVector.begin(), it);
+                    auto it = std::find_if(paleta.begin(), paleta.end(), [&](const Color& paletteColor) {
+                        return porownajKolory(paletteColor, obrazek[rowAbsolute][columnAbsolute]);
+                    });
+                    if (it != paleta.end()) {
+                         bitset5[bitIndex] = std::distance(paleta.begin(), it);
                     } else {                        
                         std::cout << "Nie ma takiego koloru w palecie wykrytej, zapisuje 0!!!" << std::endl;
                         bitset5[bitIndex] = 0;
@@ -460,11 +458,6 @@ void OdczytZPliku(const std::string &filename) {
     cout << "dithering: " << (int)dithering << endl;
 
     wejscie.close();
-}
-
-void FunkcjaT() {
-    const std::string filename = "obrazek.kfc";
-    OdczytZPliku(filename);
 }
 
 SDL_Color getPixelSurface(int x, int y, SDL_Surface *surface) {
