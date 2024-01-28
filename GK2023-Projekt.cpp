@@ -301,6 +301,11 @@ void KonwertujBmpNaKfc(std::string bmpZrodlo, std::string kfcCel, TrybObrazu try
                 if (paletaSet.size() >= 32) break;
             }
             paleta = Canvas1D(paletaSet.begin(), paletaSet.end());
+
+            // paddowanie palety, jeśli nie sięga 32 kolorów
+            while (paleta.size() < 32) {
+                paleta.push_back({0, 0, 0});
+            }
             break;
         }
 
@@ -308,6 +313,7 @@ void KonwertujBmpNaKfc(std::string bmpZrodlo, std::string kfcCel, TrybObrazu try
             break;
         }
     }
+    
 
     ZapisDoPliku(kfcCel, tryb, d, obrazek, paleta);
     std::cout << "Zapisano obrazek w formacie KFC" << std::endl;
@@ -356,13 +362,18 @@ void ZapisDoPliku(std::string nazwaPliku, TrybObrazu tryb, Dithering dithering,
     // print the cursor (where we are at the file)
     cout << "Cursor: " << wyjscie.tellp() << endl;
 
-   
+    // wypisanie palety
+    for (const auto& c: paleta) {
+        cout << "Paleta: " << (int)c.r << " " << (int)c.g << " " << (int)c.b << endl;
+    }
+
+    // UWAGA UWAGA PALETA ZAPISANA PRZEZ 4 JEST PUSTA
     if (czyTrybJestZPaleta(tryb)) {
         for(const auto& c: paleta) {
             wyjscie.write((char *)&c, sizeof(Color));
         }
+        cout << "Zapisano palete" << endl;
     }
-    wyjscie.write((char*)&iloscBitowDoZapisania, sizeof(int));
 
     // print the cursor (where we are at the file)
     cout << "Cursor: " << wyjscie.tellp() << endl;
@@ -538,9 +549,7 @@ Canvas OdczytZPliku(const std::string &filename) {
         cout << "Odczytanio palete" << endl;
     }
 
-    int iloscBitowDoOdczytania;
-    wejscie.read(reinterpret_cast<char*>(&iloscBitowDoOdczytania), sizeof(int));
-    cout << "iloscBitowDoOdczytania: " << iloscBitowDoOdczytania << endl;
+    int iloscBitowDoOdczytania = szerokoscObrazu * wysokoscObrazu * 5;
 
     vector<bitset<5>> bitset5(iloscBitowDoOdczytania / 5);
 
@@ -569,6 +578,7 @@ Canvas OdczytZPliku(const std::string &filename) {
     bitIndex = 0;
 
     Canvas obrazek(wysokoscObrazu, std::vector<Color>(szerokoscObrazu));
+
 
     for (int step = 0; step < maxSteps; step++) {
         int offset = step * 8;
