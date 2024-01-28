@@ -356,13 +356,13 @@ void ZapisDoPliku(std::string nazwaPliku, TrybObrazu tryb, Dithering dithering,
     // print the cursor (where we are at the file)
     cout << "Cursor: " << wyjscie.tellp() << endl;
 
-   
+    // UWAGA UWAGA PALETA ZAPISANA PRZEZ 4 JEST PUSTA
     if (czyTrybJestZPaleta(tryb)) {
         for(const auto& c: paleta) {
             wyjscie.write((char *)&c, sizeof(Color));
         }
+        cout << "Zapisano palete" << endl;
     }
-    wyjscie.write((char*)&iloscBitowDoZapisania, sizeof(int));
 
     // print the cursor (where we are at the file)
     cout << "Cursor: " << wyjscie.tellp() << endl;
@@ -538,9 +538,7 @@ Canvas OdczytZPliku(const std::string &filename) {
         cout << "Odczytanio palete" << endl;
     }
 
-    int iloscBitowDoOdczytania;
-    wejscie.read(reinterpret_cast<char*>(&iloscBitowDoOdczytania), sizeof(int));
-    cout << "iloscBitowDoOdczytania: " << iloscBitowDoOdczytania << endl;
+    int iloscBitowDoOdczytania = szerokoscObrazu * wysokoscObrazu * 5;
 
     vector<bitset<5>> bitset5(iloscBitowDoOdczytania / 5);
 
@@ -569,6 +567,7 @@ Canvas OdczytZPliku(const std::string &filename) {
     bitIndex = 0;
 
     Canvas obrazek(wysokoscObrazu, std::vector<Color>(szerokoscObrazu));
+
 
     for (int step = 0; step < maxSteps; step++) {
         int offset = step * 8;

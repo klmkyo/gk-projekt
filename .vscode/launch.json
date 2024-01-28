@@ -9,7 +9,7 @@
       "type": "cppdbg",
       "request": "launch",
       "program": "${workspaceFolder}/GK2023-Projekt.out",
-      "args": ["frombmp", "obrazek1.bmp", "obrazek1.kfc"],
+      "args": ["tobmp","temp_out.kfc","-s","temp_out_decode.bmp"],
       "stopAtEntry": false,
       "cwd": "${fileDirname}",
       "environment": [],
