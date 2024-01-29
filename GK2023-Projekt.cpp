@@ -50,6 +50,8 @@ struct equal_to<Color> {
 };
 }  // namespace std
 
+
+
 typedef std::vector<std::vector<Color>> Canvas;
 typedef std::vector<Color> Canvas1D;
 
@@ -102,6 +104,16 @@ Uint8 normalizacja(int wartosc) {
 
 Canvas ladujBMPDoPamieci(std::string nazwa);
 bool porownajKolory(Color kolor1, Color kolor2);
+
+int getUniqueColorsInImage(const Canvas &image) {
+    std::unordered_set<Color> colors;
+    for (const auto &row : image) {
+        for (const auto &pixel : row) {
+            colors.insert(pixel);
+        }
+    }
+    return colors.size();
+}
 
 Uint8 z24RGBna5RGB(Color kolor) {
     Uint8 nowyR, nowyG, nowyB;
@@ -624,6 +636,8 @@ void ZapiszCanvasDoBmp(const Canvas& image, const std::string& filename) {
     int32_t height = image.size();
     int32_t rowPadding = (4 - (width * 3) % 4) % 4;
     int32_t fileSize = 54 + (3 * width + rowPadding) * height;
+
+    std::cout << "W obrazku jest " << getUniqueColorsInImage(image) << " unikalnych kolorow" << std::endl;
 
     std::ofstream file(filename, std::ios::out | std::ios::binary);
 
