@@ -145,7 +145,7 @@ void medianCutBW(int start, int koniec, int iteracja, Canvas1D &obrazek,
         sort(obrazek.begin() + start, obrazek.begin() + koniec,
              [](Color a, Color b) { return a.r < b.r; });
 
-        cout << "Dzielenie kubełka KFC na poziomie " << iteracja << endl;
+        // cout << "Dzielenie kubełka KFC na poziomie " << iteracja << endl;
 
         int srodek = (start + koniec + 1) / 2;
         medianCutBW(start, srodek - 1, iteracja - 1, obrazek, paleta);
@@ -160,15 +160,15 @@ void medianCutBW(int start, int koniec, int iteracja, Canvas1D &obrazek,
         Color nowyKolor = {noweBW, noweBW, noweBW};
         paleta.push_back(nowyKolor);
 
-        cout << "🍿 Kubełek " << paleta.size() << " (" << start << "," << koniec
-             << ") kolorBW: " << (int)noweBW << endl;
+        // cout << "🍿 Kubełek " << paleta.size() << " (" << start << "," << koniec
+        //      << ") kolorBW: " << (int)noweBW << endl;
     }
 }
 
 void medianCutRGB(int start, int koniec, int iteracja, Canvas1D &obrazek,
                   Canvas1D &paleta) {
-    std::cout << "medianCutRGB start: " << start << " koniec: " << koniec
-              << " iteracja: " << iteracja << std::endl;
+    // std::cout << "medianCutRGB start: " << start << " koniec: " << koniec
+    //           << " iteracja: " << iteracja << std::endl;
     if (iteracja > 0) {
         // sortowanie wtorkowego kubełka kfc za 22 zł
         SkladowaRGB skladowa = najwiekszaRoznica(start, koniec, obrazek);
@@ -180,7 +180,7 @@ void medianCutRGB(int start, int koniec, int iteracja, Canvas1D &obrazek,
                  if (skladowa == B) return a.b < b.b;
              });
 
-        cout << "Dzielenie kubełka KFC na poziomie " << iteracja << endl;
+        // cout << "Dzielenie kubełka KFC na poziomie " << iteracja << endl;
 
         int srodek = (start + koniec + 1) / 2;
         medianCutRGB(start, srodek - 1, iteracja - 1, obrazek, paleta);
@@ -201,9 +201,9 @@ void medianCutRGB(int start, int koniec, int iteracja, Canvas1D &obrazek,
                            Uint8(sumaB / ilosc)};
         paleta.push_back(nowyKolor);
 
-        cout << "🍿 Kubełek " << paleta.size() << " (" << start << "," << koniec
-             << ") koloryRGB: " << (int)nowyKolor.r << " " << (int)nowyKolor.g
-             << " " << (int)nowyKolor.b << endl;
+        // cout << "🍿 Kubełek " << paleta.size() << " (" << start << "," << koniec
+        //      << ") koloryRGB: " << (int)nowyKolor.r << " " << (int)nowyKolor.g
+        //      << " " << (int)nowyKolor.b << endl;
     }
 }
 
@@ -528,22 +528,22 @@ void ZapisDoPliku(std::string nazwaPliku, TrybObrazu tryb, Dithering dithering,
     wyjscie.write((char *)&dithering, sizeof(Uint8));
 
     // print the cursor (where we are at the file)
-    cout << "Cursor: " << wyjscie.tellp() << endl;
+    // cout << "Cursor: " << wyjscie.tellp() << endl;
 
     // wypisanie palety
-    for (const auto& c: paleta) {
-        cout << "Paleta: " << (int)c.r << " " << (int)c.g << " " << (int)c.b << endl;
-    }
+    // for (const auto& c: paleta) {
+    //     cout << "Paleta: " << (int)c.r << " " << (int)c.g << " " << (int)c.b << endl;
+    // }
 
     if (czyTrybJestZPaleta(tryb)) {
         for(const auto& c: paleta) {
             wyjscie.write((char *)&c, sizeof(Color));
         }
-        cout << "Zapisano palete" << endl;
+        // cout << "Zapisano palete" << endl;
     }
 
     // print the cursor (where we are at the file)
-    cout << "Cursor: " << wyjscie.tellp() << endl;
+    // cout << "Cursor: " << wyjscie.tellp() << endl;
 
     vector<bitset<5>> bitset5(iloscBitowDoZapisania / 5);
 
@@ -563,7 +563,8 @@ void ZapisDoPliku(std::string nazwaPliku, TrybObrazu tryb, Dithering dithering,
                         z24RGBna5RGB(obrazek[rowAbsolute][columnAbsolute]) >> 3;
                 } else if (tryb == TrybObrazu::SzaroscNarzucona) {
                     bitset5[bitIndex] =
-                        z24RGBna5BW(obrazek[rowAbsolute][columnAbsolute]) >> 3;
+                        z24RGBna5BW(obrazek[rowAbsolute][columnAbsolute]);
+                    cout << (int)z24RGBna5BW(obrazek[rowAbsolute][columnAbsolute]) << " ";
                 } else if (tryb == TrybObrazu::SzaroscDedykowana) {
                     // też adresy do palety (która jest poprostu szara xD)
                     bitset5[bitIndex] = znajdzNajblizszyKolorIndex(
@@ -687,11 +688,11 @@ Canvas OdczytZPliku(const std::string &filename) {
     TrybObrazu tryb = (TrybObrazu)_tryb;
     Dithering dithering = (Dithering)_dithering;
 
-    cout << "id: " << id[0] << id[1] << endl;
-    cout << "szerokosc: " << szerokoscObrazu << endl;
-    cout << "wysokosc: " << wysokoscObrazu << endl;
-    cout << "tryb: " << (int)tryb << endl;
-    cout << "dithering: " << (int)dithering << endl;
+    // cout << "id: " << id[0] << id[1] << endl;
+    // cout << "szerokosc: " << szerokoscObrazu << endl;
+    // cout << "wysokosc: " << wysokoscObrazu << endl;
+    // cout << "tryb: " << (int)tryb << endl;
+    // cout << "dithering: " << (int)dithering << endl;
 
 
     Canvas1D paleta;
@@ -701,7 +702,7 @@ Canvas OdczytZPliku(const std::string &filename) {
             wejscie.read((char *)&c, sizeof(Color));
         }
 
-        cout << "Odczytanio palete" << endl;
+        // cout << "Odczytanio palete" << endl;
     }
 
     int iloscBitowDoOdczytania = szerokoscObrazu * wysokoscObrazu * 5;
@@ -747,7 +748,7 @@ Canvas OdczytZPliku(const std::string &filename) {
                         z5RGBna24RGB(bitset5[bitIndex].to_ulong() << 3);
                 } else if (tryb == TrybObrazu::SzaroscNarzucona) {
                     obrazek[rowAbsolute][columnAbsolute] =
-                        z5BWna24RGB(bitset5[bitIndex].to_ulong() << 3);
+                        z5BWna24RGB(bitset5[bitIndex].to_ulong());
                 } else if (tryb == TrybObrazu::SzaroscDedykowana) {
                     obrazek[rowAbsolute][columnAbsolute] =
                         paleta[bitset5[bitIndex].to_ulong()];
@@ -811,7 +812,7 @@ Canvas ladujBMPDoPamieci(std::string nazwa) {
             }
         }
         SDL_FreeSurface(bmp);
-        std::cout << "zaladowano obrazek essa" << std::endl;
+        // std::cout << "zaladowano obrazek essa" << std::endl;
         return obrazek;
     }
 }
