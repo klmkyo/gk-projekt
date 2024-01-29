@@ -14,7 +14,6 @@
 #include <unordered_set>
 #include <vector>
 
-
 #include "SDL_surface.h"
 
 using namespace std;
@@ -40,7 +39,7 @@ template <> struct equal_to<Color> {
     return lhs.r == rhs.r && lhs.g == rhs.g && lhs.b == rhs.b;
   }
 };
-}
+} // namespace std
 
 typedef std::vector<std::vector<Color>> Canvas;
 typedef std::vector<Color> Canvas1D;
@@ -411,9 +410,8 @@ void applyBayerDithering(Canvas &image, Canvas1D &palette) {
   }
 }
 
-/ /
-    void KonwertujBmpNaKfc(std::string bmpZrodlo, std::string kfcCel,
-                           TrybObrazu tryb, Dithering d) {
+void KonwertujBmpNaKfc(std::string bmpZrodlo, std::string kfcCel,
+                       TrybObrazu tryb, Dithering d) {
   Canvas obrazek = ladujBMPDoPamieci(bmpZrodlo);
   Canvas1D obrazek1D = wyprostujCanvas(obrazek);
   Canvas1D paleta;
