@@ -345,14 +345,21 @@ void applyBayerDithering(Canvas &image, bool blackWhite) {
 }
 
 
-void applyFloydSteinbergDithering(Canvas &image, Canvas1D &palette) {
+void applyFloydSteinbergDithering(Canvas &image, Canvas1D &palette, bool blackWhite) {
     int width = image[0].size();
     int height = image.size();
 
     for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
             Color oldPixel = image[y][x];
-            Color newPixel = znajdzNajblizszyKolor(oldPixel, palette); // Find closest color in the palette
+            Color newPixel;
+            
+            if (blackWhite) {
+                newPixel = znajdzNajblizszyKolor(z5BWna24RGB(z24RGBna5BW(oldPixel)), palette);
+            } else {
+                newPixel = znajdzNajblizszyKolor(oldPixel, palette);
+            }
+
             image[y][x] = newPixel;
 
             int errR = oldPixel.r - newPixel.r;
@@ -462,7 +469,7 @@ void KonwertujBmpNaKfc(std::string bmpZrodlo, std::string kfcCel, TrybObrazu try
     switch (d) {
         case Dithering::Floyd: {
             if(czyTrybJestZPaleta(tryb)) {
-                applyFloydSteinbergDithering(obrazek, paleta);
+                applyFloydSteinbergDithering(obrazek, paleta, tryb == TrybObrazu::SzaroscDedykowana);
             } else {
                 applyFloydSteinbergDithering(obrazek, tryb == TrybObrazu::SzaroscNarzucona);
             }
