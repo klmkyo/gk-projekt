@@ -564,7 +564,6 @@ void ZapisDoPliku(std::string nazwaPliku, TrybObrazu tryb, Dithering dithering,
                 } else if (tryb == TrybObrazu::SzaroscNarzucona) {
                     bitset5[bitIndex] =
                         z24RGBna5BW(obrazek[rowAbsolute][columnAbsolute]);
-                    cout << (int)z24RGBna5BW(obrazek[rowAbsolute][columnAbsolute]) << " ";
                 } else if (tryb == TrybObrazu::SzaroscDedykowana) {
                     // też adresy do palety (która jest poprostu szara xD)
                     bitset5[bitIndex] = znajdzNajblizszyKolorIndex(
