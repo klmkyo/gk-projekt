@@ -13,8 +13,9 @@
 #include <string>
 #include <unordered_set>
 #include <vector>
+#include <random>
 
-#include "SDL_surface.h"
+#include <SDL2/SDL.h>
 
 using namespace std;
 
@@ -313,9 +314,17 @@ void applyFloydSteinbergDithering(Canvas &image, bool blackWhite) {
   }
 }
 
+// int bayerMatrix[4][4] = {
+//     {1, 9, 3, 11}, {13, 5, 15, 7}, {4, 12, 2, 10}, {16, 8, 14, 6}};
+
+// extended to 256
+int bayerMatrix8x8[8][8] = {
+    {1, 33, 9, 41, 3, 35, 11, 43}, {49, 17, 57, 25, 51, 19, 59, 27},
+    {13, 45, 5, 37, 15, 47, 7, 39}, {61, 29, 53, 21, 63, 31, 55, 23},
+    {4, 36, 12, 44, 2, 34, 10, 42}, {52, 20, 60, 28, 50, 18, 58, 26},
+    {16, 48, 8, 40, 14, 46, 6, 38}, {64, 32, 56, 24, 62, 30, 54, 22}};
+
 void applyBayerDithering(Canvas &image, bool blackWhite) {
-  int bayerMatrix[4][4] = {
-      {1, 9, 3, 11}, {13, 5, 15, 7}, {4, 12, 2, 10}, {16, 8, 14, 6}};
 
   int width = image[0].size();
   int height = image.size();
@@ -324,9 +333,16 @@ void applyBayerDithering(Canvas &image, bool blackWhite) {
     for (int x = 0; x < width; x++) {
       Color oldPixel = image[y][x];
 
-      oldPixel.r = min(max(0, oldPixel.r + bayerMatrix[y % 4][x % 4] - 8), 255);
-      oldPixel.g = min(max(0, oldPixel.g + bayerMatrix[y % 4][x % 4] - 8), 255);
-      oldPixel.b = min(max(0, oldPixel.b + bayerMatrix[y % 4][x % 4] - 8), 255);
+      // oldPixel.r = min(max(0, oldPixel.r + bayerMatrix[y % 4][x % 4] - 8), 255);
+      // oldPixel.g = min(max(0, oldPixel.g + bayerMatrix[y % 4][x % 4] - 8), 255);
+      // oldPixel.b = min(max(0, oldPixel.b + bayerMatrix[y % 4][x % 4] - 8), 255);
+
+      // compare with 8x8 matrix
+      oldPixel.r = min(max(0, oldPixel.r + bayerMatrix8x8[y % 8][x % 8] - 32), 255);
+      oldPixel.g = min(max(0, oldPixel.g + bayerMatrix8x8[y % 8][x % 8] - 32), 255);
+      oldPixel.b = min(max(0, oldPixel.b + bayerMatrix8x8[y % 8][x % 8] - 32), 255);
+  
+
 
       Color newPixel;
       if (blackWhite) {
@@ -390,8 +406,6 @@ void applyFloydSteinbergDithering(Canvas &image, Canvas1D &palette,
 }
 
 void applyBayerDithering(Canvas &image, Canvas1D &palette) {
-  int bayerMatrix[4][4] = {
-      {1, 9, 3, 11}, {13, 5, 15, 7}, {4, 12, 2, 10}, {16, 8, 14, 6}};
 
   int width = image[0].size();
   int height = image.size();
@@ -400,9 +414,14 @@ void applyBayerDithering(Canvas &image, Canvas1D &palette) {
     for (int x = 0; x < width; x++) {
       Color oldPixel = image[y][x];
 
-      oldPixel.r = min(max(0, oldPixel.r + bayerMatrix[y % 4][x % 4] - 8), 255);
-      oldPixel.g = min(max(0, oldPixel.g + bayerMatrix[y % 4][x % 4] - 8), 255);
-      oldPixel.b = min(max(0, oldPixel.b + bayerMatrix[y % 4][x % 4] - 8), 255);
+      // oldPixel.r = min(max(0, oldPixel.r + bayerMatrix[y % 4][x % 4] - 8), 255);
+      // oldPixel.g = min(max(0, oldPixel.g + bayerMatrix[y % 4][x % 4] - 8), 255);
+      // oldPixel.b = min(max(0, oldPixel.b + bayerMatrix[y % 4][x % 4] - 8), 255);
+
+      // compare with 8x8 matrix
+      oldPixel.r = min(max(0, oldPixel.r + bayerMatrix8x8[y % 8][x % 8] - 32), 255);
+      oldPixel.g = min(max(0, oldPixel.g + bayerMatrix8x8[y % 8][x % 8] - 32), 255);
+      oldPixel.b = min(max(0, oldPixel.b + bayerMatrix8x8[y % 8][x % 8] - 32), 255);
 
       Color newPixel = znajdzNajblizszyKolor(oldPixel, palette);
       image[y][x] = newPixel;
@@ -806,12 +825,12 @@ int main(int argc, char *argv[]) {
     std::cout << "  Witamy w konwerterze obrazów 🍗 KFC <-> 🎨 BMP.\n"
               << "Dostępne operacje:\n"
               << "1. Konwersja formatu KFC na BMP\n"
-              << "> " << appName
+              << "\t > " << appName
               << " tobmp <ścieżka_pliku_kfc> [-s ścieżka_pliku_bmp]\n"
               << "Wyświetl więcej informacji używając '" << appName
               << " -help tobmp'\n"
               << "2. Konwersja formatu BMP na KFC\n"
-              << "> " << appName
+              << "\t > " << appName
               << " frombmp <ścieżka_pliku_bmp> [-s ścieżka_pliku_kfc] [-t "
                  "tryb(1-5)] [-d dithering(none/bayer/floyd)]\n"
               << "Wyświetl więcej informacji używając '" << appName
@@ -950,3 +969,4 @@ int main(int argc, char *argv[]) {
   }
   return 0;
 }
+
