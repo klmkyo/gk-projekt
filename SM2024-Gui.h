@@ -1,7 +1,4 @@
-// podstawowe funkcje
-#ifndef SM2024_GUI_H_INCLUDED
-#define SM2024_GUI_H_INCLUDED
-
+#pragma once
 #include "SM2024-Zmienne.h"
 #include <stdio.h>
 #include <math.h>
@@ -22,5 +19,3 @@ SDL_Color getPixel(int x, int y);
 void czyscEkran(Uint8 R, Uint8 G, Uint8 B);
 void ladujBMP(char const* nazwa, int x, int y);
 int startupGui();
-
-#endif // SM2024_GUI_H_INCLUDED

@@ -1,6 +1,4 @@
-#ifndef SM2024_PLIKI_H
-#define SM2024_PLIKI_H
-
+#pragma once
 #include "SM2024-Zmienne.h"
 #include "SM2024-Funkcje.h"
 #include "SM2024-MedianCut.h"
@@ -13,5 +11,3 @@ Canvas ladujBMPDoPamieci(std::string nazwa);
 void KonwertujBmpNaKfc(std::string bmpZrodlo, std::string kfcCel, TrybObrazu tryb, Dithering d);
 void KonwertujKfcNaBmp(std::string kfcZrodlo, std::string bmpCel);
 SDL_Color getPixelSurface(int x, int y, SDL_Surface *surface);
-
-#endif // SM2024_PLIKI_H
