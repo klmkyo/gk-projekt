@@ -12,5 +12,6 @@ void ZapiszCanvasDoBmp(const Canvas& image, const std::string& filename);
 Canvas ladujBMPDoPamieci(std::string nazwa);
 void KonwertujBmpNaKfc(std::string bmpZrodlo, std::string kfcCel, TrybObrazu tryb, Dithering d);
 void KonwertujKfcNaBmp(std::string kfcZrodlo, std::string bmpCel);
+SDL_Color getPixelSurface(int x, int y, SDL_Surface *surface);
 
 #endif // SM2024_PLIKI_H
