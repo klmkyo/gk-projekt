@@ -44,6 +44,12 @@ int main(int argc, char *argv[]) {
 
     const std::string appName = argc < 1 ? "kfc" : argv[0];
 
+    // If no argv start gui
+    if (argc == 1) {
+        startupGui();
+        return 0;
+    }
+
     /* Wypisuje wszystkie dostępne komendy bez opisu */
     if (argc <= 1 || (argc == 2 && (std::string(argv[1]) == "help" ||
                                     std::string(argv[1]) == "-help"))) {

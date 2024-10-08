@@ -21,5 +21,6 @@ void setPixel(int x, int y, Uint8 R, Uint8 G, Uint8 B);
 SDL_Color getPixel(int x, int y);
 void czyscEkran(Uint8 R, Uint8 G, Uint8 B);
 void ladujBMP(char const* nazwa, int x, int y);
+int startupGui();
 
 #endif // SM2024_GUI_H_INCLUDED
