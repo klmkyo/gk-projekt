@@ -1,6 +1,4 @@
-#ifndef SM2024_FUNKCJE_H
-#define SM2024_FUNKCJE_H
-
+#pragma once
 #include "SM2024-Zmienne.h"
 #include <cmath>
 #include <climits>
@@ -19,5 +17,3 @@ void applyFloydSteinbergDithering(Canvas &image, bool blackWhite);
 void applyBayerDithering(Canvas &image, bool blackWhite);
 void applyFloydSteinbergDithering(Canvas &image, Canvas1D &palette, bool blackWhite);
 void applyBayerDithering(Canvas &image, Canvas1D &palette);
-
-#endif // SM2024_FUNKCJE_H
