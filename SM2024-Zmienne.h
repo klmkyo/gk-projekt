@@ -6,11 +6,17 @@
 #include "SDL_surface.h"
 #include <bitset>
 #include <string>
+#include <SDL2/SDL.h>
 
 #define szerokosc 640
 #define wysokosc 400
 #define PALETA_SIZE 32
 #define OBRAZEK_SIZE 64000
+
+#define tytul "SM2024 - Projekt - Zespol XX"
+
+extern SDL_Window* window;
+extern SDL_Surface* screen;
 
 struct Color {
     Uint8 r, g, b;

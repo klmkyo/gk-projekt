@@ -2,6 +2,7 @@
 #include "SM2024-Funkcje.h"
 #include "SM2024-MedianCut.h"
 #include "SM2024-Pliki.h"
+#include "SM2024-Gui.h"
 #include <iostream>
 #include <map>
 #include <string>
