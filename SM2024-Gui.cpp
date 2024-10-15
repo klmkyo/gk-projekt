@@ -4,6 +4,8 @@
 #include "SM2024-Paleta.h"
 #include "SM2024-MedianCut.h"
 #include "SM2024-Pliki.h"
+#include "SM2024-Konwersje.h"
+#include "SM2024-Gui.h"
 
 
 void czyscEkran(Uint8 R, Uint8 G, Uint8 B)
@@ -13,57 +15,112 @@ void czyscEkran(Uint8 R, Uint8 G, Uint8 B)
 }
 
 void Funkcja1() {
-    // make screen red
-    czyscEkran(255, 0, 0);
+
+     for (int yy=0; yy<wysokosc/2; yy++) {
+        for (int xx=0; xx<szerokosc/2; xx++) {
+            HSL hsl = getHSL(xx, yy);
+            int h_int = (int)hsl.h;
+            int s_int = (int)(hsl.s * 100);
+            int l_int = (int)(hsl.l * 100);
+
+            setPixel(xx + szerokosc/2, yy, h_int, h_int, h_int);
+            setPixel(xx + szerokosc/2, yy + wysokosc/2, s_int, s_int, s_int);
+            setPixel(xx, yy + wysokosc/2, l_int, l_int, l_int);
+        }
+    }
 
     SDL_UpdateWindowSurface(window);
 }
 
 void Funkcja2() {
 
-    //...
+ for (int yy=0; yy<wysokosc/2; yy++) {
+        for (int xx=0; xx<szerokosc/2; xx++) {
+            HSL hsl = getHSL(xx, yy);
+            setHSL(xx + szerokosc/2, yy, hsl.h, hsl.s, hsl.l);
+        }
+    }
 
     SDL_UpdateWindowSurface(window);
 }
 
 void Funkcja3() {
 
-    //...
+       for (int yy=0; yy<wysokosc/2; yy++) {
+        for (int xx=0; xx<szerokosc/2; xx++) {
+            YUV yuv = getYUV(xx, yy);
+            setPixel(xx + szerokosc/2, yy, yuv.y, yuv.y, yuv.y);
+            setPixel(xx, yy + wysokosc/2, yuv.u, yuv.u, yuv.u);
+            setPixel(xx + szerokosc/2, yy + wysokosc/2, yuv.v, yuv.v, yuv.v);
+        }
+    }
 
     SDL_UpdateWindowSurface(window);
 }
 
 void Funkcja4() {
 
-    //...
+      for (int yy=0; yy<wysokosc/2; yy++) {
+        for (int xx=0; xx<szerokosc/2; xx++) {
+            YUV yuv = getYUV(xx, yy);
+            setYUV(xx + szerokosc/2, yy, yuv.y, yuv.u, yuv.v);
+        }
+    }
 
     SDL_UpdateWindowSurface(window);
 }
 
 void Funkcja5() {
 
-    //...
+     for (int yy=0; yy<wysokosc/2; yy++) {
+        for (int xx=0; xx<szerokosc/2; xx++) {
+            YIQ yiq = getYIQ(xx, yy);
+            setPixel(xx + szerokosc/2, yy, yiq.y, yiq.y, yiq.y);
+            setPixel(xx, yy + wysokosc/2, yiq.i, yiq.i, yiq.i);
+            setPixel(xx + szerokosc/2, yy + wysokosc/2, yiq.q, yiq.q, yiq.q);
+        }
+    }
 
     SDL_UpdateWindowSurface(window);
 }
 
 void Funkcja6() {
 
-    //...
+     for (int yy=0; yy<wysokosc/2; yy++) {
+        for (int xx=0; xx<szerokosc/2; xx++) {
+            YIQ yiq = getYIQ(xx, yy);
+            setYIQ(xx + szerokosc/2, yy, yiq.y, yiq.i, yiq.q);
+        }
+    }
+
 
     SDL_UpdateWindowSurface(window);
 }
 
 void Funkcja7() {
 
-    //...
+     for (int yy=0; yy<wysokosc/2; yy++) {
+        for (int xx=0; xx<szerokosc/2; xx++) {
+            YCbCr ycbcr = getYCbCr(xx, yy);
+            setPixel(xx + szerokosc/2, yy, ycbcr.y, ycbcr.y, ycbcr.y);
+            setPixel(xx, yy + wysokosc/2, ycbcr.cb, ycbcr.cb, ycbcr.cb);
+            setPixel(xx + szerokosc/2, yy + wysokosc/2, ycbcr.cr, ycbcr.cr, ycbcr.cr);
+        }
+    }
+
 
     SDL_UpdateWindowSurface(window);
 }
 
 void Funkcja8() {
 
-    //...
+       for (int yy=0; yy<wysokosc/2; yy++) {
+        for (int xx=0; xx<szerokosc/2; xx++) {
+            YCbCr ycbcr = getYCbCr(xx, yy);
+            setYCbCr(xx + szerokosc/2, yy, ycbcr.y, ycbcr.cb, ycbcr.cr);
+        }
+    }
+
 
     SDL_UpdateWindowSurface(window);
 }

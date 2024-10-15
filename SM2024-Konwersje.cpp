@@ -204,3 +204,14 @@ SDL_Color hslToRgb(Uint8 in_h, Uint8 in_s, Uint8 in_l) {
 
     return color;
 }
+
+
+void setHSL(int x, int y, float h, float s, float l) {
+    SDL_Color color = hslToRgb(h, s, l);
+    setPixel(x, y, color.r, color.g, color.b);
+}
+
+HSL getHSL(int x, int y) {
+    SDL_Color color = getPixel(x, y);
+    return rgbToHsl(color.r, color.g, color.b);
+}

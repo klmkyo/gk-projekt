@@ -54,3 +54,6 @@ SDL_Color ycbcrToRgb(int y, int cb, int cr);
 // HSL Conversion Functions
 HSL rgbToHsl(int r, int g, int b);
 SDL_Color hslToRgb(Uint8 h, Uint8 s, Uint8 l);
+
+void setHSL(int x, int y, float h, float s, float l);
+HSL getHSL(int x, int y);
