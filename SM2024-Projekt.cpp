@@ -3,6 +3,7 @@
 #include "SM2024-MedianCut.h"
 #include "SM2024-Pliki.h"
 #include "SM2024-Gui.h"
+#include "SM2024-Konwersje.h"
 #include <iostream>
 #include <map>
 #include <string>
