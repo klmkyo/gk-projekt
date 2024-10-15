@@ -1,2 +1,2 @@
 all:
-	g++ -o smlab *.cpp -lSDL2main -lSDL2
+	g++ -o smlab *.cpp -D_REENTRANT -I/usr/include/SDL2 -lSDL2
