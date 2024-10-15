@@ -19,7 +19,7 @@ void Funkcja1() {
      for (int yy=0; yy<wysokosc/2; yy++) {
         for (int xx=0; xx<szerokosc/2; xx++) {
             HSL hsl = getHSL(xx, yy);
-            
+
             setPixel(xx + szerokosc/2, yy, hsl.h, hsl.h, hsl.h);
             setPixel(xx + szerokosc/2, yy + wysokosc/2, hsl.s, hsl.s, hsl.s);
             setPixel(xx, yy + wysokosc/2, hsl.l, hsl.l, hsl.l);
@@ -83,7 +83,7 @@ void Funkcja5() {
 
 void Funkcja6() {
 
-     for (int yy=0; yy<wysokosc/2; yy++) {
+       for (int yy=0; yy<wysokosc/2; yy++) {
         for (int xx=0; xx<szerokosc/2; xx++) {
             YIQ yiq = getYIQ(xx, yy);
             setYIQ(xx + szerokosc/2, yy, yiq.y, yiq.i, yiq.q);
