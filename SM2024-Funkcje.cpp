@@ -1,6 +1,8 @@
 #include "SM2024-Funkcje.h"
 #include <algorithm>
 
+
+
 Uint8 z24RGBna5RGB(Color kolor) {
     Uint8 nowyR, nowyG, nowyB;
     nowyR = round(kolor.r * 3.0 / 255.0);
