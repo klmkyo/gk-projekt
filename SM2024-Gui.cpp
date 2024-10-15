@@ -19,13 +19,10 @@ void Funkcja1() {
      for (int yy=0; yy<wysokosc/2; yy++) {
         for (int xx=0; xx<szerokosc/2; xx++) {
             HSL hsl = getHSL(xx, yy);
-            int h_int = (int)hsl.h;
-            int s_int = (int)(hsl.s * 100);
-            int l_int = (int)(hsl.l * 100);
-
-            setPixel(xx + szerokosc/2, yy, h_int, h_int, h_int);
-            setPixel(xx + szerokosc/2, yy + wysokosc/2, s_int, s_int, s_int);
-            setPixel(xx, yy + wysokosc/2, l_int, l_int, l_int);
+            
+            setPixel(xx + szerokosc/2, yy, hsl.h, hsl.h, hsl.h);
+            setPixel(xx + szerokosc/2, yy + wysokosc/2, hsl.s, hsl.s, hsl.s);
+            setPixel(xx, yy + wysokosc/2, hsl.l, hsl.l, hsl.l);
         }
     }
 
