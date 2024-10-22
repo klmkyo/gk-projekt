@@ -1,4 +1,5 @@
 #include "SM2024-Funkcje.h"
+#include "SM2024-Konwersje.h"
 #include <algorithm>
 
 Uint8 z24RGBna5RGB(Color kolor) {
@@ -238,3 +239,4 @@ void applyBayerDithering(Canvas &image, Canvas1D &palette) {
         }
     }
 }
+

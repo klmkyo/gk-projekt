@@ -215,3 +215,88 @@ HSL getHSL(int x, int y) {
     SDL_Color color = getPixel(x, y);
     return rgbToHsl(color.r, color.g, color.b);
 }
+
+Uint16 sdlColorToRGB555(SDL_Color color) {
+    Uint8 r = color.r >> 3;
+    Uint8 g = color.g >> 3;
+    Uint8 b = color.b >> 3;
+
+    Uint16 rgb555 = 0;
+    rgb555 |= r;
+    rgb555 |= (g << 5);
+    rgb555 |= (b << 10);
+
+    return rgb555;
+}
+
+SDL_Color RGB555ToSdlColor(Uint16 rgb555) {
+    Uint8 r = rgb555 & 0b11111;
+    Uint8 g = (rgb555 >> 5) & 0b11111;
+    Uint8 b = (rgb555 >> 10) & 0b11111;
+
+    r = r << 3;
+    g = g << 3;
+    b = b << 3;
+
+    return SDL_Color { r, g, b };
+}
+
+Uint16 sdlColorToRGB565(SDL_Color color) {
+    Uint8 r = color.r >> 3;
+    Uint8 g = color.g >> 2;
+    Uint8 b = color.b >> 3;
+
+    Uint16 rgb565 = 0;
+    rgb565 |= r;
+    rgb565 |= (g << 5);
+    rgb565 |= (b << 11);
+
+    return rgb565;
+
+}
+
+SDL_Color RGB565ToSdlColor(Uint16 rgb565) {
+    Uint8 r = rgb565 & 0b11111;
+    Uint8 g = (rgb565 >> 5) & 0b111111;
+    Uint8 b = (rgb565 >> 11) & 0b11111;
+
+    r = r << 3;
+    g = g << 2;
+    b = b << 3;
+
+    return SDL_Color { r, g, b };
+}
+
+void setRGB555(int xx, int yy, Uint8 r, Uint8 g, Uint8 b) {
+    Uint16 rgb555 = sdlColorToRGB555(SDL_Color { r, g, b });
+    setRGB555(xx, yy, rgb555);
+}
+void setRGB555(int xx, int yy, Uint16 rgb555) {
+    SDL_Color color = RGB555ToSdlColor(rgb555);
+    setPixel(xx, yy, color.r, color.g, color.b);
+}
+SDL_Color getRGB555(int xx, int yy) {
+    SDL_Color color = getPixel(xx, yy);
+    return RGB555ToSdlColor(sdlColorToRGB555(color));
+}
+Uint16 getRGB555_(int xx, int yy) {
+    SDL_Color color = getPixel(xx, yy);
+    return sdlColorToRGB555(color);
+}
+
+void setRGB565(int xx, int yy, Uint8 r, Uint8 g, Uint8 b) {
+    Uint16 rgb565 = sdlColorToRGB565(SDL_Color { r, g, b });
+    setRGB565(xx, yy, rgb565);
+}
+void setRGB565(int xx, int yy, Uint16 rgb565) {
+    SDL_Color color = RGB565ToSdlColor(rgb565);
+    setPixel(xx, yy, color.r, color.g, color.b);
+}
+SDL_Color getRGB565(int xx, int yy) {
+    SDL_Color color = getPixel(xx, yy);
+    return RGB565ToSdlColor(sdlColorToRGB565(color));
+}
+Uint16 getRGB565_(int xx, int yy) {
+    SDL_Color color = getPixel(xx, yy);
+    return sdlColorToRGB565(color);
+}

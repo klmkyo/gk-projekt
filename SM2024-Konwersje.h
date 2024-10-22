@@ -55,3 +55,17 @@ SDL_Color hslToRgb(Uint8 h, Uint8 s, Uint8 l);
 
 void setHSL(int x, int y, float h, float s, float l);
 HSL getHSL(int x, int y);
+
+Uint16 sdlColorToRGB555(SDL_Color color);
+SDL_Color RGB555ToSdlColor(Uint16 rgb555);
+Uint16 sdlColorToRGB565(SDL_Color color);
+SDL_Color RGB565ToSdlColor(Uint16 rgb565);
+
+void setRGB555(int xx, int yy, Uint8 r, Uint8 g, Uint8 b);
+void setRGB555(int xx, int yy, Uint16 rgb555);
+SDL_Color getRGB555(int xx, int yy);
+Uint16 getRGB555_(int xx, int yy);
+void setRGB565(int xx, int yy, Uint8 r, Uint8 g, Uint8 b);
+void setRGB565(int xx, int yy, Uint16 rgb565);
+SDL_Color getRGB565(int xx, int yy);
+Uint16 getRGB565_(int xx, int yy);
