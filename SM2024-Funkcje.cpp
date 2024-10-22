@@ -211,11 +211,14 @@ void applyBayerDithering15RGB(Canvas &image) {
         for (int x = 0; x < width; x++) {
             Color oldPixel = image[y][x];
 
-            oldPixel.r = std::min(std::max(0, oldPixel.r + bayerMatrix[y % 4][x % 4] - 8), 255);
-            oldPixel.g = std::min(std::max(0, oldPixel.g + bayerMatrix[y % 4][x % 4] - 8), 255);
-            oldPixel.b = std::min(std::max(0, oldPixel.b + bayerMatrix[y % 4][x % 4] - 8), 255);
+            oldPixel.r = std::min(std::max(0, oldPixel.r + bayerMatrix[y % 4][x % 4] - 4), 255);
+            oldPixel.g = std::min(std::max(0, oldPixel.g + bayerMatrix[y % 4][x % 4] - 4), 255);
+            oldPixel.b = std::min(std::max(0, oldPixel.b + bayerMatrix[y % 4][x % 4] - 4), 255);
 
-            image[y][x] = oldPixel;
+            SDL_Color newPixel = {oldPixel.r, oldPixel.g, oldPixel.b};
+            Uint16 rgb555 = sdlColorToRGB555(newPixel);
+            SDL_Color newPixel2 = RGB555ToSdlColor(rgb555);
+            image[y][x] = {newPixel2.r, newPixel2.g, newPixel2.b};
         }
     }
 }
