@@ -16,13 +16,11 @@ void czyscEkran(Uint8 R, Uint8 G, Uint8 B)
 
 void Funkcja1() {
 
-     for (int yy=0; yy<wysokosc/2; yy++) {
-        for (int xx=0; xx<szerokosc/2; xx++) {
-            HSL hsl = getHSL(xx, yy);
-
-            setPixel(xx + szerokosc/2, yy, hsl.h, hsl.h, hsl.h);
-            setPixel(xx + szerokosc/2, yy + wysokosc/2, hsl.s, hsl.s, hsl.s);
-            setPixel(xx, yy + wysokosc/2, hsl.l, hsl.l, hsl.l);
+    // Kopiowanie obrazu z RGB555
+    for (int yy = 0; yy < wysokosc / 2; yy++) {
+        for (int xx = 0; xx < szerokosc / 2; xx++) {
+            Uint16 rgb555 = getRGB555_(xx, yy);
+            setRGB555(xx + szerokosc / 2, yy, rgb555);
         }
     }
 
@@ -31,10 +29,16 @@ void Funkcja1() {
 
 void Funkcja2() {
 
- for (int yy=0; yy<wysokosc/2; yy++) {
-        for (int xx=0; xx<szerokosc/2; xx++) {
-            HSL hsl = getHSL(xx, yy);
-            setHSL(xx + szerokosc/2, yy, hsl.h, hsl.s, hsl.l);
+    // Rozbicie RGB555 na składowe
+    for (int yy = 0; yy < wysokosc / 2; yy++) {
+        for (int xx = 0; xx < szerokosc / 2; xx++) {
+            Uint16 rgb555 = getRGB555_(xx, yy);
+            Uint8 r = (rgb555 & 0b11111) * 8;
+            Uint8 g = ((rgb555 >> 5) & 0b11111) * 8;
+            Uint8 b = ((rgb555 >> 10) & 0b11111) * 8;
+            setPixel(xx + szerokosc / 2, yy, r, r, r);
+            setPixel(xx + szerokosc / 2, yy + wysokosc / 2, g, g, g);
+            setPixel(xx, yy + wysokosc / 2, b, b, b);
         }
     }
 
@@ -43,12 +47,11 @@ void Funkcja2() {
 
 void Funkcja3() {
 
-       for (int yy=0; yy<wysokosc/2; yy++) {
-        for (int xx=0; xx<szerokosc/2; xx++) {
-            YUV yuv = getYUV(xx, yy);
-            setPixel(xx + szerokosc/2, yy, yuv.y, yuv.y, yuv.y);
-            setPixel(xx, yy + wysokosc/2, yuv.u, yuv.u, yuv.u);
-            setPixel(xx + szerokosc/2, yy + wysokosc/2, yuv.v, yuv.v, yuv.v);
+    // Kopiowanie obrazu z RGB565
+    for (int yy = 0; yy < wysokosc / 2; yy++) {
+        for (int xx = 0; xx < szerokosc / 2; xx++) {
+            Uint16 rgb565 = getRGB565_(xx, yy);
+            setRGB565(xx + szerokosc / 2, yy, rgb565);
         }
     }
 
@@ -57,15 +60,22 @@ void Funkcja3() {
 
 void Funkcja4() {
 
-      for (int yy=0; yy<wysokosc/2; yy++) {
-        for (int xx=0; xx<szerokosc/2; xx++) {
-            YUV yuv = getYUV(xx, yy);
-            setYUV(xx + szerokosc/2, yy, yuv.y, yuv.u, yuv.v);
+    // Rozbicie RGB565 na składowe
+    for (int yy = 0; yy < wysokosc / 2; yy++) {
+        for (int xx = 0; xx < szerokosc / 2; xx++) {
+            Uint16 rgb565 = getRGB565_(xx, yy);
+            Uint8 r = (rgb565 & 0b11111) * 8;
+            Uint8 g = ((rgb565 >> 5) & 0b111111) * 4;
+            Uint8 b = ((rgb565 >> 11) & 0b11111) * 8;
+            setPixel(xx + szerokosc / 2, yy, r, r, r);
+            setPixel(xx + szerokosc / 2, yy + wysokosc / 2, g, g, g);
+            setPixel(xx, yy + wysokosc / 2, b, b, b);
         }
     }
 
     SDL_UpdateWindowSurface(window);
 }
+
 
 void Funkcja5() {
 
@@ -83,7 +93,8 @@ void Funkcja5() {
 
 void Funkcja6() {
 
-       for (int yy=0; yy<wysokosc/2; yy++) {
+    // TODO! to się sypie
+    for (int yy=0; yy<wysokosc/2; yy++) {
         for (int xx=0; xx<szerokosc/2; xx++) {
             YIQ yiq = getYIQ(xx, yy);
             setYIQ(xx + szerokosc/2, yy, yiq.y, yiq.i, yiq.q);
