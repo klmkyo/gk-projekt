@@ -19,3 +19,5 @@ SDL_Color getPixel(int x, int y);
 void czyscEkran(Uint8 R, Uint8 G, Uint8 B);
 void ladujBMP(char const* nazwa, int x, int y);
 int startupGui();
+Canvas getCanvasFromTopLeftCorner(int x, int y, int width, int height);
+void setCanvasToCorner(const Canvas &canvas, int l, int b);

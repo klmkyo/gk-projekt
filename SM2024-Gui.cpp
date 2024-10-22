@@ -29,18 +29,9 @@ void Funkcja1() {
 
 void Funkcja2() {
 
-    // Rozbicie RGB555 na składowe
-    for (int yy = 0; yy < wysokosc / 2; yy++) {
-        for (int xx = 0; xx < szerokosc / 2; xx++) {
-            Uint16 rgb555 = getRGB555_(xx, yy);
-            Uint8 r = (rgb555 & 0b11111) * 8;
-            Uint8 g = ((rgb555 >> 5) & 0b11111) * 8;
-            Uint8 b = ((rgb555 >> 10) & 0b11111) * 8;
-            setPixel(xx + szerokosc / 2, yy, r, r, r);
-            setPixel(xx + szerokosc / 2, yy + wysokosc / 2, g, g, g);
-            setPixel(xx, yy + wysokosc / 2, b, b, b);
-        }
-    }
+    // DEBUG copy top left corner to top right
+    Canvas canvas = getCanvasFromTopLeftCorner(0, 0, szerokosc / 2, wysokosc / 2);
+    setCanvasToCorner(canvas, 1, 0);
 
     SDL_UpdateWindowSurface(window);
 }
@@ -140,7 +131,32 @@ void Funkcja9() {
     SDL_UpdateWindowSurface(window);
 }
 
+Canvas getCanvasFromTopLeftCorner(int x, int y, int width, int height) {
+    Canvas canvas;
+    canvas.reserve(height);
+    for (int yy = y; yy < y + height; yy++) {
+        std::vector<Color> row;
+        row.reserve(width);
+        for (int xx = x; xx < x + width; xx++) {
+            SDL_Color sdlColor = getPixel(xx, yy);
+            Color color = {sdlColor.r, sdlColor.g, sdlColor.b};
+            row.push_back(color);
+        }
+        canvas.push_back(row);
+    }
+    return canvas;
+}
 
+
+void setCanvasToCorner(const Canvas &canvas, int l, int b) {
+    int x = l * szerokosc / 2;
+    int y = b * wysokosc / 2;
+    for (int yy = 0; yy < canvas.size(); yy++) {
+        for (int xx = 0; xx < canvas[0].size(); xx++) {
+            setPixel(xx + x, yy + y, canvas[yy][xx].r, canvas[yy][xx].g, canvas[yy][xx].b);
+        }
+    }
+}
 
 void setPixel(int x, int y, Uint8 R, Uint8 G, Uint8 B)
 {
