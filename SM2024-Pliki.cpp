@@ -318,9 +318,9 @@ void KonwertujBmpNaKfc(std::string bmpZrodlo, std::string kfcCel, TrybObrazu try
         }
         case Dithering::Bayer: {
             if(czyTrybJestZPaleta(tryb)) {
-                applyBayerDithering(obrazek, paleta);
+                applyBayerDithering5RGB(obrazek, paleta);
             } else {
-                applyBayerDithering(obrazek, tryb == TrybObrazu::SzaroscNarzucona);
+                applyBayerDithering5RGB(obrazek, tryb == TrybObrazu::SzaroscNarzucona);
             }
             break;
         }

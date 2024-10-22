@@ -29,8 +29,10 @@ void Funkcja1() {
 
 void Funkcja2() {
 
-    // DEBUG copy top left corner to top right
     Canvas canvas = getCanvasFromTopLeftCorner(0, 0, szerokosc / 2, wysokosc / 2);
+
+    applyBayerDithering15RGB(canvas);
+
     setCanvasToCorner(canvas, 1, 0);
 
     SDL_UpdateWindowSurface(window);

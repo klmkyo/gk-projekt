@@ -140,7 +140,7 @@ void applyFloydSteinbergDithering(Canvas &image, bool blackWhite) {
     }
 }
 
-void applyBayerDithering(Canvas &image, bool blackWhite) {
+void applyBayerDithering5RGB(Canvas &image, bool blackWhite) {
     int bayerMatrix[4][4] = {
         {1,  9,  3, 11},
         {13, 5, 15, 7},
@@ -166,6 +166,56 @@ void applyBayerDithering(Canvas &image, bool blackWhite) {
                 newPixel = z5RGBna24RGB(z24RGBna5RGB(oldPixel));
             }
             image[y][x] = newPixel;
+        }
+    }
+}
+
+// void applyBayerDithering15RGB(Canvas &image) {
+//     int bayerMatrix[2][2] = {
+//         {16, 32},
+//         {24, 8}
+//     };
+
+//     int width = image[0].size();
+//     int height = image.size();
+
+//     for (int y = 0; y < height; y++) {
+//         for (int x = 0; x < width; x++) {
+//             Color oldPixel = image[y][x];
+
+//             oldPixel.r = std::min(std::max(0, oldPixel.r + bayerMatrix[y % 2][x % 2] - 16), 255);
+//             oldPixel.g = std::min(std::max(0, oldPixel.g + bayerMatrix[y % 2][x % 2] - 16), 255);
+//             oldPixel.b = std::min(std::max(0, oldPixel.b + bayerMatrix[y % 2][x % 2] - 16), 255);
+
+//             oldPixel.r = oldPixel.r;
+//             oldPixel.g = oldPixel.g;
+//             oldPixel.b = oldPixel.b;
+
+//             image[y][x] = oldPixel;
+//         }
+//     }
+// }
+
+void applyBayerDithering15RGB(Canvas &image) {
+    int bayerMatrix[4][4] = {
+        {1, 9, 3, 11},
+        {13, 5, 15, 7},
+        {4, 12, 2, 10},
+        {16, 8, 14, 6}
+    };
+
+    int width = image[0].size();
+    int height = image.size();
+
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+            Color oldPixel = image[y][x];
+
+            oldPixel.r = std::min(std::max(0, oldPixel.r + bayerMatrix[y % 4][x % 4] - 8), 255);
+            oldPixel.g = std::min(std::max(0, oldPixel.g + bayerMatrix[y % 4][x % 4] - 8), 255);
+            oldPixel.b = std::min(std::max(0, oldPixel.b + bayerMatrix[y % 4][x % 4] - 8), 255);
+
+            image[y][x] = oldPixel;
         }
     }
 }
@@ -215,7 +265,7 @@ void applyFloydSteinbergDithering(Canvas &image, Canvas1D &palette, bool blackWh
     }
 }
 
-void applyBayerDithering(Canvas &image, Canvas1D &palette) {
+void applyBayerDithering5RGB(Canvas &image, Canvas1D &palette) {
     int bayerMatrix[4][4] = {
         {1,  9,  3, 11},
         {13, 5, 15, 7},
