@@ -223,6 +223,49 @@ void applyBayerDithering15RGB(Canvas &image) {
     }
 }
 
+template <typename T>
+const T& clamp(const T& value, const T& low, const T& high) {
+    return (value < low) ? low : ((value > high) ? high : value);
+}
+
+// TODO może być źle
+void applyBayerDithering16RGB(Canvas &image) {
+    int bayerMatrix[4][4] = {
+        {1,  9,  3, 11},
+        {13, 5, 15, 7},
+        {4, 12, 2, 10},
+        {16, 8, 14, 6}
+    };
+
+    int height = image.size();
+    if (height == 0) return;
+    int width = image[0].size();
+
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+            Color oldPixel = image[y][x];
+            int threshold = bayerMatrix[y % 4][x % 4];
+
+            oldPixel.r = clamp(oldPixel.r + threshold - 8, 0, 255);
+            oldPixel.b = clamp(oldPixel.b + threshold - 8, 0, 255);
+
+            oldPixel.g = clamp(oldPixel.g + (threshold * 2) - 16, 0, 255);
+
+            SDL_Color modifiedColor = {
+                static_cast<Uint8>(oldPixel.r),
+                static_cast<Uint8>(oldPixel.g),
+                static_cast<Uint8>(oldPixel.b),
+                255
+            };
+
+            Uint16 rgb565 = sdlColorToRGB565(modifiedColor);
+            SDL_Color finalColor = RGB565ToSdlColor(rgb565);
+
+            image[y][x] = {finalColor.r, finalColor.g, finalColor.b};
+        }
+    }
+}
+
 void applyFloydSteinbergDithering(Canvas &image, Canvas1D &palette, bool blackWhite) {
     int width = image[0].size();
     int height = image.size();

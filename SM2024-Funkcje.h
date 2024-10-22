@@ -16,5 +16,6 @@ Color znajdzNajblizszyKolor(Color kolor, Canvas1D &paleta);
 void applyFloydSteinbergDithering(Canvas &image, bool blackWhite);
 void applyBayerDithering5RGB(Canvas &image, bool blackWhite);
 void applyBayerDithering15RGB(Canvas &image);
+void applyBayerDithering16RGB(Canvas &image);
 void applyFloydSteinbergDithering(Canvas &image, Canvas1D &palette, bool blackWhite);
 void applyBayerDithering5RGB(Canvas &image, Canvas1D &palette);

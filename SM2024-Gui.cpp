@@ -31,7 +31,7 @@ void Funkcja2() {
 
     Canvas canvas = getCanvasFromTopLeftCorner(0, 0, szerokosc / 2, wysokosc / 2);
 
-    applyBayerDithering15RGB(canvas);
+    applyBayerDithering16RGB(canvas);
 
     setCanvasToCorner(canvas, 1, 0);
 
