@@ -11,3 +11,53 @@ Canvas ladujBMPDoPamieci(std::string nazwa);
 void KonwertujBmpNaKfc(std::string bmpZrodlo, std::string kfcCel, TrybObrazu tryb, Dithering d);
 void KonwertujKfcNaBmp(std::string kfcZrodlo, std::string bmpCel);
 SDL_Color getPixelSurface(int x, int y, SDL_Surface *surface);
+
+enum class ImageType {
+    YUV = 0,
+    YIQ = 1,
+    YCbCr = 2,
+    HSL = 3,
+    RGB555 = 4,
+    RGB565 = 5
+};
+
+// What the file contains
+// After that will be the image data, size of each
+// channel will be known based on width, height and subsampling info
+struct NFHeader {
+    char magic[4];
+    Uint8 version;
+    ImageType type;
+    Uint16 width;
+    Uint16 height;
+
+    // TODO compress these
+    // For now these are disabled - value is 1, subsampling support will be added later
+    Uint8 channel1HorizontalSubsampling;
+    Uint8 channel1VerticalSubsampling;
+    Uint8 channel2HorizontalSubsampling;
+    Uint8 channel2VerticalSubsampling;
+    Uint8 channel3HorizontalSubsampling;
+    Uint8 channel3VerticalSubsampling;
+};
+
+// What the user uses to create header (the same thing, but without magic and version)
+struct NFHeaderUser {
+    Uint8 version;
+    ImageType type;
+    Uint16 width;
+    Uint16 height;
+
+    // TODO compress these
+    // For now these are disabled - value is 1, subsampling support will be added later
+    Uint8 channel1HorizontalSubsampling;
+    Uint8 channel1VerticalSubsampling;
+    Uint8 channel2HorizontalSubsampling;
+    Uint8 channel2VerticalSubsampling;
+    Uint8 channel3HorizontalSubsampling;
+    Uint8 channel3VerticalSubsampling;
+};
+
+std::vector<Uint8> serializeHeader(NFHeader header);
+
+NFHeader deserializeHeader(std::vector<Uint8> data);

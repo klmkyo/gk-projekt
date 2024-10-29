@@ -332,3 +332,66 @@ void KonwertujBmpNaKfc(std::string bmpZrodlo, std::string kfcCel, TrybObrazu try
     ZapisDoPliku(kfcCel, tryb, d, obrazek, paleta);
     std::cout << "Zapisano obrazek w formacie KFC" << std::endl;
 }
+
+const char *NOFI_MAGIC = "NOFI";
+const int NFVERSION = 1;
+
+
+std::vector<Uint8> serializeHeader(NFHeaderUser header) {
+    std::vector<Uint8> headerData;
+    headerData.reserve(sizeof(NFHeader));
+
+    // Setting Magic
+    for (int i = 0; i < 4; i++) {
+        headerData.push_back(NOFI_MAGIC[i]);
+    }
+
+    headerData.push_back(NFVERSION);
+    headerData.push_back((Uint8) header.type);
+
+    headerData.push_back(header.width & 0xFF);
+    headerData.push_back((header.width >> 8) & 0xFF);
+
+    headerData.push_back(header.height & 0xFF);
+    headerData.push_back((header.height >> 8) & 0xFF);
+
+    headerData.push_back(header.channel1HorizontalSubsampling);
+    headerData.push_back(header.channel1VerticalSubsampling);
+    headerData.push_back(header.channel2HorizontalSubsampling);
+    headerData.push_back(header.channel2VerticalSubsampling);
+    headerData.push_back(header.channel3HorizontalSubsampling);
+    headerData.push_back(header.channel3VerticalSubsampling);
+
+    return headerData;
+}
+
+NFHeader deserializeHeader(std::vector<Uint8> data) {
+    NFHeader header;
+    for (int i = 0; i < 4; i++) {
+        header.magic[i] = data[i];
+
+        if(header.magic[i] != NOFI_MAGIC[i]) {
+            throw std::invalid_argument("Invalid NOFI file");
+        }
+    }
+
+    header.version = data[4];
+
+    if(header.version != NFVERSION) {
+        throw std::invalid_argument("Invalid NOFI version. Expected " + std::to_string(NFVERSION) + " but got " + std::to_string(header.version));
+    }
+
+    header.type = (ImageType)data[5];
+
+    header.width = data[6] | (data[7] << 8);
+    header.height = data[8] | (data[9] << 8);
+
+    header.channel1HorizontalSubsampling = data[10];
+    header.channel1VerticalSubsampling = data[11];
+    header.channel2HorizontalSubsampling = data[12];
+    header.channel2VerticalSubsampling = data[13];
+    header.channel3HorizontalSubsampling = data[14];
+    header.channel3VerticalSubsampling = data[15];
+
+    return header;
+}
