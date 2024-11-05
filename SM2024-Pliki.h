@@ -21,6 +21,18 @@ enum class ImageType {
     RGB565 = 5
 };
 
+enum class FilterType {
+    None = 0,
+    Sub = 1,
+    Up = 2,
+    Average = 3,
+    Paeth = 4
+};
+
+enum class CompressionType {
+    None = 0,
+};
+
 // What the file contains
 // After that will be the image data, size of each
 // channel will be known based on width, height and subsampling info
@@ -28,34 +40,23 @@ struct NFHeader {
     char magic[4];
     Uint8 version;
     ImageType type;
+    FilterType filter;
+    CompressionType compression;
     Uint16 width;
     Uint16 height;
-
-    // TODO compress these
-    // For now these are disabled - value is 1, subsampling support will be added later
-    Uint8 channel1HorizontalSubsampling;
-    Uint8 channel1VerticalSubsampling;
-    Uint8 channel2HorizontalSubsampling;
-    Uint8 channel2VerticalSubsampling;
-    Uint8 channel3HorizontalSubsampling;
-    Uint8 channel3VerticalSubsampling;
+    // 4:2:0, każdy ImageType ma z góry określone subsamplingi
+    bool subsamplingEnabled = false;
 };
 
 // What the user uses to create header (the same thing, but without magic and version)
 struct NFHeaderUser {
     Uint8 version;
     ImageType type;
+    FilterType filter;
+    CompressionType compression;
     Uint16 width;
     Uint16 height;
-
-    // TODO compress these
-    // For now these are disabled - value is 1, subsampling support will be added later
-    Uint8 channel1HorizontalSubsampling;
-    Uint8 channel1VerticalSubsampling;
-    Uint8 channel2HorizontalSubsampling;
-    Uint8 channel2VerticalSubsampling;
-    Uint8 channel3HorizontalSubsampling;
-    Uint8 channel3VerticalSubsampling;
+    bool subsamplingEnabled = false;
 };
 
 std::vector<Uint8> serializeHeader(NFHeader header);

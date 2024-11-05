@@ -348,6 +348,8 @@ std::vector<Uint8> serializeHeader(NFHeaderUser header) {
 
     headerData.push_back(NFVERSION);
     headerData.push_back((Uint8) header.type);
+    headerData.push_back(header.filter);
+    headerData.push_back(header.compression);
 
     headerData.push_back(header.width & 0xFF);
     headerData.push_back((header.width >> 8) & 0xFF);
@@ -355,12 +357,7 @@ std::vector<Uint8> serializeHeader(NFHeaderUser header) {
     headerData.push_back(header.height & 0xFF);
     headerData.push_back((header.height >> 8) & 0xFF);
 
-    headerData.push_back(header.channel1HorizontalSubsampling);
-    headerData.push_back(header.channel1VerticalSubsampling);
-    headerData.push_back(header.channel2HorizontalSubsampling);
-    headerData.push_back(header.channel2VerticalSubsampling);
-    headerData.push_back(header.channel3HorizontalSubsampling);
-    headerData.push_back(header.channel3VerticalSubsampling);
+    headerData.push_back(header.subsamplingEnabled);
 
     return headerData;
 }
@@ -382,16 +379,13 @@ NFHeader deserializeHeader(std::vector<Uint8> data) {
     }
 
     header.type = (ImageType)data[5];
+    header.filter = (FilterType)data[6];
+    header.compression = (CompressionType)data[7];
 
     header.width = data[6] | (data[7] << 8);
     header.height = data[8] | (data[9] << 8);
 
-    header.channel1HorizontalSubsampling = data[10];
-    header.channel1VerticalSubsampling = data[11];
-    header.channel2HorizontalSubsampling = data[12];
-    header.channel2VerticalSubsampling = data[13];
-    header.channel3HorizontalSubsampling = data[14];
-    header.channel3VerticalSubsampling = data[15];
+    header.subsamplingEnabled = data[10];
 
     return header;
 }
