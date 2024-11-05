@@ -86,7 +86,6 @@ void Funkcja5() {
 
 void Funkcja6() {
 
-    // TODO! to się sypie
     for (int yy=0; yy<wysokosc/2; yy++) {
         for (int xx=0; xx<szerokosc/2; xx++) {
             YIQ yiq = getYIQ(xx, yy);
