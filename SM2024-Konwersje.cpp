@@ -51,9 +51,9 @@ SDL_Color yiqToRgb(Uint8 y, Uint8 i, Uint8 q) {
     int adj_i = i - 128;
     int adj_q = q - 128;
 
-    Uint8 r = (Uint8)(y + 0.956  * adj_i + 0.619 * adj_q);
-    Uint8 g = (Uint8)(y + -0.272 * adj_i + -0.647 * adj_q);
-    Uint8 b = (Uint8)(y + -1.106 * adj_i + 1.703 * adj_q);
+    Uint8 r = clamp(y + 0.956  * adj_i + 0.619 * adj_q);
+    Uint8 g = clamp(y + -0.272 * adj_i + -0.647 * adj_q);
+    Uint8 b = clamp(y + -1.106 * adj_i + 1.703 * adj_q);
 
     SDL_Color color = {r, g, b};
     return color;
