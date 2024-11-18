@@ -347,9 +347,9 @@ std::vector<Uint8> serializeHeader(NFHeaderUser header) {
     }
 
     headerData.push_back(NFVERSION);
-    headerData.push_back((Uint8) header.type);
-    headerData.push_back(header.filter);
-    headerData.push_back(header.compression);
+    headerData.push_back((Uint8)header.type);
+    headerData.push_back((Uint8)header.filter);
+    headerData.push_back((Uint8)header.compression);
 
     headerData.push_back(header.width & 0xFF);
     headerData.push_back((header.width >> 8) & 0xFF);
@@ -382,10 +382,233 @@ NFHeader deserializeHeader(std::vector<Uint8> data) {
     header.filter = (FilterType)data[6];
     header.compression = (CompressionType)data[7];
 
-    header.width = data[6] | (data[7] << 8);
-    header.height = data[8] | (data[9] << 8);
+    header.width = data[8] | (data[9] << 8);
+    header.height = data[10] | (data[11] << 8);
 
     header.subsamplingEnabled = data[10];
 
     return header;
+}
+
+void saveNFImage(const std::string &filename, NFHeaderUser header, Canvas &image) {
+    // TODO
+}
+
+std::pair<NFHeader, Canvas> loadNFImage(const std::string &filename) {
+    // TODO
+}
+
+
+template <typename T>
+T clamp(const T& value, const T& min, const T& max) {
+    if (value < min) return min;
+    if (value > max) return max;
+    return value;
+}
+
+
+std::vector<Uint8> serializeCanvas(Canvas &image, ImageType type, bool subsamplingEnabled) {
+    std::vector<Uint8> data;
+    int width = image[0].size();
+    int height = image.size();
+
+    if (type == ImageType::RGB555) {
+        // Convert each pixel to RGB555 format
+        for (const auto &row : image) {
+            for (const auto &pixel : row) {
+                Uint16 rgb555 = ((pixel.r & 0xF8) << 7) | ((pixel.g & 0xF8) << 2) | (pixel.b >> 3);
+                data.push_back(rgb555 & 0xFF);
+                data.push_back((rgb555 >> 8) & 0xFF);
+            }
+        }
+    } else if (type == ImageType::RGB565) {
+        // Convert each pixel to RGB565 format
+        for (const auto &row : image) {
+            for (const auto &pixel : row) {
+                Uint16 rgb565 = ((pixel.r & 0xF8) << 8) | ((pixel.g & 0xFC) << 3) | (pixel.b >> 3);
+                data.push_back(rgb565 & 0xFF);
+                data.push_back((rgb565 >> 8) & 0xFF);
+            }
+        }
+    } else if (type == ImageType::YUV) {
+        // Convert RGB to YUV and handle subsampling if enabled
+        std::vector<std::vector<Uint8>> Y(height, std::vector<Uint8>(width));
+        std::vector<std::vector<Uint8>> U(height, std::vector<Uint8>(width));
+        std::vector<std::vector<Uint8>> V(height, std::vector<Uint8>(width));
+
+        for (int y = 0; y < height; ++y) {
+            for (int x = 0; x < width; ++x) {
+                Color &pixel = image[y][x];
+                float r = pixel.r / 255.0f;
+                float g = pixel.g / 255.0f;
+                float b = pixel.b / 255.0f;
+
+                float Yf = 0.299f * r + 0.587f * g + 0.114f * b;
+                float Uf = -0.14713f * r - 0.28886f * g + 0.436f * b + 0.5f;
+                float Vf = 0.615f * r - 0.51499f * g - 0.10001f * b + 0.5f;
+
+                Y[y][x] = static_cast<Uint8>(Yf * 255);
+                U[y][x] = static_cast<Uint8>(Uf * 255);
+                V[y][x] = static_cast<Uint8>(Vf * 255);
+            }
+        }
+
+        if (subsamplingEnabled) {
+            // 4:2:0 subsampling
+            int subsampledWidth = (width + 1) / 2;
+            int subsampledHeight = (height + 1) / 2;
+            std::vector<std::vector<Uint8>> U_sub(subsampledHeight, std::vector<Uint8>(subsampledWidth));
+            std::vector<std::vector<Uint8>> V_sub(subsampledHeight, std::vector<Uint8>(subsampledWidth));
+
+            for (int y = 0; y < subsampledHeight; ++y) {
+                for (int x = 0; x < subsampledWidth; ++x) {
+                    int sumU = 0, sumV = 0, count = 0;
+                    for (int dy = 0; dy < 2; ++dy) {
+                        for (int dx = 0; dx < 2; ++dx) {
+                            int yy = y * 2 + dy;
+                            int xx = x * 2 + dx;
+                            if (yy < height && xx < width) {
+                                sumU += U[yy][xx];
+                                sumV += V[yy][xx];
+                                ++count;
+                            }
+                        }
+                    }
+                    U_sub[y][x] = sumU / count;
+                    V_sub[y][x] = sumV / count;
+                }
+            }
+
+            // Store Y, U_sub, and V_sub
+            for (const auto &row : Y)
+                data.insert(data.end(), row.begin(), row.end());
+            for (const auto &row : U_sub)
+                data.insert(data.end(), row.begin(), row.end());
+            for (const auto &row : V_sub)
+                data.insert(data.end(), row.begin(), row.end());
+        } else {
+            // No subsampling
+            for (const auto &row : Y)
+                data.insert(data.end(), row.begin(), row.end());
+            for (const auto &row : U)
+                data.insert(data.end(), row.begin(), row.end());
+            for (const auto &row : V)
+                data.insert(data.end(), row.begin(), row.end());
+        }
+    }
+    // Implement other ImageTypes (YIQ, YCbCr, HSL) similarly
+    else {
+        throw std::invalid_argument("Unsupported ImageType in serializeCanvas");
+    }
+    return data;
+}
+
+Canvas deserializeCanvas(std::vector<Uint8> data, NFHeader header) {
+    Canvas image(header.height, std::vector<Color>(header.width));
+    int width = header.width;
+    int height = header.height;
+
+    if (header.type == ImageType::RGB555) {
+        // Reconstruct image from RGB555 data
+        int idx = 0;
+        for (int y = 0; y < height; ++y) {
+            for (int x = 0; x < width; ++x) {
+                Uint16 rgb555 = data[idx] | (data[idx + 1] << 8);
+                idx += 2;
+                Uint8 r = ((rgb555 >> 7) & 0xF8) | ((rgb555 >> 12) & 0x07);
+                Uint8 g = ((rgb555 >> 2) & 0xF8) | ((rgb555 >> 7) & 0x07);
+                Uint8 b = ((rgb555 << 3) & 0xF8) | ((rgb555 >> 2) & 0x07);
+                image[y][x] = {r, g, b};
+            }
+        }
+    } else if (header.type == ImageType::RGB565) {
+        // Reconstruct image from RGB565 data
+        int idx = 0;
+        for (int y = 0; y < height; ++y) {
+            for (int x = 0; x < width; ++x) {
+                Uint16 rgb565 = data[idx] | (data[idx + 1] << 8);
+                idx += 2;
+                Uint8 r = ((rgb565 >> 8) & 0xF8) | ((rgb565 >> 13) & 0x07);
+                Uint8 g = ((rgb565 >> 3) & 0xFC) | ((rgb565 >> 9) & 0x03);
+                Uint8 b = ((rgb565 << 3) & 0xF8) | ((rgb565 >> 2) & 0x07);
+                image[y][x] = {r, g, b};
+            }
+        }
+    } else if (header.type == ImageType::YUV) {
+        // Reconstruct image from YUV data
+        int idx = 0;
+        std::vector<std::vector<Uint8>> Y(height, std::vector<Uint8>(width));
+        std::vector<std::vector<Uint8>> U, V;
+
+        if (header.subsamplingEnabled) {
+            int subsampledWidth = (width + 1) / 2;
+            int subsampledHeight = (height + 1) / 2;
+            U.resize(subsampledHeight, std::vector<Uint8>(subsampledWidth));
+            V.resize(subsampledHeight, std::vector<Uint8>(subsampledWidth));
+
+            // Read Y channel
+            for (auto &row : Y)
+                for (auto &val : row)
+                    val = data[idx++];
+
+            // Read subsampled U and V
+            for (auto &row : U)
+                for (auto &val : row)
+                    val = data[idx++];
+            for (auto &row : V)
+                for (auto &val : row)
+                    val = data[idx++];
+
+            // Upsample U and V
+            std::vector<std::vector<Uint8>> U_full(height, std::vector<Uint8>(width));
+            std::vector<std::vector<Uint8>> V_full(height, std::vector<Uint8>(width));
+
+            for (int y = 0; y < height; ++y) {
+                int yy = y / 2;
+                for (int x = 0; x < width; ++x) {
+                    int xx = x / 2;
+                    U_full[y][x] = U[yy][xx];
+                    V_full[y][x] = V[yy][xx];
+                }
+            }
+            U = std::move(U_full);
+            V = std::move(V_full);
+        } else {
+            U.resize(height, std::vector<Uint8>(width));
+            V.resize(height, std::vector<Uint8>(width));
+
+            // Read Y, U, and V channels
+            for (auto &row : Y)
+                for (auto &val : row)
+                    val = data[idx++];
+            for (auto &row : U)
+                for (auto &val : row)
+                    val = data[idx++];
+            for (auto &row : V)
+                for (auto &val : row)
+                    val = data[idx++];
+        }
+
+        // Convert YUV to RGB
+        for (int y = 0; y < height; ++y) {
+            for (int x = 0; x < width; ++x) {
+                float Yf = Y[y][x] / 255.0f;
+                float Uf = (U[y][x] / 255.0f) - 0.5f;
+                float Vf = (V[y][x] / 255.0f) - 0.5f;
+
+                float r = Yf + 1.13983f * Vf;
+                float g = Yf - 0.39465f * Uf - 0.58060f * Vf;
+                float b = Yf + 2.03211f * Uf;
+
+                image[y][x].r = static_cast<Uint8>(clamp(r, 0.0f, 1.0f) * 255);
+                image[y][x].g = static_cast<Uint8>(clamp(g, 0.0f, 1.0f) * 255);
+                image[y][x].b = static_cast<Uint8>(clamp(b, 0.0f, 1.0f) * 255);
+            }
+        }
+    }
+    // Implement other ImageTypes (YIQ, YCbCr, HSL) similarly
+    else {
+        throw std::invalid_argument("Unsupported ImageType in deserializeCanvas");
+    }
+    return image;
 }

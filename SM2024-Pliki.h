@@ -60,5 +60,10 @@ struct NFHeaderUser {
 };
 
 std::vector<Uint8> serializeHeader(NFHeader header);
-
 NFHeader deserializeHeader(std::vector<Uint8> data);
+
+std::vector<Uint8> serializeCanvas(Canvas &image, ImageType type, bool subsamplingEnabled);
+Canvas deserializeCanvas(std::vector<Uint8> data, NFHeader header);
+
+void saveNFImage(const std::string &filename, NFHeaderUser header, Canvas &image);
+std::pair<NFHeader, Canvas> loadNFImage(const std::string &filename);

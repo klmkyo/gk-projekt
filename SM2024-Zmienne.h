@@ -22,6 +22,9 @@ struct Color {
     Uint8 r, g, b;
 };
 
+bool operator==(const Color &lhs, const Color &rhs);
+bool operator!=(const Color &lhs, const Color &rhs);
+
 extern const char FILE_SIGNATURE[2];
 
 typedef std::vector<std::vector<Color>> Canvas;

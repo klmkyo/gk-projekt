@@ -11,4 +11,12 @@ SDL_Surface* screen = NULL;
 
 SDL_Color paleta8[szerokosc*wysokosc];
 
+bool operator==(const Color &lhs, const Color &rhs) {
+    return lhs.r == rhs.r && lhs.g == rhs.g && lhs.b == rhs.b;
+}
+
+bool operator!=(const Color &lhs, const Color &rhs) {
+    return !(lhs == rhs);
+}
+
 // Removed the template specializations of hash<Color> and equal_to<Color>
