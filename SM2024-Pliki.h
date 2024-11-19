@@ -48,9 +48,21 @@ struct NFHeader {
     bool subsamplingEnabled = false;
 };
 
+const int NFHEADER_SIZE_UNPADDED = 
+    4 + // Magic
+    1 + // Version
+    1 + // ImageType
+    1 + // FilterType
+    1 + // CompressionType
+    2 + // Width
+    2 + // Height
+    1;  // SubsamplingEnabled
+
+// pad to 4 bytes
+const int NFHEADER_SIZE = 32;
+
 // What the user uses to create header (the same thing, but without magic and version)
 struct NFHeaderUser {
-    Uint8 version;
     ImageType type;
     FilterType filter;
     CompressionType compression;

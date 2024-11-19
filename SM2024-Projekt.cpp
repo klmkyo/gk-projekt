@@ -37,65 +37,69 @@ bool hasParameter(ParameterMap<std::string> &parameterMap, char parameter) {
 
 int main(int argc, char *argv[]) {
 
-    // TEST: Create a sample image (all black), save and read to/from file using saveNFImage and loadNFImage
+    // // TEST: Create a sample image (all black), save and read to/from file using saveNFImage and loadNFImage
 
-    NFHeaderUser header;
+    // NFHeaderUser header;
 
-    header.version = 1;
-    header.type = ImageType::RGB565;
-    header.filter = FilterType::None;
-    header.compression = CompressionType::None;
-    header.width = 320;
-    header.height = 240;
-    header.subsamplingEnabled = false;
+    // header.type = ImageType::RGB555;
+    // header.filter = FilterType::None;
+    // header.compression = CompressionType::None;
+    // header.width = 3;
+    // header.height = 3;
+    // header.subsamplingEnabled = false;
 
-    Canvas image(240, std::vector<Color>(320, {0, 0, 0}));
+    // Canvas image(header.height, std::vector<Color>(header.width, {0, 0, 0}));
 
-    // add some random colors
-    for (int i = 0; i < 240; i++) {
-        for (int j = 0; j < 320; j++) {
-            image[i][j] = {(Uint8)(rand() % 256), (Uint8)(rand() % 256), (Uint8)(rand() % 256)};
-        }
-    }
+    // for (int i = 0; i < header.height; i++) {
+    //     for (int j = 0; j < header.width; j++) {
+    //         // image[i][j] = {(Uint8)(rand() % 256), (Uint8)(rand() % 256), (Uint8)(rand() % 256)};
 
-    saveNFImage("test.nf", header, image);
+    //         // set to hex AA
+    //         image[i][j] = {0xAA, 0xAA, 0xAA};
+    //     }
+    // }
 
-    auto [loadedHeader, loadedImage] = loadNFImage("test.nf");
+    // saveNFImage("test.nf", header, image);
 
-    // DEBUG print data about the loaded image
-    std::cout << "Loaded image header: " << std::endl;
-    std::cout << "Version: " << (int)loadedHeader.version << std::endl;
-    std::cout << "Type: " << (int)loadedHeader.type << std::endl;
-    std::cout << "Filter: " << (int)loadedHeader.filter << std::endl;
-    std::cout << "Compression: " << (int)loadedHeader.compression << std::endl;
-    std::cout << "Width: " << loadedHeader.width << std::endl;
-    std::cout << "Height: " << loadedHeader.height << std::endl;
-    std::cout << "Subsampling enabled: " << loadedHeader.subsamplingEnabled << std::endl;
+    // auto [loadedHeader, loadedImage] = loadNFImage("test.nf");
 
-    std::cout << "Loaded image data: " << std::endl;
-    std::cout << "Width: " << loadedImage[0].size() << std::endl;
-    std::cout << "Height: " << loadedImage.size() << std::endl;
+    // // DEBUG print data about the loaded image
+    // std::cout << "Loaded image header: " << std::endl;
+    // std::cout << "Version: " << (int)loadedHeader.version << std::endl;
+    // std::cout << "Type: " << (int)loadedHeader.type << std::endl;
+    // std::cout << "Filter: " << (int)loadedHeader.filter << std::endl;
+    // std::cout << "Compression: " << (int)loadedHeader.compression << std::endl;
+    // std::cout << "Width: " << loadedHeader.width << std::endl;
+    // std::cout << "Height: " << loadedHeader.height << std::endl;
+    // std::cout << "Subsampling enabled: " << loadedHeader.subsamplingEnabled << std::endl;
 
-    // compare canvases.
-    bool isDifferent = false;
+    // std::cout << "Loaded image data: " << std::endl;
+    // std::cout << "Width: " << loadedImage[0].size() << std::endl;
+    // std::cout << "Height: " << loadedImage.size() << std::endl;
 
-    for (int i = 0; i < header.height; i++) {
-        for (int j = 0; j < header.width; j++) {
-            if (image[i][j] != loadedImage[i][j]) {
-                std::cout << "Images are different at pixel (" << j << ", " << i << "). Expected: " << (int)image[i][j].r << ", " << (int)image[i][j].g << ", " << (int)image[i][j].b << " Got: " << (int)loadedImage[i][j].r << ", " << (int)loadedImage[i][j].g << ", " << (int)loadedImage[i][j].b << std::endl;
-            }
-        }
-    }
+    // // compare canvases.
+    // bool isDifferent = false;
 
-    if (isDifferent) {
-        std::cout << "Images are different!" << std::endl;
-    } else {
-        std::cout << "Images are the same!" << std::endl;
-    }
+    // for (int i = 0; i < header.height; i++) {
+    //     for (int j = 0; j < header.width; j++) {
+    //         if (image[i][j] != loadedImage[i][j]) 
+    //             isDifferent = true;
+
+    //             // same as above, but print decimal and hex
+    //             std::cout << "Images are different at pixel (" << j << ", " << i << "). Expected: " << (int)image[i][j].r << ", " << (int)image[i][j].g << ", " << (int)image[i][j].b << " \tGot: " << (int)loadedImage[i][j].r << ", " << (int)loadedImage[i][j].g << ", " << (int)loadedImage[i][j].b << std::hex << " \t(" << (int)image[i][j].r << ", " << (int)image[i][j].g << ", " << (int)image[i][j].b << ") \t(" << (int)loadedImage[i][j].r << ", " << (int)loadedImage[i][j].g << ", " << (int)loadedImage[i][j].b << ")" << std::dec << std::endl;
+    //         }
+    //     }
+    // }
+
+    // if (isDifferent) {
+    //     std::cout << "Images are different!" << std::endl;
+    // } else {
+    //     std::cout << "Images are the same!" << std::endl;
+    // }
+    // return 0;
 
 
 
-    return 0;
     CommandAliasMap commandsAliases;
 
     /* tobmp - odczytuje plik kfc, zapisuje plik bmp */

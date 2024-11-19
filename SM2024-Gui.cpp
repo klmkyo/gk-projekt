@@ -29,11 +29,11 @@ void Funkcja1() {
 
 void Funkcja2() {
 
-    Canvas canvas = getCanvasFromTopLeftCorner(0, 0, szerokosc / 2, wysokosc / 2);
+    Canvas canvas = getCanvasFromPixels(0, 0, szerokosc / 2, wysokosc / 2);
 
     applyBayerDithering16RGB(canvas);
 
-    setCanvasToCorner(canvas, 1, 0);
+    paintCanvasInCorner(canvas, 1, 0);
 
     SDL_UpdateWindowSurface(window);
 }
@@ -114,7 +114,7 @@ void Funkcja7() {
 
 void Funkcja8() {
 
-       for (int yy=0; yy<wysokosc/2; yy++) {
+    for (int yy=0; yy<wysokosc/2; yy++) {
         for (int xx=0; xx<szerokosc/2; xx++) {
             YCbCr ycbcr = getYCbCr(xx, yy);
             setYCbCr(xx + szerokosc/2, yy, ycbcr.y, ycbcr.cb, ycbcr.cr);
@@ -127,12 +127,31 @@ void Funkcja8() {
 
 void Funkcja9() {
 
-    //...
+    // save top left quarter to canvas
+    Canvas canvas = getCanvasFromPixels(0, 0, szerokosc / 2, wysokosc / 2);
+
+    NFHeaderUser header;
+    header.type = ImageType::RGB555;
+    header.filter = FilterType::None;
+    header.compression = CompressionType::None;
+    header.width = canvas[0].size();
+    header.height = canvas.size();
+    header.subsamplingEnabled = false;
+
+    saveNFImage("test.nf", header, canvas);
+
+    // read the image back, and put it in top right
+    auto [loadedHeader, loadedImage] = loadNFImage("test.nf");
+
+    // DEBUG print image dimensions
+    std::cout << "Loaded image dimensions: " << loadedImage[0].size() << "x" << loadedImage.size() << std::endl;
+
+    paintCanvasFromOrigin(loadedImage, szerokosc / 2, 0);
 
     SDL_UpdateWindowSurface(window);
 }
 
-Canvas getCanvasFromTopLeftCorner(int x, int y, int width, int height) {
+Canvas getCanvasFromPixels(int x, int y, int width, int height) {
     Canvas canvas;
     canvas.reserve(height);
     for (int yy = y; yy < y + height; yy++) {
@@ -148,8 +167,15 @@ Canvas getCanvasFromTopLeftCorner(int x, int y, int width, int height) {
     return canvas;
 }
 
+void paintCanvasFromOrigin(const Canvas &canvas, int tlx, int tly) {
+    for (int yy = 0; yy < canvas.size(); yy++) {
+        for (int xx = 0; xx < canvas[0].size(); xx++) {
+            setPixel(xx + tlx, yy + tly, canvas[yy][xx].r, canvas[yy][xx].g, canvas[yy][xx].b);
+        }
+    }
+}
 
-void setCanvasToCorner(const Canvas &canvas, int l, int b) {
+void paintCanvasInCorner(const Canvas &canvas, int l, int b) {
     int x = l * szerokosc / 2;
     int y = b * wysokosc / 2;
     for (int yy = 0; yy < canvas.size(); yy++) {
