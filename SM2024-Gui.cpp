@@ -131,7 +131,7 @@ void Funkcja9() {
     Canvas canvas = getCanvasFromPixels(0, 0, szerokosc / 2, wysokosc / 2);
 
     NFHeaderUser header;
-    header.type = ImageType::RGB555;
+    header.type = ImageType::RGB565;
     header.filter = FilterType::None;
     header.compression = CompressionType::None;
     header.width = canvas[0].size();
