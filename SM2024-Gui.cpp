@@ -6,6 +6,7 @@
 #include "SM2024-Pliki.h"
 #include "SM2024-Konwersje.h"
 #include "SM2024-Gui.h"
+#include "SM2024-Kompresja.h"
 
 
 void czyscEkran(Uint8 R, Uint8 G, Uint8 B)
@@ -15,12 +16,36 @@ void czyscEkran(Uint8 R, Uint8 G, Uint8 B)
 }
 
 void Funkcja1() {
+    int nieskompresowane[] = {0, 0, 0, 1, 1, 1, 1, 2, 0, 0, 3, 1, 3, 2, 2, 0, 0, 0, 3, 3, 3, 3, 1, 2, 1, 2, 3, 1, 2, 0, 0, 1, 1, 1, 3, 3};
+    int dlugosc = 36;
+    
+    std::cout<<"wejscie:"<<std::endl;
+    for (int c=0; c<dlugosc; c++)
+        std::cout<<(int)nieskompresowane[c]<<" ";
+    std::cout<<"\n";
 
-    // Kopiowanie obrazu z RGB555
-    for (int yy = 0; yy < wysokosc / 2; yy++) {
-        for (int xx = 0; xx < szerokosc / 2; xx++) {
-            Uint16 rgb555 = getRGB555_(xx, yy);
-            setRGB555(xx + szerokosc / 2, yy, rgb555);
+    auto result = LZWKompresja(nieskompresowane, dlugosc);
+    auto skompresowane = result.first;
+    auto slownik = result.second;
+    std::cout<<"\n";
+
+    std::cout<<"skompresowane:"<<std::endl;
+    for (int c=0; c<skompresowane.size(); c++)
+        std::cout<<skompresowane[c]<<" ";
+    std::cout<<"\n";
+
+    auto zdekompresowane = LZWDekompresja(skompresowane, slownik);
+    
+    std::cout<<"zdekompresowane:"<<std::endl;
+    for (int c=0; c<zdekompresowane.size(); c++)
+        std::cout<<zdekompresowane[c]<<" ";
+    std::cout<<"\n";
+
+    // check if equal
+    for (int c=0; c<dlugosc; c++) {
+        if (nieskompresowane[c] != zdekompresowane[c]) {
+            std::cout<<"ERROR: "<<c<<std::endl;
+            break;
         }
     }
 
