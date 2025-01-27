@@ -1,0 +1,47 @@
+[
+  {
+    "directory": "/Users/klmkyo/code_projects/gk-projekt",
+    "command": "clang++ -O2 -std=c++14 -I/opt/homebrew/include -I/opt/homebrew/include/SDL2 -D_THREAD_SAFE -c SM2024-Projekt.cpp",
+    "file": "SM2024-Projekt.cpp"
+  },
+  {
+    "directory": "/Users/klmkyo/code_projects/gk-projekt",
+    "command": "clang++ -O2 -std=c++14 -I/opt/homebrew/include -I/opt/homebrew/include/SDL2 -D_THREAD_SAFE -c SM2024-Funkcje.cpp",
+    "file": "SM2024-Funkcje.cpp"
+  },
+  {
+    "directory": "/Users/klmkyo/code_projects/gk-projekt",
+    "command": "clang++ -O2 -std=c++14 -I/opt/homebrew/include -I/opt/homebrew/include/SDL2 -D_THREAD_SAFE -c SM2024-MedianCut.cpp",
+    "file": "SM2024-MedianCut.cpp"
+  },
+  {
+    "directory": "/Users/klmkyo/code_projects/gk-projekt",
+    "command": "clang++ -O2 -std=c++14 -I/opt/homebrew/include -I/opt/homebrew/include/SDL2 -D_THREAD_SAFE -c SM2024-Paleta.cpp",
+    "file": "SM2024-Paleta.cpp"
+  },
+  {
+    "directory": "/Users/klmkyo/code_projects/gk-projekt",
+    "command": "clang++ -O2 -std=c++14 -I/opt/homebrew/include -I/opt/homebrew/include/SDL2 -D_THREAD_SAFE -c SM2024-Pliki.cpp",
+    "file": "SM2024-Pliki.cpp"
+  },
+  {
+    "directory": "/Users/klmkyo/code_projects/gk-projekt",
+    "command": "clang++ -O2 -std=c++14 -I/opt/homebrew/include -I/opt/homebrew/include/SDL2 -D_THREAD_SAFE -c SM2024-Zmienne.cpp",
+    "file": "SM2024-Zmienne.cpp"
+  },
+  {
+    "directory": "/Users/klmkyo/code_projects/gk-projekt",
+    "command": "clang++ -O2 -std=c++14 -I/opt/homebrew/include -I/opt/homebrew/include/SDL2 -D_THREAD_SAFE -c SM2024-Gui.cpp",
+    "file": "SM2024-Gui.cpp"
+  },
+  {
+    "directory": "/Users/klmkyo/code_projects/gk-projekt",
+    "command": "clang++ -O2 -std=c++14 -I/opt/homebrew/include -I/opt/homebrew/include/SDL2 -D_THREAD_SAFE -c SM2024-Konwersje.cpp",
+    "file": "SM2024-Konwersje.cpp"
+  },
+  {
+    "directory": "/Users/klmkyo/code_projects/gk-projekt",
+    "command": "clang++ -O2 -std=c++14 -I/opt/homebrew/include -I/opt/homebrew/include/SDL2 -D_THREAD_SAFE -c SM2024-Kompresja.cpp",
+    "file": "SM2024-Kompresja.cpp"
+  }
+]

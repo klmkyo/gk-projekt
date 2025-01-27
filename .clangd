@@ -1,0 +1,11 @@
+CompileFlags:
+  Add: [-Wall, -Wextra, -std=c++14]
+  Compiler: clang++
+
+Diagnostics:
+  ClangTidy:
+    Add: [modernize*, performance*, readability*]
+    Remove: [modernize-use-trailing-return-type]
+
+Index:
+  Background: Build 
