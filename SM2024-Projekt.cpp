@@ -112,12 +112,12 @@ int main(int argc, char *argv[]) {
 
   CommandAliasMap commandsAliases;
 
-  /* tobmp - odczytuje plik kfc, zapisuje plik bmp */
+  /* tobmp - reads NF file, saves BMP file */
   commandsAliases[1] = {"tobmp", "-t", "-tobmp"};
-  /* frombmp - odczytuje plik bmp, zapisuje plik kfc */
+  /* frombmp - reads BMP file, saves NF file */
   commandsAliases[2] = {"frombmp", "-f", "-frombmp"};
 
-  const std::string appName = argc < 1 ? "kfc" : argv[0];
+  const std::string appName = argc < 1 ? "nf" : argv[0];
 
   // If no argv start gui
   if (argc == 1) {
@@ -125,150 +125,173 @@ int main(int argc, char *argv[]) {
     return 0;
   }
 
-  /* Wypisuje wszystkie dostępne komendy bez opisu */
+  /* Print all available commands without description */
   if (argc <= 1 || (argc == 2 && (std::string(argv[1]) == "help" ||
                                   std::string(argv[1]) == "-help"))) {
-    std::cout << "  Witamy w konwerterze obrazów 🍗 KFC <-> 🎨 BMP.\n"
-              << "Dostępne operacje:\n"
-              << "1. Konwersja formatu KFC na BMP\n"
+    std::cout << "  Welcome to the 🎨 BMP <-> 🖼️ NF image converter.\n"
+              << "Available operations:\n"
+              << "1. Convert NF format to BMP\n"
+              << "> " << appName << " tobmp <nf_file_path> [-s bmp_file_path]\n"
+              << "Show more information using '" << appName << " -help tobmp'\n"
+              << "2. Convert BMP format to NF\n"
               << "> " << appName
-              << " tobmp <ścieżka_pliku_kfc> [-s ścieżka_pliku_bmp]\n"
-              << "Wyświetl więcej informacji używając '" << appName
-              << " -help tobmp'\n"
-              << "2. Konwersja formatu BMP na KFC\n"
-              << "> " << appName
-              << " frombmp <ścieżka_pliku_bmp> [-s ścieżka_pliku_kfc] [-t "
-                 "tryb(1-5)] [-d dithering(none/bayer/floyd)]\n"
-              << "Wyświetl więcej informacji używając '" << appName
-              << " -help tobmp'\n";
+              << " frombmp <bmp_file_path> [-s nf_file_path] [-t type] [-f "
+                 "filter] [-c compression] [-ss subsampling]\n"
+              << "Show more information using '" << appName
+              << " -help frombmp'\n";
   }
 
-  /* W przypadku wysłania 'kfc help <command_name>' wyświetlony zostanie opis
-     komendy */
+  /* If 'nf help <command_name>' is sent, command description will be displayed
+   */
   else if (argc == 3 && (std::string(argv[1]) == "help" ||
                          std::string(argv[1]) == "-help")) {
     int primaryCommandId = findCommand(commandsAliases, argv[2]);
     switch (primaryCommandId) {
     case 1: { /* tobmp */
       std::cout << "> " << appName
-                << " tobmp <ścieżka_pliku_kfc> [-s ścieżka_pliku_bmp]\n"
-                << "Opis: Komenda 'tobmp' konwertuje plik w formacie KFC "
-                   "na format BMP \n"
-                << "Parametry obowiązkowe:\n"
-                << "\t<ścieżka_pliku_kfc> - ścieżka do pliku w formacie "
-                   "kfc (relatywna lub absolutna)\n"
-                << "Parametry opcjonalne:\n"
-                << "\t[-s ścieżka_pliku_bmp] - ścieżka do nowo utworzonego "
-                   "pliku (domyślnie plik kfc ze zmienionym "
-                   "rozszerzeniem)\n";
+                << " tobmp <nf_file_path> [-s bmp_file_path]\n"
+                << "Description: 'tobmp' command converts NF format file to "
+                   "BMP format\n"
+                << "Required parameters:\n"
+                << "\t<nf_file_path> - path to NF format file (relative or "
+                   "absolute)\n"
+                << "Optional parameters:\n"
+                << "\t[-s bmp_file_path] - path to newly created file "
+                   "(default: NF file with changed extension)\n";
       break;
     }
-    case 2: { /* frombmp*/
-      std::cout << "> " << appName
-                << " frombmp <ścieżka_pliku_kfc> [-s ścieżka_pliku_bmp] "
-                   "[-t tryb(1-5)] [-d dithering(none/bayer/floyd)]\n"
-                << "Opis: Komenda 'frombmp' konwertuje plik w formacie BMP "
-                   "na format KFC \n"
-                << "Parametry obowiązkowe:\n"
-                << "\t<ścieżka_pliku_bmp> - ścieżka do pliku w formacie "
-                   "bmp (relatywna lub absolutna)\n"
-                << "Parametry opcjonalne:\n"
-                << "\t[-s ścieżka_pliku_kfc] - ścieżka do nowo utworzonego "
-                   "pliku (domyślnie plik bmp ze zmienionym "
-                   "rozszerzeniem)\n"
-                << "\t[-t tryb(1-5)] - tryb konwersji obrazu (domyślnie "
-                   "1), dostępne tryby:\n"
-                << "\t\t1 - Paleta narzucona\n"
-                << "\t\t2 - Szarość narzucona\n"
-                << "\t\t3 - Paleta wykryta\n"
-                << "\t\t4 - Szarość wykryta\n"
-                << "\t\t5 - Paleta dedykowana\n"
-                << "\t[-d dithering(none/bayer/floyd)] - tryb ditheringu "
-                   "(domyślnie none - bez ditheringu)\n";
+    case 2: { /* frombmp */
+      std::cout
+          << "> " << appName
+          << " frombmp <bmp_file_path> [-s nf_file_path] [-t type] [-f filter] "
+             "[-c compression] [-ss subsampling]\n"
+          << "Description: 'frombmp' command converts BMP format file to NF "
+             "format\n"
+          << "Required parameters:\n"
+          << "\t<bmp_file_path> - path to BMP format file (relative or "
+             "absolute)\n"
+          << "Optional parameters:\n"
+          << "\t[-s nf_file_path] - path to newly created file (default: BMP "
+             "file with changed extension)\n"
+          << "\t[-t type] - image type (default: RGB555), available types:\n"
+          << "\t\tYUV - YUV color space\n"
+          << "\t\tYIQ - YIQ color space\n"
+          << "\t\tYCbCr - YCbCr color space\n"
+          << "\t\tHSL - HSL color space\n"
+          << "\t\tRGB555 - 15-bit RGB\n"
+          << "\t\tRGB565 - 16-bit RGB\n"
+          << "\t[-f filter] - filter type (default: none)\n"
+          << "\t[-c compression] - compression type (default: none)\n"
+          << "\t[-ss] - enable subsampling (default: disabled)\n";
       break;
     }
     default: {
-      std::cout << "Nieznana komenda. Użyj '" << appName
-                << " help' aby dowiedzieć się o istniejących komendach."
-                << std::endl;
+      std::cout << "Unknown command. Use '" << appName
+                << " help' to learn about existing commands." << std::endl;
       break;
     }
     }
   }
 
-  /* W pozostałych przypadkach będzie próba rozpoznania komendy z 1 argumentu
-     i jej wykonanie */
+  /* In other cases, try to recognize command from 1st argument and execute it
+   */
   else if (argc > 1) {
     int primaryCommandId = findCommand(commandsAliases, argv[1]);
 
     switch (primaryCommandId) {
-    case 1: { /* tobmp <ścieżka_pliku_kfc> [-s ścieżka_pliku_bmp] */
+    case 1: { /* tobmp <nf_file_path> [-s bmp_file_path] */
       if (argc < 3) {
-        std::cout << "Nie podano ścieżki do pliku kfc. Użyj '" << appName
-                  << " help tobmp' aby dowiedzieć się więcej." << '\n';
+        std::cout << "No NF file path provided. Use '" << appName
+                  << " help tobmp' to learn more." << '\n';
         break;
       }
-      std::string kfcPath = argv[2];
+      std::string nfPath = argv[2];
       ParameterMap<std::string> parameterMap;
       readParameterMap(parameterMap, 3, argc, argv);
-      /* parametr s - scieżka pliku kfc */
+
       std::string bmpPath =
           hasParameter(parameterMap, 's')
               ? parameterMap['s']
-              : kfcPath.substr(0, kfcPath.find_last_of('.')) + ".bmp";
+              : nfPath.substr(0, nfPath.find_last_of('.')) + ".bmp";
 
-      KonwertujKfcNaBmp(kfcPath, bmpPath);
+      auto [header, image] = loadNFImage(nfPath);
+      ZapiszCanvasDoBmp(image, bmpPath);
       break;
     }
-    case 2: { /* frombmp <ścieżka_pliku_kfc> [-s ścieżka_pliku_bmp] [-t
-                 tryb(1-5)] [-d dithering(none/bayer/floyd)] */
+    case 2: { /* frombmp <bmp_file_path> [-s nf_file_path] [-t type] [-f filter]
+                 [-c compression] [-ss] */
       if (argc < 3) {
-        std::cout << "Nie podano ścieżki do pliku bmp. Użyj '" << appName
-                  << " help frombmp' aby dowiedzieć się więcej." << '\n';
+        std::cout << "No BMP file path provided. Use '" << appName
+                  << " help frombmp' to learn more." << '\n';
         break;
       }
       std::string bmpPath = argv[2];
       ParameterMap<std::string> parameterMap;
       readParameterMap(parameterMap, 3, argc, argv);
-      /* parametr s - scieżka pliku kfc */
-      std::string kfcPath =
+
+      std::string nfPath =
           hasParameter(parameterMap, 's')
               ? parameterMap['s']
-              : bmpPath.substr(0, bmpPath.find_last_of('.')) + ".kfc";
-      /* parametr t - tryb obrazu */
-      TrybObrazu tryb = TrybObrazu::PaletaDedykowana;
+              : bmpPath.substr(0, bmpPath.find_last_of('.')) + ".nf";
+
+      NFHeaderUser header;
+      header.type = ImageType::RGB555; // default
+      header.filter = FilterType::None;
+      header.compression = CompressionType::None;
+      header.subsamplingEnabled = false;
+
       if (hasParameter(parameterMap, 't')) {
-        int _tryb = std::stoi(parameterMap['t']);
-        if (_tryb < 1 || _tryb > 5) {
-          std::cout << "Nieprawidłowy tryb konwersji. Użyj '" << appName
-                    << " help frombmp' aby dowiedzieć się więcej." << std::endl;
-          break;
-        }
-        tryb = static_cast<TrybObrazu>(_tryb);
-      }
-      /* parametr d - dithering*/
-      Dithering dithering = Dithering::Brak;
-      if (hasParameter(parameterMap, 'd')) {
-        std::string _dithering = parameterMap['d'];
-        if (_dithering == "none")
-          dithering = Dithering::Brak;
-        else if (_dithering == "bayer")
-          dithering = Dithering::Bayer;
-        else if (_dithering == "floyd")
-          dithering = Dithering::Floyd;
+        std::string type = parameterMap['t'];
+        if (type == "YUV")
+          header.type = ImageType::YUV;
+        else if (type == "YIQ")
+          header.type = ImageType::YIQ;
+        else if (type == "YCbCr")
+          header.type = ImageType::YCbCr;
+        else if (type == "HSL")
+          header.type = ImageType::HSL;
+        else if (type == "RGB555")
+          header.type = ImageType::RGB555;
+        else if (type == "RGB565")
+          header.type = ImageType::RGB565;
         else {
-          std::cout << "Nieprawidłowy tryb ditheringu. Użyj '" << appName
-                    << " help frombmp' aby dowiedzieć się więcej." << '\n';
+          std::cout << "Invalid image type. Use '" << appName
+                    << " help frombmp' to learn more." << '\n';
           break;
         }
       }
-      KonwertujBmpNaKfc(bmpPath, kfcPath, tryb, dithering);
+
+      if (hasParameter(parameterMap, 'f')) {
+        std::string filter = parameterMap['f'];
+        if (filter == "none")
+          header.filter = FilterType::None;
+        else if (filter == "sub")
+          header.filter = FilterType::Sub;
+        else if (filter == "up")
+          header.filter = FilterType::Up;
+        else if (filter == "average")
+          header.filter = FilterType::Average;
+        else if (filter == "paeth")
+          header.filter = FilterType::Paeth;
+        else {
+          std::cout << "Invalid filter type. Use '" << appName
+                    << " help frombmp' to learn more." << '\n';
+          break;
+        }
+      }
+
+      header.subsamplingEnabled = hasParameter(parameterMap, 'ss');
+
+      Canvas image = ladujBMPDoPamieci(bmpPath);
+      header.width = image[0].size();
+      header.height = image.size();
+
+      saveNFImage(nfPath, header, image);
       break;
     }
     default: {
-      std::cout << "Nieznana komenda. Użyj '" << appName
-                << " help' aby dowiedzieć się o dostępnych komendach."
-                << std::endl;
+      std::cout << "Unknown command. Use '" << appName
+                << " help' to learn about available commands." << std::endl;
       break;
     }
     }
