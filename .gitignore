@@ -1,4 +1,5 @@
 .vscode
 *.out
 .cache
+text-runs
 text-runs/*
