@@ -41,12 +41,11 @@ int main(int argc, char *argv[]) {
   // TEST: Create a sample image (all black), save and read to/from file
   NFHeaderUser header;
 
-  header.type = ImageType::RGB555;
+  header.type = ImageType::RGB555_WITH_BAYER_DITHERING;
   header.filter = FilterType::None;
   header.compression = CompressionType::None;
   header.width = 3;
   header.height = 3;
-  header.subsamplingEnabled = false;
 
   Canvas image(header.height, std::vector<Color>(header.width, {0, 0, 0}));
 
@@ -71,8 +70,6 @@ int main(int argc, char *argv[]) {
   std::cout << "Compression: " << (int)loadedHeader.compression << std::endl;
   std::cout << "Width: " << loadedHeader.width << std::endl;
   std::cout << "Height: " << loadedHeader.height << std::endl;
-  std::cout << "Subsampling enabled: " << loadedHeader.subsamplingEnabled
-            << std::endl;
 
   std::cout << "Loaded image data: " << std::endl;
   std::cout << "Width: " << loadedImage[0].size() << std::endl;

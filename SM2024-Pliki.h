@@ -1,6 +1,4 @@
 #pragma once
-#include "SM2024-Funkcje.h"
-#include "SM2024-MedianCut.h"
 #include "SM2024-Zmienne.h"
 #include <string>
 
@@ -31,8 +29,6 @@ struct NFHeader {
   CompressionType compression;
   Uint16 width;
   Uint16 height;
-  // 4:2:0, każdy ImageType ma z góry określone subsamplingi
-  bool subsamplingEnabled = false;
 };
 
 const int NFHEADER_SIZE_UNPADDED = 4 + // Magic
@@ -41,8 +37,7 @@ const int NFHEADER_SIZE_UNPADDED = 4 + // Magic
                                    1 + // FilterType
                                    1 + // CompressionType
                                    2 + // Width
-                                   2 + // Height
-                                   1;  // SubsamplingEnabled
+                                   2;  // Height
 
 // pad to 4 bytes
 const int NFHEADER_SIZE = 32;
@@ -55,14 +50,13 @@ struct NFHeaderUser {
   CompressionType compression;
   Uint16 width;
   Uint16 height;
-  bool subsamplingEnabled = false;
 };
 
 std::vector<Uint8> serializeHeader(NFHeader header);
 NFHeader deserializeHeader(std::vector<Uint8> data);
 
-std::vector<Uint8> serializeCanvas(Canvas &image, ImageType type,
-                                   bool subsamplingEnabled);
+std::vector<Uint8> serializeCanvas(Canvas &image, NFHeaderUser header);
+std::vector<Uint8> serializeCanvas(Canvas &image, NFHeader header);
 Canvas deserializeCanvas(std::vector<Uint8> data, NFHeader header);
 
 void saveNFImage(const std::string &filename, NFHeaderUser header,
