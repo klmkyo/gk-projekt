@@ -16,6 +16,7 @@ enum class CompressionType {
   None = 0,
   Dct = 1,
   DctPlusChromaSubsampling = 2,
+  RLE = 3,
 };
 
 // What the file contains

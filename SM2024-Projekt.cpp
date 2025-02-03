@@ -62,6 +62,8 @@ CompressionType parseCompressionType(const std::string &comp) {
     return CompressionType::Dct;
   if (comp == "dct_chroma")
     return CompressionType::DctPlusChromaSubsampling;
+  if (comp == "rle")
+    return CompressionType::RLE;
   throw std::invalid_argument("Invalid compression type: " + comp);
 }
 
@@ -281,6 +283,9 @@ int main(int argc, char *argv[]) {
         break;
       case CompressionType::DctPlusChromaSubsampling:
         std::cout << "DCT with chroma subsampling";
+        break;
+      case CompressionType::RLE:
+        std::cout << "Run-Length Encoding";
         break;
       }
 

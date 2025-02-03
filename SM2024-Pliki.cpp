@@ -192,11 +192,64 @@ Uint8 applyBayerDithering(int x, int y, Uint8 value) {
   return static_cast<Uint8>(dithered * 31.0f + 0.5f);
 }
 
+// Add RLE compression helper functions
+std::vector<Uint8> compressRLE(const std::vector<Uint8> &input) {
+  std::vector<Uint8> compressed;
+  size_t i = 0;
+
+  while (i < input.size()) {
+    Uint8 current = input[i];
+    Uint8 count = 1;
+
+    // Count consecutive identical bytes
+    while (i + 1 < input.size() && input[i + 1] == current && count < 255) {
+      count++;
+      i++;
+    }
+
+    // If run length is 1 and next byte is different, store without RLE
+    if (count == 1 && i + 1 < input.size() && input[i + 1] != current) {
+      compressed.push_back(0); // 0 count means literal byte follows
+      compressed.push_back(current);
+    } else {
+      compressed.push_back(count);
+      compressed.push_back(current);
+    }
+
+    i++;
+  }
+
+  return compressed;
+}
+
+std::vector<Uint8> decompressRLE(const std::vector<Uint8> &input) {
+  std::vector<Uint8> decompressed;
+  size_t i = 0;
+
+  while (i < input.size()) {
+    Uint8 count = input[i++];
+    Uint8 value = input[i++];
+
+    if (count == 0) {
+      // Literal byte
+      decompressed.push_back(value);
+    } else {
+      // Run of identical bytes
+      for (Uint8 j = 0; j < count; j++) {
+        decompressed.push_back(value);
+      }
+    }
+  }
+
+  return decompressed;
+}
+
 std::vector<Uint8> serializeCanvas(Canvas &image, NFHeader header) {
   std::vector<Uint8> data;
   int width = image[0].size();
   int height = image.size();
 
+  // First collect the raw pixel data
   switch (header.type) {
   case ImageType::RGB888: {
     // Standard RGB888 format - 3 bytes per pixel
@@ -316,13 +369,19 @@ std::vector<Uint8> serializeCanvas(Canvas &image, NFHeader header) {
     data = std::move(filtered);
   }
 
+  // Apply compression if specified
+  if (header.compression == CompressionType::RLE) {
+    data = compressRLE(data);
+  }
+
   return data;
 }
 
 Canvas deserializeCanvas(std::vector<Uint8> data, NFHeader header) {
-  Canvas image(header.height, std::vector<Color>(header.width));
-  int width = header.width;
-  int height = header.height;
+  // First decompress if RLE was used
+  if (header.compression == CompressionType::RLE) {
+    data = decompressRLE(data);
+  }
 
   // If average filter was applied, reverse it first
   if (header.filter == FilterType::Average) {
@@ -350,6 +409,10 @@ Canvas deserializeCanvas(std::vector<Uint8> data, NFHeader header) {
     }
     data = std::move(unfiltered);
   }
+
+  Canvas image(header.height, std::vector<Color>(header.width));
+  int width = header.width;
+  int height = header.height;
 
   size_t dataIndex = 0;
   switch (header.type) {
