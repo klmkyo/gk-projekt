@@ -331,11 +331,13 @@ std::vector<Uint8> serializeCanvas(Canvas &image, NFHeader header) {
             for (int yb = 0; yb < 8; yb++) {
               for (int xb = 0; xb < 8; xb++) {
                 float q = QY[yb][xb]; // Use luminance quantization for RGB
-                float coeff = std::round(dctOut[yb][xb] / q);
-                int16_t iCoeff = (int16_t)coeff;
-                // Store as 2 bytes (little-endian)
-                data.push_back((Uint8)(iCoeff & 0xFF));
-                data.push_back((Uint8)((iCoeff >> 8) & 0xFF));
+                float coeff = dctOut[yb][xb] / q;
+                // Scale and clamp to 8-bit range
+                int8_t iCoeff =
+                    (int8_t)clamp<int>((int)std::round(coeff), -128, 127);
+                // Store as single byte
+                data.push_back(
+                    (Uint8)(iCoeff + 128)); // Shift from -128..127 to 0..255
               }
             }
           }
@@ -397,11 +399,13 @@ std::vector<Uint8> serializeCanvas(Canvas &image, NFHeader header) {
             for (int yb = 0; yb < 8; yb++) {
               for (int xb = 0; xb < 8; xb++) {
                 float q = QY[yb][xb]; // Use luminance quantization
-                float coeff = std::round(dctOut[yb][xb] / q);
-                int16_t iCoeff = (int16_t)coeff;
-                // Store as 2 bytes (little-endian)
-                data.push_back((Uint8)(iCoeff & 0xFF));
-                data.push_back((Uint8)((iCoeff >> 8) & 0xFF));
+                float coeff = dctOut[yb][xb] / q;
+                // Scale and clamp to 8-bit range
+                int8_t iCoeff =
+                    (int8_t)clamp<int>((int)std::round(coeff), -128, 127);
+                // Store as single byte
+                data.push_back(
+                    (Uint8)(iCoeff + 128)); // Shift from -128..127 to 0..255
               }
             }
           }
@@ -498,11 +502,13 @@ std::vector<Uint8> serializeCanvas(Canvas &image, NFHeader header) {
             for (int yb = 0; yb < 8; yb++) {
               for (int xb = 0; xb < 8; xb++) {
                 float q = quant[yb][xb];
-                float coeff = std::round(dctOut[yb][xb] / q);
-                int16_t iCoeff = (int16_t)coeff;
-                // Store as 2 bytes (little-endian)
-                data.push_back((Uint8)(iCoeff & 0xFF));
-                data.push_back((Uint8)((iCoeff >> 8) & 0xFF));
+                float coeff = dctOut[yb][xb] / q;
+                // Scale and clamp to 8-bit range
+                int8_t iCoeff =
+                    (int8_t)clamp<int>((int)std::round(coeff), -128, 127);
+                // Store as single byte
+                data.push_back(
+                    (Uint8)(iCoeff + 128)); // Shift from -128..127 to 0..255
               }
             }
           }
@@ -634,17 +640,16 @@ Canvas deserializeCanvas(std::vector<Uint8> data, NFHeader header) {
                                 int h) {
         for (int by = 0; by < h; by += 8) {
           for (int bx = 0; bx < w; bx += 8) {
-            // read 64 int16
+            // read 64 int8
             float blockDCT[8][8];
             for (int yb = 0; yb < 8; yb++) {
               for (int xb = 0; xb < 8; xb++) {
-                if (dataIndex + 1 >= data.size()) {
+                if (dataIndex >= data.size()) {
                   // Safety check or throw if data is incomplete
                   blockDCT[yb][xb] = 0;
                 } else {
-                  int16_t coeff =
-                      (int16_t)(data[dataIndex] | (data[dataIndex + 1] << 8));
-                  dataIndex += 2;
+                  // Convert from 0..255 back to -128..127
+                  int8_t coeff = (int8_t)((int)data[dataIndex++] - 128);
                   blockDCT[yb][xb] = (float)coeff;
                 }
               }
@@ -710,17 +715,16 @@ Canvas deserializeCanvas(std::vector<Uint8> data, NFHeader header) {
                                 int h) {
         for (int by = 0; by < h; by += 8) {
           for (int bx = 0; bx < w; bx += 8) {
-            // read 64 int16
+            // read 64 int8
             float blockDCT[8][8];
             for (int yb = 0; yb < 8; yb++) {
               for (int xb = 0; xb < 8; xb++) {
-                if (dataIndex + 1 >= data.size()) {
+                if (dataIndex >= data.size()) {
                   // Safety check or throw if data is incomplete
                   blockDCT[yb][xb] = 0;
                 } else {
-                  int16_t coeff =
-                      (int16_t)(data[dataIndex] | (data[dataIndex + 1] << 8));
-                  dataIndex += 2;
+                  // Convert from 0..255 back to -128..127
+                  int8_t coeff = (int8_t)((int)data[dataIndex++] - 128);
                   blockDCT[yb][xb] = (float)coeff;
                 }
               }
@@ -821,17 +825,16 @@ Canvas deserializeCanvas(std::vector<Uint8> data, NFHeader header) {
                                 int h, const float quant[8][8]) {
         for (int by = 0; by < h; by += 8) {
           for (int bx = 0; bx < w; bx += 8) {
-            // read 64 int16
+            // read 64 int8
             float blockDCT[8][8];
             for (int yb = 0; yb < 8; yb++) {
               for (int xb = 0; xb < 8; xb++) {
-                if (dataIndex + 1 >= data.size()) {
+                if (dataIndex >= data.size()) {
                   // Safety check or throw if data is incomplete
                   blockDCT[yb][xb] = 0;
                 } else {
-                  int16_t coeff =
-                      (int16_t)(data[dataIndex] | (data[dataIndex + 1] << 8));
-                  dataIndex += 2;
+                  // Convert from 0..255 back to -128..127
+                  int8_t coeff = (int8_t)((int)data[dataIndex++] - 128);
                   blockDCT[yb][xb] = (float)coeff;
                 }
               }
