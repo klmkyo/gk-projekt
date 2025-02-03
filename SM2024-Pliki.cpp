@@ -167,6 +167,31 @@ std::vector<Uint8> serializeCanvas(Canvas &image, NFHeaderUser header) {
   return serializeCanvas(image, fullHeader);
 }
 
+// 8x8 Bayer dithering matrix
+const int BAYER_MATRIX_SIZE = 8;
+const float BAYER_MATRIX[8][8] = {
+    {0, 48, 12, 60, 3, 51, 15, 63}, {32, 16, 44, 28, 35, 19, 47, 31},
+    {8, 56, 4, 52, 11, 59, 7, 55},  {40, 24, 36, 20, 43, 27, 39, 23},
+    {2, 50, 14, 62, 1, 49, 13, 61}, {34, 18, 46, 30, 33, 17, 45, 29},
+    {10, 58, 6, 54, 9, 57, 5, 53},  {42, 26, 38, 22, 41, 25, 37, 21}};
+
+// Apply Bayer dithering to a single color channel
+Uint8 applyBayerDithering(int x, int y, Uint8 value) {
+  // Normalize the Bayer matrix value to [0, 1]
+  float bayerValue =
+      BAYER_MATRIX[y % BAYER_MATRIX_SIZE][x % BAYER_MATRIX_SIZE] / 64.0f;
+  // Scale to match the color reduction step
+  bayerValue = (bayerValue - 0.5f) *
+               (8.0f / 255.0f); // 8 is the step size for 5-bit color
+
+  // Add dither and clamp
+  float dithered = value / 255.0f + bayerValue;
+  dithered = std::max(0.0f, std::min(1.0f, dithered));
+
+  // Convert to 5-bit color (0-31)
+  return static_cast<Uint8>(dithered * 31.0f + 0.5f);
+}
+
 std::vector<Uint8> serializeCanvas(Canvas &image, NFHeader header) {
   std::vector<Uint8> data;
   int width = image[0].size();
@@ -185,13 +210,13 @@ std::vector<Uint8> serializeCanvas(Canvas &image, NFHeader header) {
     break;
   }
   case ImageType::RGB555_WITH_BAYER_DITHERING: {
-    // RGB555 format - 2 bytes per pixel (5 bits per channel)
+    // RGB555 format with Bayer dithering - 2 bytes per pixel
     for (int y = 0; y < height; y++) {
       for (int x = 0; x < width; x++) {
-        // Convert RGB888 to RGB555
-        Uint16 r5 = (image[y][x].r >> 3) & 0x1F;
-        Uint16 g5 = (image[y][x].g >> 3) & 0x1F;
-        Uint16 b5 = (image[y][x].b >> 3) & 0x1F;
+        // Apply Bayer dithering to each channel
+        Uint8 r5 = applyBayerDithering(x, y, image[y][x].r);
+        Uint8 g5 = applyBayerDithering(x, y, image[y][x].g);
+        Uint8 b5 = applyBayerDithering(x, y, image[y][x].b);
 
         // Pack into 16 bits: RRRRRGGGGGGBBBBB
         Uint16 pixel = (r5 << 10) | (g5 << 5) | b5;
@@ -219,7 +244,6 @@ std::vector<Uint8> serializeCanvas(Canvas &image, NFHeader header) {
     // Convert RGB to YCbCr
     for (int y = 0; y < height; y++) {
       for (int x = 0; x < width; x++) {
-        // RGB to YCbCr conversion
         float r = image[y][x].r;
         float g = image[y][x].g;
         float b = image[y][x].b;
