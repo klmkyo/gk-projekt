@@ -4,29 +4,20 @@
 #include "SM2024-Zmienne.h"
 #include <string>
 
-void ZapisDoPliku(std::string nazwaPliku, TrybObrazu tryb, Dithering dithering,
-                  Canvas &obrazek, Canvas1D &paleta);
-Canvas OdczytZPliku(const std::string &filename);
-void ZapiszCanvasDoBmp(const Canvas &image, const std::string &filename);
-Canvas ladujBMPDoPamieci(std::string nazwa);
-void KonwertujBmpNaKfc(std::string bmpZrodlo, std::string kfcCel,
-                       TrybObrazu tryb, Dithering d);
-void KonwertujKfcNaBmp(std::string kfcZrodlo, std::string bmpCel);
 SDL_Color getPixelSurface(int x, int y, SDL_Surface *surface);
 
 enum class ImageType {
-  YUV = 0,
-  YIQ = 1,
-  YCbCr = 2,
-  HSL = 3,
-  RGB555 = 4,
-  RGB565 = 5
+  RGB555_WITH_BAYER_DITHERING = 0,
+  RGB888 = 1,
+  YCbCr888 = 2,
 };
 
-enum class FilterType { None = 0, Sub = 1, Up = 2, Average = 3, Paeth = 4 };
+enum class FilterType { None = 0, Average = 3 };
 
 enum class CompressionType {
   None = 0,
+  Dct = 1,
+  DctPlusChromaSubsampling = 2,
 };
 
 // What the file contains
