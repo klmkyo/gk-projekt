@@ -192,8 +192,89 @@ EOF
     done
 done
 
+echo "</div>" >> test-runs/preview.html
+
+# Add comparison tables
+cat >> test-runs/preview.html << EOF
+    <h2>Compression Ratio Comparison Tables</h2>
+    
+    <h3>No Filter</h3>
+    <table style="border-collapse: collapse; width: 100%; margin-bottom: 30px;">
+        <tr style="background-color: #f5f5f5;">
+            <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Type</th>
+            <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">No Compression</th>
+            <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">DCT</th>
+            <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">DCT+Chroma</th>
+            <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">RLE</th>
+        </tr>
+EOF
+
+# Fill the "No Filter" table
+for type in "${TYPES[@]}"; do
+    echo "        <tr>" >> test-runs/preview.html
+    echo "            <td style=\"border: 1px solid #ddd; padding: 8px;\">$type</td>" >> test-runs/preview.html
+    for compression in "none" "dct" "dct_chroma" "rle"; do
+        nf_name="test-runs/$(sanitize "${type}")_none_${compression}.nf"
+        if [ -f "$nf_name" ]; then
+            nf_size=$(get_size_kb "$nf_name")
+            nf_percent=$(get_percentage $nf_size $original_size)
+            # Color coding based on compression ratio
+            if (( $(echo "$nf_percent < 40" | bc -l) )); then
+                color="#2a9d8f"
+            elif (( $(echo "$nf_percent < 70" | bc -l) )); then
+                color="#e9c46a"
+            else
+                color="#e76f51"
+            fi
+            echo "            <td style=\"border: 1px solid #ddd; padding: 8px; text-align: center; color: ${color}\">${nf_percent}%</td>" >> test-runs/preview.html
+        else
+            echo "            <td style=\"border: 1px solid #ddd; padding: 8px; text-align: center;\">N/A</td>" >> test-runs/preview.html
+        fi
+    done
+    echo "        </tr>" >> test-runs/preview.html
+done
+
+cat >> test-runs/preview.html << EOF
+    </table>
+
+    <h3>Average Filter</h3>
+    <table style="border-collapse: collapse; width: 100%; margin-bottom: 30px;">
+        <tr style="background-color: #f5f5f5;">
+            <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Type</th>
+            <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">No Compression</th>
+            <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">DCT</th>
+            <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">DCT+Chroma</th>
+            <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">RLE</th>
+        </tr>
+EOF
+
+# Fill the "Average Filter" table
+for type in "${TYPES[@]}"; do
+    echo "        <tr>" >> test-runs/preview.html
+    echo "            <td style=\"border: 1px solid #ddd; padding: 8px;\">$type</td>" >> test-runs/preview.html
+    for compression in "none" "dct" "dct_chroma" "rle"; do
+        nf_name="test-runs/$(sanitize "${type}")_average_${compression}.nf"
+        if [ -f "$nf_name" ]; then
+            nf_size=$(get_size_kb "$nf_name")
+            nf_percent=$(get_percentage $nf_size $original_size)
+            # Color coding based on compression ratio
+            if (( $(echo "$nf_percent < 40" | bc -l) )); then
+                color="#2a9d8f"
+            elif (( $(echo "$nf_percent < 70" | bc -l) )); then
+                color="#e9c46a"
+            else
+                color="#e76f51"
+            fi
+            echo "            <td style=\"border: 1px solid #ddd; padding: 8px; text-align: center; color: ${color}\">${nf_percent}%</td>" >> test-runs/preview.html
+        else
+            echo "            <td style=\"border: 1px solid #ddd; padding: 8px; text-align: center;\">N/A</td>" >> test-runs/preview.html
+        fi
+    done
+    echo "        </tr>" >> test-runs/preview.html
+done
+
 # Close the HTML file
-echo "</div></body></html>" >> test-runs/preview.html
+echo "</table></body></html>" >> test-runs/preview.html
 
 echo -e "\nCreated preview.html - open it in a browser to compare all images"
 echo "You can open it with: open test-runs/preview.html" 
