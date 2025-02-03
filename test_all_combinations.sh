@@ -14,7 +14,7 @@ fi
 mkdir -p test-runs
 
 # Input file
-INPUT="obrazek7.bmp"
+INPUT="obrazek6.bmp"
 
 # Arrays of possible values for each parameter
 TYPES=("rgb555" "rgb888" "ycbcr")
