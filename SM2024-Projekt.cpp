@@ -1,4 +1,3 @@
-#include "SM2024-Gui.h"
 #include "SM2024-Pliki.h"
 #include "SM2024-Zmienne.h"
 #include <SDL2/SDL.h>

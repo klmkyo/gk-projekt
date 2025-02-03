@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 # Check if parallel is installed
 if ! command -v parallel &> /dev/null; then
     echo "GNU parallel is not installed. Please install it first."
@@ -30,10 +32,11 @@ get_percentage() {
     echo "scale=1; 100 * $1 / $2" | bc
 }
 
+# remove the output file if it exists
+rm -f SM2024-Projekt.out
+
 # Compile the program first
-clang++ -o SM2024-Projekt.out SM2024-Projekt.cpp SM2024-Funkcje.cpp SM2024-MedianCut.cpp \
-        SM2024-Paleta.cpp SM2024-Pliki.cpp SM2024-Zmienne.cpp SM2024-Gui.cpp \
-        SM2024-Konwersje.cpp SM2024-Kompresja.cpp -O2 -std=c++17 $(pkg-config --cflags --libs sdl2)
+clang++ -o SM2024-Projekt.out SM2024-Projekt.cpp SM2024-Pliki.cpp SM2024-Zmienne.cpp -O2 -std=c++17 $(pkg-config --cflags --libs sdl2)
 
 # Function to convert spaces and special characters to underscores
 sanitize() {

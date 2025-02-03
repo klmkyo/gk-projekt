@@ -1,5 +1,4 @@
 #include "SM2024-Pliki.h"
-#include "SM2024-Konwersje.h"
 #include "SM2024-Zmienne.h"
 #include <SDL.h>
 #include <algorithm>
