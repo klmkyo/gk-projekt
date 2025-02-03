@@ -176,7 +176,7 @@ static const float QC[8][8] = {
 
 // Forward & inverse DCT helpers
 static inline float c(int idx) {
-  // “alpha” factor
+  // "alpha" factor
   return (idx == 0) ? (1.0f / std::sqrt(8.0f)) : std::sqrt(2.0f / 8.0f);
 }
 
@@ -286,25 +286,137 @@ std::vector<Uint8> serializeCanvas(Canvas &image, NFHeader header) {
   switch (header.type) {
   case ImageType::RGB888: {
     // Standard RGB888 - 3 bytes/pixel
-    for (int y = 0; y < height; y++) {
-      for (int x = 0; x < width; x++) {
-        data.push_back(image[y][x].r);
-        data.push_back(image[y][x].g);
-        data.push_back(image[y][x].b);
+    if (header.compression == CompressionType::Dct) {
+      // Create separate planes for R, G, B
+      std::vector<std::vector<float>> Rf(height, std::vector<float>(width));
+      std::vector<std::vector<float>> Gf(height, std::vector<float>(width));
+      std::vector<std::vector<float>> Bf(height, std::vector<float>(width));
+
+      // Fill the planes
+      for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+          Rf[y][x] = (float)image[y][x].r;
+          Gf[y][x] = (float)image[y][x].g;
+          Bf[y][x] = (float)image[y][x].b;
+        }
+      }
+
+      auto encodePlaneDCT = [&](std::vector<std::vector<float>> &plane, int w,
+                                int h) {
+        for (int by = 0; by < h; by += 8) {
+          for (int bx = 0; bx < w; bx += 8) {
+            // Gather block -> subtract 128
+            float block[8][8];
+            for (int yb = 0; yb < 8; yb++) {
+              for (int xb = 0; xb < 8; xb++) {
+                int px = bx + xb;
+                int py = by + yb;
+                float val = 0.f;
+                if (px < w && py < h) {
+                  val = plane[py][px] - 128.f;
+                }
+                block[yb][xb] = val;
+              }
+            }
+            // Forward DCT
+            float dctOut[8][8];
+            forwardDCT8x8(block, dctOut);
+            // Quantize & store
+            for (int yb = 0; yb < 8; yb++) {
+              for (int xb = 0; xb < 8; xb++) {
+                float q = QY[yb][xb]; // Use luminance quantization for RGB
+                float coeff = std::round(dctOut[yb][xb] / q);
+                int16_t iCoeff = (int16_t)coeff;
+                // Store as 2 bytes (little-endian)
+                data.push_back((Uint8)(iCoeff & 0xFF));
+                data.push_back((Uint8)((iCoeff >> 8) & 0xFF));
+              }
+            }
+          }
+        }
+      };
+
+      // Encode each color plane
+      encodePlaneDCT(Rf, width, height);
+      encodePlaneDCT(Gf, width, height);
+      encodePlaneDCT(Bf, width, height);
+    } else {
+      for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+          data.push_back(image[y][x].r);
+          data.push_back(image[y][x].g);
+          data.push_back(image[y][x].b);
+        }
       }
     }
     break;
   }
   case ImageType::RGB555_WITH_BAYER_DITHERING: {
-    // RGB555 with Bayer - 2 bytes/pixel
-    for (int y = 0; y < height; y++) {
-      for (int x = 0; x < width; x++) {
-        Uint8 r5 = applyBayerDithering(x, y, image[y][x].r);
-        Uint8 g5 = applyBayerDithering(x, y, image[y][x].g);
-        Uint8 b5 = applyBayerDithering(x, y, image[y][x].b);
-        Uint16 pixel = (r5 << 10) | (g5 << 5) | b5;
-        data.push_back((Uint8)(pixel & 0xFF));
-        data.push_back((Uint8)((pixel >> 8) & 0xFF));
+    if (header.compression == CompressionType::Dct) {
+      // Create separate planes for R5, G5, B5
+      std::vector<std::vector<float>> R5f(height, std::vector<float>(width));
+      std::vector<std::vector<float>> G5f(height, std::vector<float>(width));
+      std::vector<std::vector<float>> B5f(height, std::vector<float>(width));
+
+      // Fill the planes with dithered 5-bit values
+      for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+          R5f[y][x] = (float)applyBayerDithering(x, y, image[y][x].r);
+          G5f[y][x] = (float)applyBayerDithering(x, y, image[y][x].g);
+          B5f[y][x] = (float)applyBayerDithering(x, y, image[y][x].b);
+        }
+      }
+
+      auto encodePlaneDCT = [&](std::vector<std::vector<float>> &plane, int w,
+                                int h) {
+        for (int by = 0; by < h; by += 8) {
+          for (int bx = 0; bx < w; bx += 8) {
+            // Gather block -> scale to 0-255 range and subtract 128
+            float block[8][8];
+            for (int yb = 0; yb < 8; yb++) {
+              for (int xb = 0; xb < 8; xb++) {
+                int px = bx + xb;
+                int py = by + yb;
+                float val = 0.f;
+                if (px < w && py < h) {
+                  val = (plane[py][px] * 255.0f / 31.0f) - 128.f;
+                }
+                block[yb][xb] = val;
+              }
+            }
+            // Forward DCT
+            float dctOut[8][8];
+            forwardDCT8x8(block, dctOut);
+            // Quantize & store
+            for (int yb = 0; yb < 8; yb++) {
+              for (int xb = 0; xb < 8; xb++) {
+                float q = QY[yb][xb]; // Use luminance quantization
+                float coeff = std::round(dctOut[yb][xb] / q);
+                int16_t iCoeff = (int16_t)coeff;
+                // Store as 2 bytes (little-endian)
+                data.push_back((Uint8)(iCoeff & 0xFF));
+                data.push_back((Uint8)((iCoeff >> 8) & 0xFF));
+              }
+            }
+          }
+        }
+      };
+
+      // Encode each 5-bit color plane
+      encodePlaneDCT(R5f, width, height);
+      encodePlaneDCT(G5f, width, height);
+      encodePlaneDCT(B5f, width, height);
+    } else {
+      // Original RGB555 with Bayer code
+      for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+          Uint8 r5 = applyBayerDithering(x, y, image[y][x].r);
+          Uint8 g5 = applyBayerDithering(x, y, image[y][x].g);
+          Uint8 b5 = applyBayerDithering(x, y, image[y][x].b);
+          Uint16 pixel = (r5 << 10) | (g5 << 5) | b5;
+          data.push_back((Uint8)(pixel & 0xFF));
+          data.push_back((Uint8)((pixel >> 8) & 0xFF));
+        }
       }
     }
     break;
@@ -506,28 +618,161 @@ Canvas deserializeCanvas(std::vector<Uint8> data, NFHeader header) {
   size_t dataIndex = 0;
   switch (header.type) {
   case ImageType::RGB888: {
-    // Plain RGB888
-    for (int y = 0; y < height; y++) {
-      for (int x = 0; x < width; x++) {
-        image[y][x].r = data[dataIndex++];
-        image[y][x].g = data[dataIndex++];
-        image[y][x].b = data[dataIndex++];
+    if (header.compression == CompressionType::Dct) {
+      // Create planes for R, G, B
+      std::vector<std::vector<float>> Rf(height, std::vector<float>(width));
+      std::vector<std::vector<float>> Gf(height, std::vector<float>(width));
+      std::vector<std::vector<float>> Bf(height, std::vector<float>(width));
+
+      auto decodePlaneDCT = [&](std::vector<std::vector<float>> &plane, int w,
+                                int h) {
+        for (int by = 0; by < h; by += 8) {
+          for (int bx = 0; bx < w; bx += 8) {
+            // read 64 int16
+            float blockDCT[8][8];
+            for (int yb = 0; yb < 8; yb++) {
+              for (int xb = 0; xb < 8; xb++) {
+                if (dataIndex + 1 >= data.size()) {
+                  // Safety check or throw if data is incomplete
+                  blockDCT[yb][xb] = 0;
+                } else {
+                  int16_t coeff =
+                      (int16_t)(data[dataIndex] | (data[dataIndex + 1] << 8));
+                  dataIndex += 2;
+                  blockDCT[yb][xb] = (float)coeff;
+                }
+              }
+            }
+            // Dequantize + iDCT
+            float spatial[8][8];
+            for (int yb = 0; yb < 8; yb++) {
+              for (int xb = 0; xb < 8; xb++) {
+                blockDCT[yb][xb] *=
+                    QY[yb][xb]; // Use luminance quantization for RGB
+              }
+            }
+            inverseDCT8x8(blockDCT, spatial);
+            // place back
+            for (int yb = 0; yb < 8; yb++) {
+              for (int xb = 0; xb < 8; xb++) {
+                int px = bx + xb;
+                int py = by + yb;
+                if (px < w && py < h) {
+                  float val = spatial[yb][xb] + 128.f;
+                  val = clamp<float>(val, 0.f, 255.f);
+                  plane[py][px] = val;
+                }
+              }
+            }
+          }
+        }
+      };
+
+      // Decode each color plane
+      decodePlaneDCT(Rf, width, height);
+      decodePlaneDCT(Gf, width, height);
+      decodePlaneDCT(Bf, width, height);
+
+      // Convert back to RGB
+      for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+          image[y][x].r = (Uint8)clamp<int>((int)std::lround(Rf[y][x]), 0, 255);
+          image[y][x].g = (Uint8)clamp<int>((int)std::lround(Gf[y][x]), 0, 255);
+          image[y][x].b = (Uint8)clamp<int>((int)std::lround(Bf[y][x]), 0, 255);
+        }
+      }
+    } else {
+      // Plain RGB888
+      for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+          image[y][x].r = data[dataIndex++];
+          image[y][x].g = data[dataIndex++];
+          image[y][x].b = data[dataIndex++];
+        }
       }
     }
     break;
   }
   case ImageType::RGB555_WITH_BAYER_DITHERING: {
-    // 16-bit
-    for (int y = 0; y < height; y++) {
-      for (int x = 0; x < width; x++) {
-        Uint16 pixel = (Uint16)(data[dataIndex] | (data[dataIndex + 1] << 8));
-        dataIndex += 2;
-        Uint8 r5 = (pixel >> 10) & 0x1F;
-        Uint8 g5 = (pixel >> 5) & 0x1F;
-        Uint8 b5 = pixel & 0x1F;
-        image[y][x].r = (r5 << 3) | (r5 >> 2);
-        image[y][x].g = (g5 << 3) | (g5 >> 2);
-        image[y][x].b = (b5 << 3) | (b5 >> 2);
+    if (header.compression == CompressionType::Dct) {
+      // Create planes for R5, G5, B5
+      std::vector<std::vector<float>> R5f(height, std::vector<float>(width));
+      std::vector<std::vector<float>> G5f(height, std::vector<float>(width));
+      std::vector<std::vector<float>> B5f(height, std::vector<float>(width));
+
+      auto decodePlaneDCT = [&](std::vector<std::vector<float>> &plane, int w,
+                                int h) {
+        for (int by = 0; by < h; by += 8) {
+          for (int bx = 0; bx < w; bx += 8) {
+            // read 64 int16
+            float blockDCT[8][8];
+            for (int yb = 0; yb < 8; yb++) {
+              for (int xb = 0; xb < 8; xb++) {
+                if (dataIndex + 1 >= data.size()) {
+                  // Safety check or throw if data is incomplete
+                  blockDCT[yb][xb] = 0;
+                } else {
+                  int16_t coeff =
+                      (int16_t)(data[dataIndex] | (data[dataIndex + 1] << 8));
+                  dataIndex += 2;
+                  blockDCT[yb][xb] = (float)coeff;
+                }
+              }
+            }
+            // Dequantize + iDCT
+            float spatial[8][8];
+            for (int yb = 0; yb < 8; yb++) {
+              for (int xb = 0; xb < 8; xb++) {
+                blockDCT[yb][xb] *= QY[yb][xb]; // Use luminance quantization
+              }
+            }
+            inverseDCT8x8(blockDCT, spatial);
+            // place back and scale from 0-255 to 0-31
+            for (int yb = 0; yb < 8; yb++) {
+              for (int xb = 0; xb < 8; xb++) {
+                int px = bx + xb;
+                int py = by + yb;
+                if (px < w && py < h) {
+                  float val = spatial[yb][xb] + 128.f;
+                  val = clamp<float>(val, 0.f, 255.f);
+                  val = val * 31.0f / 255.0f;
+                  plane[py][px] = val;
+                }
+              }
+            }
+          }
+        }
+      };
+
+      // Decode each color plane
+      decodePlaneDCT(R5f, width, height);
+      decodePlaneDCT(G5f, width, height);
+      decodePlaneDCT(B5f, width, height);
+
+      // Convert back to RGB888
+      for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+          Uint8 r5 = (Uint8)clamp<int>((int)std::lround(R5f[y][x]), 0, 31);
+          Uint8 g5 = (Uint8)clamp<int>((int)std::lround(G5f[y][x]), 0, 31);
+          Uint8 b5 = (Uint8)clamp<int>((int)std::lround(B5f[y][x]), 0, 31);
+          image[y][x].r = (r5 << 3) | (r5 >> 2);
+          image[y][x].g = (g5 << 3) | (g5 >> 2);
+          image[y][x].b = (b5 << 3) | (b5 >> 2);
+        }
+      }
+    } else {
+      // Original RGB555 code
+      for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+          Uint16 pixel = (Uint16)(data[dataIndex] | (data[dataIndex + 1] << 8));
+          dataIndex += 2;
+          Uint8 r5 = (pixel >> 10) & 0x1F;
+          Uint8 g5 = (pixel >> 5) & 0x1F;
+          Uint8 b5 = pixel & 0x1F;
+          image[y][x].r = (r5 << 3) | (r5 >> 2);
+          image[y][x].g = (g5 << 3) | (g5 >> 2);
+          image[y][x].b = (b5 << 3) | (b5 >> 2);
+        }
       }
     }
     break;

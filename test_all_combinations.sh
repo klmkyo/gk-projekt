@@ -167,26 +167,12 @@ for type in "${TYPES[@]}"; do
             saved_kb=$((original_size - nf_size))
             
             # Determine color class based on compression percentage
-            if (( $(echo "$nf_percent < 100" | bc -l) )); then
-                # Green gradient for any savings (gets more intense with more savings)
-                intensity=$(echo "scale=2; (100 - $nf_percent) / 100" | bc)
-                r=$(echo "scale=0; 40 + (215 * (1-$intensity))" | bc)
-                g=$(echo "scale=0; 215" | bc)
-                b=$(echo "scale=0; 40 + (215 * (1-$intensity))" | bc)
-                color=$(printf "#%02x%02x%02x" $r $g $b)
-            elif (( $(echo "$nf_percent == 100" | bc -l) )); then
-                # Yellow for same size
-                color="#FFD700"
+            if (( $(echo "$nf_percent < 40" | bc -l) )); then
+                size_class="size-good"
+            elif (( $(echo "$nf_percent < 70" | bc -l) )); then
+                size_class="size-medium"
             else
-                # Red gradient for worse compression (gets more intense with worse compression)
-                intensity=$(echo "scale=2; ($nf_percent - 100) / 100" | bc)
-                if (( $(echo "$intensity > 1" | bc -l) )); then
-                    intensity=1
-                fi
-                r=$(echo "scale=0; 215" | bc)
-                g=$(echo "scale=0; 215 * (1-$intensity)" | bc)
-                b=$(echo "scale=0; 215 * (1-$intensity)" | bc)
-                color=$(printf "#%02x%02x%02x" $r $g $b)
+                size_class="size-bad"
             fi
             
             cat >> test-runs/preview.html << EOF
@@ -233,26 +219,12 @@ for type in "${TYPES[@]}"; do
             nf_size=$(get_size_kb "$nf_name")
             nf_percent=$(get_percentage $nf_size $original_size)
             # Color coding based on compression ratio
-            if (( $(echo "$nf_percent < 100" | bc -l) )); then
-                # Green gradient for any savings (gets more intense with more savings)
-                intensity=$(echo "scale=2; (100 - $nf_percent) / 100" | bc)
-                r=$(echo "scale=0; 40 + (215 * (1-$intensity))" | bc)
-                g=$(echo "scale=0; 215" | bc)
-                b=$(echo "scale=0; 40 + (215 * (1-$intensity))" | bc)
-                color=$(printf "#%02x%02x%02x" $r $g $b)
-            elif (( $(echo "$nf_percent == 100" | bc -l) )); then
-                # Yellow for same size
-                color="#FFD700"
+            if (( $(echo "$nf_percent < 40" | bc -l) )); then
+                color="#2a9d8f"
+            elif (( $(echo "$nf_percent < 70" | bc -l) )); then
+                color="#e9c46a"
             else
-                # Red gradient for worse compression (gets more intense with worse compression)
-                intensity=$(echo "scale=2; ($nf_percent - 100) / 100" | bc)
-                if (( $(echo "$intensity > 1" | bc -l) )); then
-                    intensity=1
-                fi
-                r=$(echo "scale=0; 215" | bc)
-                g=$(echo "scale=0; 215 * (1-$intensity)" | bc)
-                b=$(echo "scale=0; 215 * (1-$intensity)" | bc)
-                color=$(printf "#%02x%02x%02x" $r $g $b)
+                color="#e76f51"
             fi
             echo "            <td style=\"border: 1px solid #ddd; padding: 8px; text-align: center; color: ${color}\">${nf_percent}%</td>" >> test-runs/preview.html
         else
@@ -286,26 +258,12 @@ for type in "${TYPES[@]}"; do
             nf_size=$(get_size_kb "$nf_name")
             nf_percent=$(get_percentage $nf_size $original_size)
             # Color coding based on compression ratio
-            if (( $(echo "$nf_percent < 100" | bc -l) )); then
-                # Green gradient for any savings (gets more intense with more savings)
-                intensity=$(echo "scale=2; (100 - $nf_percent) / 100" | bc)
-                r=$(echo "scale=0; 40 + (215 * (1-$intensity))" | bc)
-                g=$(echo "scale=0; 215" | bc)
-                b=$(echo "scale=0; 40 + (215 * (1-$intensity))" | bc)
-                color=$(printf "#%02x%02x%02x" $r $g $b)
-            elif (( $(echo "$nf_percent == 100" | bc -l) )); then
-                # Yellow for same size
-                color="#FFD700"
+            if (( $(echo "$nf_percent < 40" | bc -l) )); then
+                color="#2a9d8f"
+            elif (( $(echo "$nf_percent < 70" | bc -l) )); then
+                color="#e9c46a"
             else
-                # Red gradient for worse compression (gets more intense with worse compression)
-                intensity=$(echo "scale=2; ($nf_percent - 100) / 100" | bc)
-                if (( $(echo "$intensity > 1" | bc -l) )); then
-                    intensity=1
-                fi
-                r=$(echo "scale=0; 215" | bc)
-                g=$(echo "scale=0; 215 * (1-$intensity)" | bc)
-                b=$(echo "scale=0; 215 * (1-$intensity)" | bc)
-                color=$(printf "#%02x%02x%02x" $r $g $b)
+                color="#e76f51"
             fi
             echo "            <td style=\"border: 1px solid #ddd; padding: 8px; text-align: center; color: ${color}\">${nf_percent}%</td>" >> test-runs/preview.html
         else
