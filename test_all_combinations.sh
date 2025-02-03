@@ -1,10 +1,18 @@
 #!/bin/bash
 
+# Check if parallel is installed
+if ! command -v parallel &> /dev/null; then
+    echo "GNU parallel is not installed. Please install it first."
+    echo "On macOS: brew install parallel"
+    echo "On Ubuntu/Debian: apt-get install parallel"
+    exit 1
+fi
+
 # Create output directory
 mkdir -p test-runs
 
 # Input file
-INPUT="obrazek1.bmp"
+INPUT="obrazek7.bmp"
 
 # Arrays of possible values for each parameter
 TYPES=("rgb555" "rgb888" "ycbcr")
@@ -40,44 +48,53 @@ original_size=$(get_size_kb "$INPUT")
 echo "Original file size: ${original_size}kB"
 echo "----------------------------------------"
 
-# Test all combinations
-for type in "${TYPES[@]}"; do
-    for filter in "${FILTERS[@]}"; do
-        for compression in "${COMPRESSIONS[@]}"; do
-            # Create descriptive names
-            nf_name="test-runs/$(sanitize "${type}")_${filter}_${compression}.nf"
-            bmp_name="test-runs/$(sanitize "${type}")_${filter}_${compression}.bmp"
-            png_name="test-runs/$(sanitize "${type}")_${filter}_${compression}.png"
-            
-            echo "Testing combination: type=$type, filter=$filter, compression=$compression"
-            
-            # Convert BMP to NF
-            ./SM2024-Projekt.out convert -i "$INPUT" -o "$nf_name" \
-                                       -t "$type" -f "$filter" -c "$compression"
-            
-            # Convert NF back to BMP
-            ./SM2024-Projekt.out convert -i "$nf_name" -o "$bmp_name"
-            
-            # Convert to PNG using imagemagick
-            convert "$bmp_name" "$png_name"
-            
-            # Get file sizes
-            nf_size=$(get_size_kb "$nf_name")
-            bmp_size=$(get_size_kb "$bmp_name")
-            png_size=$(get_size_kb "$png_name")
-            
-            # Calculate percentages
-            nf_percent=$(get_percentage $nf_size $original_size)
-            
-            # Display file info with sizes
-            echo "Created files:"
-            echo "  NF:  $nf_name (${nf_size}kB, ${nf_percent}% of original)"
-            echo "  BMP: $bmp_name (${bmp_size}kB)"
-            echo "  PNG: $png_name (${png_size}kB)"
-            echo "----------------------------------------"
-        done
-    done
-done
+# Function to process one combination
+process_combination() {
+    local type=$1
+    local filter=$2
+    local compression=$3
+    
+    # Create descriptive names
+    local nf_name="test-runs/$(sanitize "${type}")_${filter}_${compression}.nf"
+    local bmp_name="test-runs/$(sanitize "${type}")_${filter}_${compression}.bmp"
+    local png_name="test-runs/$(sanitize "${type}")_${filter}_${compression}.png"
+    
+    echo "Testing combination: type=$type, filter=$filter, compression=$compression"
+    
+    # Convert BMP to NF
+    ./SM2024-Projekt.out convert -i "$INPUT" -o "$nf_name" \
+                               -t "$type" -f "$filter" -c "$compression"
+    
+    # Convert NF back to BMP
+    ./SM2024-Projekt.out convert -i "$nf_name" -o "$bmp_name"
+    
+    # Convert to PNG using imagemagick
+    convert "$bmp_name" "$png_name"
+    
+    # Get file sizes
+    local nf_size=$(get_size_kb "$nf_name")
+    local bmp_size=$(get_size_kb "$bmp_name")
+    local png_size=$(get_size_kb "$png_name")
+    
+    # Calculate percentages
+    local nf_percent=$(get_percentage $nf_size $original_size)
+    
+    # Display file info with sizes
+    echo "Created files:"
+    echo "  NF:  $nf_name (${nf_size}kB, ${nf_percent}% of original)"
+    echo "  BMP: $bmp_name (${bmp_size}kB)"
+    echo "  PNG: $png_name (${png_size}kB)"
+    echo "----------------------------------------"
+}
+export -f process_combination
+export -f sanitize
+export -f get_size_kb
+export -f get_percentage
+export INPUT
+export original_size
+
+# Generate all combinations and process them in parallel
+parallel --bar process_combination {1} {2} {3} ::: "${TYPES[@]}" ::: "${FILTERS[@]}" ::: "${COMPRESSIONS[@]}"
 
 # Print summary
 echo "All conversions completed. Results are in the test-runs directory."
@@ -92,6 +109,21 @@ for f in test-runs/*.{nf,bmp,png}; do
     fi
 done
 
+# Sort results by compression ratio for the summary
+echo -e "\nCompression Results (sorted by effectiveness):"
+printf "%-30s %-10s %-10s %15s\n" "SETTINGS" "SIZE(kB)" "SAVED(kB)" "% OF ORIG"
+echo "--------------------------------------------------------------------------------"
+for f in test-runs/*.nf; do
+    if [ -f "$f" ]; then
+        # Extract settings from filename
+        filename=$(basename "$f" .nf)
+        size=$(get_size_kb "$f")
+        saved=$((original_size - size))
+        percent=$(get_percentage $size $original_size)
+        printf "%-30s %10d %10d %14.1f%%\n" "$filename" "$size" "$saved" "$percent"
+    fi
+done | sort -k4n
+
 # Create an HTML preview page with file sizes
 cat > test-runs/preview.html << EOF
 <!DOCTYPE html>
@@ -101,18 +133,26 @@ cat > test-runs/preview.html << EOF
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; }
         .image-container { margin-bottom: 30px; border: 1px solid #ddd; padding: 15px; border-radius: 5px; }
-        img { max-width: 100%; height: auto; }
+        img { 
+            max-width: 100%; 
+            height: auto; 
+            image-rendering: pixelated;
+            image-rendering: -moz-crisp-edges;
+            image-rendering: crisp-edges;
+        }
         h2 { color: #333; margin-top: 0; }
         .details { color: #666; margin-bottom: 10px; }
         .file-info { font-family: monospace; background: #f5f5f5; padding: 10px; border-radius: 3px; }
         .size-good { color: #2a9d8f; }
         .size-medium { color: #e9c46a; }
         .size-bad { color: #e76f51; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
     </style>
 </head>
 <body>
     <h1>Image Conversion Results</h1>
     <p>Original file: $INPUT (${original_size}kB)</p>
+    <div class="grid">
 EOF
 
 # Add each image to the HTML file
@@ -124,6 +164,7 @@ for type in "${TYPES[@]}"; do
             
             nf_size=$(get_size_kb "$nf_name")
             nf_percent=$(get_percentage $nf_size $original_size)
+            saved_kb=$((original_size - nf_size))
             
             # Determine color class based on compression percentage
             if (( $(echo "$nf_percent < 40" | bc -l) )); then
@@ -141,7 +182,8 @@ for type in "${TYPES[@]}"; do
             Settings: Type=$type, Filter=$filter, Compression=$compression
         </div>
         <div class="file-info">
-            NF size: <span class="${size_class}">${nf_size}kB (${nf_percent}% of original)</span>
+            NF size: <span class="${size_class}">${nf_size}kB (${nf_percent}% of original)</span><br>
+            Saved: ${saved_kb}kB
         </div>
         <img src="$png_name" alt="$png_name">
     </div>
@@ -151,7 +193,7 @@ EOF
 done
 
 # Close the HTML file
-echo "</body></html>" >> test-runs/preview.html
+echo "</div></body></html>" >> test-runs/preview.html
 
 echo -e "\nCreated preview.html - open it in a browser to compare all images"
 echo "You can open it with: open test-runs/preview.html" 
