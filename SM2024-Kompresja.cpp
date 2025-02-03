@@ -6,7 +6,7 @@
 
 struct slowo {
   uint16_t kod = 0;
-  uint8_t dlugosc = 0;
+  uint16_t dlugosc = 0;
   uint64_t element[4096];
   bool wSlowniku = false;
 };

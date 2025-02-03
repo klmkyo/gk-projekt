@@ -484,8 +484,8 @@ std::vector<Uint8> serializeCanvas(Canvas &image, ImageType type,
   if (type == ImageType::RGB555) {
     for (const auto &row : image) {
       for (const auto &pixel : row) {
-        Uint16 rgb555 =
-            ((pixel.r & 0xF8) << 7) | ((pixel.g & 0xF8) << 2) | (pixel.b >> 3);
+        SDL_Color sdlColor = {pixel.r, pixel.g, pixel.b};
+        Uint16 rgb555 = sdlColorToRGB555(sdlColor);
         data.push_back(rgb555 & 0xFF);
         data.push_back((rgb555 >> 8) & 0xFF);
       }
@@ -607,10 +607,8 @@ Canvas deserializeCanvas(std::vector<Uint8> data, NFHeader header) {
       for (int x = 0; x < width; ++x) {
         Uint16 rgb555 = data[idx] | (data[idx + 1] << 8);
         idx += 2;
-        Uint8 r = ((rgb555 >> 7) & 0xF8) | ((rgb555 >> 12) & 0x07);
-        Uint8 g = ((rgb555 >> 2) & 0xF8) | ((rgb555 >> 7) & 0x07);
-        Uint8 b = ((rgb555 << 3) & 0xF8) | ((rgb555 >> 2) & 0x07);
-        image[y][x] = {r, g, b};
+        SDL_Color color = RGB555ToSdlColor(rgb555);
+        image[y][x] = {color.r, color.g, color.b};
       }
     }
   } else if (header.type == ImageType::RGB565) {

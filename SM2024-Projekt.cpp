@@ -52,13 +52,10 @@ int main(int argc, char *argv[]) {
 
   for (int i = 0; i < header.height; i++) {
     for (int j = 0; j < header.width; j++) {
-      image[i][j] = {
-          (Uint8)(rand() % 256),
-          (Uint8)(rand() % 256),
-      };
+      image[i][j] = {(Uint8)(rand() % 256), (Uint8)(rand() % 256)};
 
-      // set to hex AA
-      image[i][j] = {0xAA, 0xAA, 0xAA};
+      // set to a color exactly representable in RGB555
+      image[i][j] = {0x00, 0x00, 0x00};
     }
   }
 
