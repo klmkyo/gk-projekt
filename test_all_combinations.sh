@@ -21,6 +21,9 @@ sanitize() {
     echo "$1" | tr ' ' '_' | tr '/' '_'
 }
 
+# Clear output directory
+rm -rf test-runs/*
+
 # Test all combinations
 for type in "${TYPES[@]}"; do
     for filter in "${FILTERS[@]}"; do
