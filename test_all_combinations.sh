@@ -54,6 +54,13 @@ process_combination() {
     local filter=$2
     local compression=$3
     
+    # Skip invalid combinations
+    if [ "$compression" = "dct_chroma" ] && [ "$type" != "ycbcr" ]; then
+        echo "Skipping invalid combination: DCT+Chroma can only be used with YCbCr format"
+        echo "----------------------------------------"
+        return
+    fi
+    
     # Create descriptive names
     local nf_name="test-runs/$(sanitize "${type}")_${filter}_${compression}.nf"
     local bmp_name="test-runs/$(sanitize "${type}")_${filter}_${compression}.bmp"
@@ -159,6 +166,11 @@ EOF
 for type in "${TYPES[@]}"; do
     for filter in "${FILTERS[@]}"; do
         for compression in "${COMPRESSIONS[@]}"; do
+            # Skip invalid combinations
+            if [ "$compression" = "dct_chroma" ] && [ "$type" != "ycbcr" ]; then
+                continue
+            fi
+            
             nf_name="test-runs/$(sanitize "${type}")_${filter}_${compression}.nf"
             png_name="$(sanitize "${type}")_${filter}_${compression}.png"
             
@@ -214,6 +226,10 @@ for type in "${TYPES[@]}"; do
     echo "        <tr>" >> test-runs/preview.html
     echo "            <td style=\"border: 1px solid #ddd; padding: 8px;\">$type</td>" >> test-runs/preview.html
     for compression in "none" "dct" "dct_chroma" "rle"; do
+        if [ "$compression" = "dct_chroma" ] && [ "$type" != "ycbcr" ]; then
+            echo "            <td style=\"border: 1px solid #ddd; padding: 8px; text-align: center; color: #999;\">N/A</td>" >> test-runs/preview.html
+            continue
+        fi
         nf_name="test-runs/$(sanitize "${type}")_none_${compression}.nf"
         if [ -f "$nf_name" ]; then
             nf_size=$(get_size_kb "$nf_name")
@@ -253,6 +269,10 @@ for type in "${TYPES[@]}"; do
     echo "        <tr>" >> test-runs/preview.html
     echo "            <td style=\"border: 1px solid #ddd; padding: 8px;\">$type</td>" >> test-runs/preview.html
     for compression in "none" "dct" "dct_chroma" "rle"; do
+        if [ "$compression" = "dct_chroma" ] && [ "$type" != "ycbcr" ]; then
+            echo "            <td style=\"border: 1px solid #ddd; padding: 8px; text-align: center; color: #999;\">N/A</td>" >> test-runs/preview.html
+            continue
+        fi
         nf_name="test-runs/$(sanitize "${type}")_average_${compression}.nf"
         if [ -f "$nf_name" ]; then
             nf_size=$(get_size_kb "$nf_name")

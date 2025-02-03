@@ -283,6 +283,13 @@ std::vector<Uint8> serializeCanvas(Canvas &image, NFHeader header) {
   int width = (int)image[0].size();
   int height = (int)image.size();
 
+  // Validate that DctPlusChromaSubsampling is only used with YCbCr
+  if (header.compression == CompressionType::DctPlusChromaSubsampling &&
+      header.type != ImageType::YCbCr888) {
+    throw std::invalid_argument(
+        "DCT+Chroma subsampling can only be used with YCbCr format");
+  }
+
   switch (header.type) {
   case ImageType::RGB888: {
     // Standard RGB888 - 3 bytes/pixel
