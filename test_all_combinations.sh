@@ -2,7 +2,6 @@
 
 set -e
 
-# Check if parallel is installed
 if ! command -v parallel &> /dev/null; then
     echo "GNU parallel is not installed. Please install it first."
     echo "On macOS: brew install parallel"
@@ -10,89 +9,69 @@ if ! command -v parallel &> /dev/null; then
     exit 1
 fi
 
-# Create output directory
 mkdir -p test-runs
 
-# Input files
 IMAGES=("obrazek1.bmp" "obrazek2.bmp" "obrazek3.bmp" "obrazek4.bmp" "obrazek5.bmp" "obrazek6.bmp" "obrazek7.bmp" "obrazek8.bmp" "obrazek9.bmp")
 
-# Arrays of possible values for each parameter
 TYPES=("rgb555" "rgb888" "ycbcr")
 FILTERS=("none" "average")
 COMPRESSIONS=("none" "dct" "dct_chroma" "rle")
 
-# Function to get file size in kB
 get_size_kb() {
     local size_bytes=$(stat -f%z "$1")
     echo $(( size_bytes / 1024 ))
 }
 
-# Function to calculate percentage of original size
 get_percentage() {
     echo "scale=1; 100 * $1 / $2" | bc
 }
 
-# remove the output file if it exists
 rm -f SM2024-Projekt.out
 
-# Compile the program first
 clang++ -o SM2024-Projekt.out SM2024-Projekt.cpp SM2024-Pliki.cpp SM2024-Zmienne.cpp -O2 -std=c++17 $(pkg-config --cflags --libs sdl2)
 
-# Function to convert spaces and special characters to underscores
 sanitize() {
     echo "$1" | tr ' ' '_' | tr '/' '_'
 }
 
-# Clear output directory
 rm -rf test-runs/*
 
-# Function to process one combination
 process_combination() {
     local input_image=$1
     local type=$2
     local filter=$3
     local compression=$4
     
-    # Get image name without extension
     local image_name=$(basename "$input_image" .bmp)
     
-    # Create directory for this image if it doesn't exist
     mkdir -p "test-runs/${image_name}"
     
-    # Skip invalid combinations
     if [ "$compression" = "dct_chroma" ] && [ "$type" != "ycbcr" ]; then
         echo "Skipping invalid combination for ${image_name}: DCT+Chroma can only be used with YCbCr format"
         echo "----------------------------------------"
         return
     fi
     
-    # Create descriptive names
     local nf_name="test-runs/${image_name}/$(sanitize "${type}")_${filter}_${compression}.nf"
     local bmp_name="test-runs/${image_name}/$(sanitize "${type}")_${filter}_${compression}.bmp"
     local png_name="test-runs/${image_name}/$(sanitize "${type}")_${filter}_${compression}.png"
     
     echo "Testing combination for ${image_name}: type=$type, filter=$filter, compression=$compression"
     
-    # Convert BMP to NF
     ./SM2024-Projekt.out convert -i "$input_image" -o "$nf_name" \
                                -t "$type" -f "$filter" -c "$compression"
     
-    # Convert NF back to BMP
     ./SM2024-Projekt.out convert -i "$nf_name" -o "$bmp_name"
     
-    # Convert to PNG using imagemagick
     convert "$bmp_name" "$png_name"
     
-    # Get file sizes
     local original_size=$(get_size_kb "$input_image")
     local nf_size=$(get_size_kb "$nf_name")
     local bmp_size=$(get_size_kb "$bmp_name")
     local png_size=$(get_size_kb "$png_name")
     
-    # Calculate percentages
     local nf_percent=$(get_percentage $nf_size $original_size)
     
-    # Display file info with sizes
     echo "Created files for ${image_name}:"
     echo "  NF:  $nf_name (${nf_size}kB, ${nf_percent}% of original)"
     echo "  BMP: $bmp_name (${bmp_size}kB)"
@@ -104,7 +83,6 @@ export -f sanitize
 export -f get_size_kb
 export -f get_percentage
 
-# Process all images with all combinations
 for image in "${IMAGES[@]}"; do
     if [ -f "$image" ]; then
         echo "Processing $image..."
@@ -114,7 +92,6 @@ for image in "${IMAGES[@]}"; do
     fi
 done
 
-# Create an HTML preview page with tabs
 cat > test-runs/preview.html << EOF
 <!DOCTYPE html>
 <html>
@@ -179,7 +156,6 @@ cat > test-runs/preview.html << EOF
     <div class="tab-buttons">
 EOF
 
-# Add tab buttons
 for image in "${IMAGES[@]}"; do
     if [ -f "$image" ]; then
         image_name=$(basename "$image" .bmp)
@@ -189,16 +165,13 @@ EOF
     fi
 done
 
-# Start tabs content
-echo '<div class="tabs-content">' >> test-runs/preview.html
+echo '</div><div class="tabs-content">' >> test-runs/preview.html
 
-# Create content for each image
 for image in "${IMAGES[@]}"; do
     if [ -f "$image" ]; then
         image_name=$(basename "$image" .bmp)
         original_size=$(get_size_kb "$image")
         
-        # Start tab content
         cat >> test-runs/preview.html << EOF
         <div id="tab-${image_name}" class="tab-content">
             <h2>${image_name}</h2>
@@ -217,7 +190,6 @@ for image in "${IMAGES[@]}"; do
                 </tr>
 EOF
 
-        # Fill the "No Filter" table
         for type in "${TYPES[@]}"; do
             echo "        <tr>" >> test-runs/preview.html
             echo "            <td style=\"border: 1px solid #ddd; padding: 8px;\">$type</td>" >> test-runs/preview.html
@@ -245,7 +217,6 @@ EOF
             echo "        </tr>" >> test-runs/preview.html
         done
 
-        # Add Average Filter table
         cat >> test-runs/preview.html << EOF
             </table>
 
@@ -260,7 +231,6 @@ EOF
                 </tr>
 EOF
 
-        # Fill the "Average Filter" table
         for type in "${TYPES[@]}"; do
             echo "        <tr>" >> test-runs/preview.html
             echo "            <td style=\"border: 1px solid #ddd; padding: 8px;\">$type</td>" >> test-runs/preview.html
@@ -288,7 +258,6 @@ EOF
             echo "        </tr>" >> test-runs/preview.html
         done
 
-        # Add image grid
         cat >> test-runs/preview.html << EOF
             </table>
 
@@ -296,7 +265,6 @@ EOF
             <div class="grid">
 EOF
 
-        # Add each image variant
         for type in "${TYPES[@]}"; do
             for filter in "${FILTERS[@]}"; do
                 for compression in "${COMPRESSIONS[@]}"; do
@@ -338,12 +306,10 @@ EOF
             done
         done
 
-        # Close the grid and tab content
         echo "</div></div>" >> test-runs/preview.html
     fi
 done
 
-# Close the HTML
 cat >> test-runs/preview.html << EOF
     </div>
     <script>
