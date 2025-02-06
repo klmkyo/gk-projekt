@@ -230,9 +230,9 @@ EOF
                 if [ -f "$nf_name" ]; then
                     nf_size=$(get_size_kb "$nf_name")
                     nf_percent=$(get_percentage $nf_size $original_size)
-                    if (( $(echo "$nf_percent < 40" | bc -l) )); then
-                        color="#2a9d8f"
-                    elif (( $(echo "$nf_percent < 70" | bc -l) )); then
+                    if (( $(echo "$nf_percent < 100" | bc -l) )); then
+                        color="#20BB5B"
+                    elif (( $(echo "$nf_percent >= 99 && $nf_percent <= 101" | bc -l) )); then
                         color="#e9c46a"
                     else
                         color="#e76f51"
@@ -273,9 +273,9 @@ EOF
                 if [ -f "$nf_name" ]; then
                     nf_size=$(get_size_kb "$nf_name")
                     nf_percent=$(get_percentage $nf_size $original_size)
-                    if (( $(echo "$nf_percent < 40" | bc -l) )); then
-                        color="#2a9d8f"
-                    elif (( $(echo "$nf_percent < 70" | bc -l) )); then
+                    if (( $(echo "$nf_percent < 100" | bc -l) )); then
+                        color="#20BB5B"
+                    elif (( $(echo "$nf_percent >= 99 && $nf_percent <= 101" | bc -l) )); then
                         color="#e9c46a"
                     else
                         color="#e76f51"
