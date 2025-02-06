@@ -13,8 +13,8 @@ fi
 # Create output directory
 mkdir -p test-runs
 
-# Input file
-INPUT="obrazek4.bmp"
+# Input files
+IMAGES=("obrazek1.bmp" "obrazek2.bmp" "obrazek3.bmp" "obrazek4.bmp" "obrazek5.bmp" "obrazek6.bmp" "obrazek7.bmp" "obrazek8.bmp" "obrazek9.bmp")
 
 # Arrays of possible values for each parameter
 TYPES=("rgb555" "rgb888" "ycbcr")
@@ -46,33 +46,35 @@ sanitize() {
 # Clear output directory
 rm -rf test-runs/*
 
-# Get original file size
-original_size=$(get_size_kb "$INPUT")
-echo "Original file size: ${original_size}kB"
-echo "----------------------------------------"
-
 # Function to process one combination
 process_combination() {
-    local type=$1
-    local filter=$2
-    local compression=$3
+    local input_image=$1
+    local type=$2
+    local filter=$3
+    local compression=$4
+    
+    # Get image name without extension
+    local image_name=$(basename "$input_image" .bmp)
+    
+    # Create directory for this image if it doesn't exist
+    mkdir -p "test-runs/${image_name}"
     
     # Skip invalid combinations
     if [ "$compression" = "dct_chroma" ] && [ "$type" != "ycbcr" ]; then
-        echo "Skipping invalid combination: DCT+Chroma can only be used with YCbCr format"
+        echo "Skipping invalid combination for ${image_name}: DCT+Chroma can only be used with YCbCr format"
         echo "----------------------------------------"
         return
     fi
     
     # Create descriptive names
-    local nf_name="test-runs/$(sanitize "${type}")_${filter}_${compression}.nf"
-    local bmp_name="test-runs/$(sanitize "${type}")_${filter}_${compression}.bmp"
-    local png_name="test-runs/$(sanitize "${type}")_${filter}_${compression}.png"
+    local nf_name="test-runs/${image_name}/$(sanitize "${type}")_${filter}_${compression}.nf"
+    local bmp_name="test-runs/${image_name}/$(sanitize "${type}")_${filter}_${compression}.bmp"
+    local png_name="test-runs/${image_name}/$(sanitize "${type}")_${filter}_${compression}.png"
     
-    echo "Testing combination: type=$type, filter=$filter, compression=$compression"
+    echo "Testing combination for ${image_name}: type=$type, filter=$filter, compression=$compression"
     
     # Convert BMP to NF
-    ./SM2024-Projekt.out convert -i "$INPUT" -o "$nf_name" \
+    ./SM2024-Projekt.out convert -i "$input_image" -o "$nf_name" \
                                -t "$type" -f "$filter" -c "$compression"
     
     # Convert NF back to BMP
@@ -82,6 +84,7 @@ process_combination() {
     convert "$bmp_name" "$png_name"
     
     # Get file sizes
+    local original_size=$(get_size_kb "$input_image")
     local nf_size=$(get_size_kb "$nf_name")
     local bmp_size=$(get_size_kb "$bmp_name")
     local png_size=$(get_size_kb "$png_name")
@@ -90,7 +93,7 @@ process_combination() {
     local nf_percent=$(get_percentage $nf_size $original_size)
     
     # Display file info with sizes
-    echo "Created files:"
+    echo "Created files for ${image_name}:"
     echo "  NF:  $nf_name (${nf_size}kB, ${nf_percent}% of original)"
     echo "  BMP: $bmp_name (${bmp_size}kB)"
     echo "  PNG: $png_name (${png_size}kB)"
@@ -100,41 +103,18 @@ export -f process_combination
 export -f sanitize
 export -f get_size_kb
 export -f get_percentage
-export INPUT
-export original_size
 
-# Generate all combinations and process them in parallel
-parallel --bar process_combination {1} {2} {3} ::: "${TYPES[@]}" ::: "${FILTERS[@]}" ::: "${COMPRESSIONS[@]}"
-
-# Print summary
-echo "All conversions completed. Results are in the test-runs directory."
-echo -e "\nDetailed file sizes:"
-printf "%-50s %10s %15s\n" "FILENAME" "SIZE(kB)" "% OF ORIG"
-echo "--------------------------------------------------------------------------------"
-for f in test-runs/*.{nf,bmp,png}; do
-    if [ -f "$f" ]; then
-        size=$(get_size_kb "$f")
-        percent=$(get_percentage $size $original_size)
-        printf "%-50s %10d %14.1f%%\n" "$(basename "$f")" "$size" "$percent"
+# Process all images with all combinations
+for image in "${IMAGES[@]}"; do
+    if [ -f "$image" ]; then
+        echo "Processing $image..."
+        parallel --bar process_combination "$image" {1} {2} {3} ::: "${TYPES[@]}" ::: "${FILTERS[@]}" ::: "${COMPRESSIONS[@]}"
+    else
+        echo "Warning: $image not found, skipping..."
     fi
 done
 
-# Sort results by compression ratio for the summary
-echo -e "\nCompression Results (sorted by effectiveness):"
-printf "%-30s %-10s %-10s %15s\n" "SETTINGS" "SIZE(kB)" "SAVED(kB)" "% OF ORIG"
-echo "--------------------------------------------------------------------------------"
-for f in test-runs/*.nf; do
-    if [ -f "$f" ]; then
-        # Extract settings from filename
-        filename=$(basename "$f" .nf)
-        size=$(get_size_kb "$f")
-        saved=$((original_size - size))
-        percent=$(get_percentage $size $original_size)
-        printf "%-30s %10d %10d %14.1f%%\n" "$filename" "$size" "$saved" "$percent"
-    fi
-done | sort -k4n
-
-# Create an HTML preview page with file sizes
+# Create an HTML preview page with tabs
 cat > test-runs/preview.html << EOF
 <!DOCTYPE html>
 <html>
@@ -157,147 +137,222 @@ cat > test-runs/preview.html << EOF
         .size-medium { color: #e9c46a; }
         .size-bad { color: #e76f51; }
         .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        .tab-buttons { margin-bottom: 20px; }
+        .tab-button {
+            padding: 10px 20px;
+            border: none;
+            background: #f0f0f0;
+            cursor: pointer;
+            border-radius: 5px;
+            margin-right: 5px;
+        }
+        .tab-button.active {
+            background: #2a9d8f;
+            color: white;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
     </style>
+    <script>
+        function showTab(imageId) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.classList.remove('active');
+            });
+            
+            // Show selected tab
+            document.getElementById('tab-' + imageId).classList.add('active');
+            document.getElementById('button-' + imageId).classList.add('active');
+        }
+    </script>
 </head>
 <body>
     <h1>Image Conversion Results</h1>
-    <p>Original file: $INPUT (${original_size}kB)</p>
-    <div class="grid">
-EOF
-
-# Add each image to the HTML file
-for type in "${TYPES[@]}"; do
-    for filter in "${FILTERS[@]}"; do
-        for compression in "${COMPRESSIONS[@]}"; do
-            # Skip invalid combinations
-            if [ "$compression" = "dct_chroma" ] && [ "$type" != "ycbcr" ]; then
-                continue
-            fi
-            
-            nf_name="test-runs/$(sanitize "${type}")_${filter}_${compression}.nf"
-            png_name="$(sanitize "${type}")_${filter}_${compression}.png"
-            
-            nf_size=$(get_size_kb "$nf_name")
-            nf_percent=$(get_percentage $nf_size $original_size)
-            saved_kb=$((original_size - nf_size))
-            
-            # Determine color class based on compression percentage
-            if (( $(echo "$nf_percent < 40" | bc -l) )); then
-                size_class="size-good"
-            elif (( $(echo "$nf_percent < 70" | bc -l) )); then
-                size_class="size-medium"
-            else
-                size_class="size-bad"
-            fi
-            
-            cat >> test-runs/preview.html << EOF
-    <div class="image-container">
-        <h2>$type - $filter - $compression</h2>
-        <div class="details">
-            Settings: Type=$type, Filter=$filter, Compression=$compression
-        </div>
-        <div class="file-info">
-            NF size: <span class="${size_class}">${nf_size}kB (${nf_percent}% of original)</span><br>
-            Saved: ${saved_kb}kB
-        </div>
-        <img src="$png_name" alt="$png_name">
-    </div>
-EOF
-        done
-    done
-done
-
-echo "</div>" >> test-runs/preview.html
-
-# Add comparison tables
-cat >> test-runs/preview.html << EOF
-    <h2>Compression Ratio Comparison Tables</h2>
     
-    <h3>No Filter</h3>
-    <table style="border-collapse: collapse; width: 100%; margin-bottom: 30px;">
-        <tr style="background-color: #f5f5f5;">
-            <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Type</th>
-            <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">No Compression</th>
-            <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">DCT</th>
-            <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">DCT+Chroma</th>
-            <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">RLE</th>
-        </tr>
+    <div class="tab-buttons">
 EOF
 
-# Fill the "No Filter" table
-for type in "${TYPES[@]}"; do
-    echo "        <tr>" >> test-runs/preview.html
-    echo "            <td style=\"border: 1px solid #ddd; padding: 8px;\">$type</td>" >> test-runs/preview.html
-    for compression in "none" "dct" "dct_chroma" "rle"; do
-        if [ "$compression" = "dct_chroma" ] && [ "$type" != "ycbcr" ]; then
-            echo "            <td style=\"border: 1px solid #ddd; padding: 8px; text-align: center; color: #999;\">N/A</td>" >> test-runs/preview.html
-            continue
-        fi
-        nf_name="test-runs/$(sanitize "${type}")_none_${compression}.nf"
-        if [ -f "$nf_name" ]; then
-            nf_size=$(get_size_kb "$nf_name")
-            nf_percent=$(get_percentage $nf_size $original_size)
-            # Color coding based on compression ratio
-            if (( $(echo "$nf_percent < 40" | bc -l) )); then
-                color="#2a9d8f"
-            elif (( $(echo "$nf_percent < 70" | bc -l) )); then
-                color="#e9c46a"
-            else
-                color="#e76f51"
-            fi
-            echo "            <td style=\"border: 1px solid #ddd; padding: 8px; text-align: center; color: ${color}\">${nf_percent}%</td>" >> test-runs/preview.html
-        else
-            echo "            <td style=\"border: 1px solid #ddd; padding: 8px; text-align: center;\">N/A</td>" >> test-runs/preview.html
-        fi
-    done
-    echo "        </tr>" >> test-runs/preview.html
+# Add tab buttons
+for image in "${IMAGES[@]}"; do
+    if [ -f "$image" ]; then
+        image_name=$(basename "$image" .bmp)
+        cat >> test-runs/preview.html << EOF
+        <button id="button-${image_name}" class="tab-button" onclick="showTab('${image_name}')">${image_name}</button>
+EOF
+    fi
 done
 
+# Start tabs content
+echo '<div class="tabs-content">' >> test-runs/preview.html
+
+# Create content for each image
+for image in "${IMAGES[@]}"; do
+    if [ -f "$image" ]; then
+        image_name=$(basename "$image" .bmp)
+        original_size=$(get_size_kb "$image")
+        
+        # Start tab content
+        cat >> test-runs/preview.html << EOF
+        <div id="tab-${image_name}" class="tab-content">
+            <h2>${image_name}</h2>
+            <p>Original file: ${image} (${original_size}kB)</p>
+            
+            <h3>Compression Ratio Comparison Tables</h3>
+            
+            <h4>No Filter</h4>
+            <table style="border-collapse: collapse; width: 100%; margin-bottom: 30px;">
+                <tr style="background-color: #f5f5f5;">
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Type</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">No Compression</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">DCT</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">DCT+Chroma</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">RLE</th>
+                </tr>
+EOF
+
+        # Fill the "No Filter" table
+        for type in "${TYPES[@]}"; do
+            echo "        <tr>" >> test-runs/preview.html
+            echo "            <td style=\"border: 1px solid #ddd; padding: 8px;\">$type</td>" >> test-runs/preview.html
+            for compression in "none" "dct" "dct_chroma" "rle"; do
+                if [ "$compression" = "dct_chroma" ] && [ "$type" != "ycbcr" ]; then
+                    echo "            <td style=\"border: 1px solid #ddd; padding: 8px; text-align: center; color: #999;\">N/A</td>" >> test-runs/preview.html
+                    continue
+                fi
+                nf_name="test-runs/${image_name}/$(sanitize "${type}")_none_${compression}.nf"
+                if [ -f "$nf_name" ]; then
+                    nf_size=$(get_size_kb "$nf_name")
+                    nf_percent=$(get_percentage $nf_size $original_size)
+                    if (( $(echo "$nf_percent < 40" | bc -l) )); then
+                        color="#2a9d8f"
+                    elif (( $(echo "$nf_percent < 70" | bc -l) )); then
+                        color="#e9c46a"
+                    else
+                        color="#e76f51"
+                    fi
+                    echo "            <td style=\"border: 1px solid #ddd; padding: 8px; text-align: center; color: ${color}\">${nf_percent}%</td>" >> test-runs/preview.html
+                else
+                    echo "            <td style=\"border: 1px solid #ddd; padding: 8px; text-align: center;\">N/A</td>" >> test-runs/preview.html
+                fi
+            done
+            echo "        </tr>" >> test-runs/preview.html
+        done
+
+        # Add Average Filter table
+        cat >> test-runs/preview.html << EOF
+            </table>
+
+            <h4>Average Filter</h4>
+            <table style="border-collapse: collapse; width: 100%; margin-bottom: 30px;">
+                <tr style="background-color: #f5f5f5;">
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Type</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">No Compression</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">DCT</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">DCT+Chroma</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">RLE</th>
+                </tr>
+EOF
+
+        # Fill the "Average Filter" table
+        for type in "${TYPES[@]}"; do
+            echo "        <tr>" >> test-runs/preview.html
+            echo "            <td style=\"border: 1px solid #ddd; padding: 8px;\">$type</td>" >> test-runs/preview.html
+            for compression in "none" "dct" "dct_chroma" "rle"; do
+                if [ "$compression" = "dct_chroma" ] && [ "$type" != "ycbcr" ]; then
+                    echo "            <td style=\"border: 1px solid #ddd; padding: 8px; text-align: center; color: #999;\">N/A</td>" >> test-runs/preview.html
+                    continue
+                fi
+                nf_name="test-runs/${image_name}/$(sanitize "${type}")_average_${compression}.nf"
+                if [ -f "$nf_name" ]; then
+                    nf_size=$(get_size_kb "$nf_name")
+                    nf_percent=$(get_percentage $nf_size $original_size)
+                    if (( $(echo "$nf_percent < 40" | bc -l) )); then
+                        color="#2a9d8f"
+                    elif (( $(echo "$nf_percent < 70" | bc -l) )); then
+                        color="#e9c46a"
+                    else
+                        color="#e76f51"
+                    fi
+                    echo "            <td style=\"border: 1px solid #ddd; padding: 8px; text-align: center; color: ${color}\">${nf_percent}%</td>" >> test-runs/preview.html
+                else
+                    echo "            <td style=\"border: 1px solid #ddd; padding: 8px; text-align: center;\">N/A</td>" >> test-runs/preview.html
+                fi
+            done
+            echo "        </tr>" >> test-runs/preview.html
+        done
+
+        # Add image grid
+        cat >> test-runs/preview.html << EOF
+            </table>
+
+            <h3>Image Comparisons</h3>
+            <div class="grid">
+EOF
+
+        # Add each image variant
+        for type in "${TYPES[@]}"; do
+            for filter in "${FILTERS[@]}"; do
+                for compression in "${COMPRESSIONS[@]}"; do
+                    if [ "$compression" = "dct_chroma" ] && [ "$type" != "ycbcr" ]; then
+                        continue
+                    fi
+                    
+                    nf_name="test-runs/${image_name}/$(sanitize "${type}")_${filter}_${compression}.nf"
+                    png_name="${image_name}/$(sanitize "${type}")_${filter}_${compression}.png"
+                    
+                    if [ -f "$nf_name" ]; then
+                        nf_size=$(get_size_kb "$nf_name")
+                        nf_percent=$(get_percentage $nf_size $original_size)
+                        saved_kb=$((original_size - nf_size))
+                        
+                        if (( $(echo "$nf_percent < 40" | bc -l) )); then
+                            size_class="size-good"
+                        elif (( $(echo "$nf_percent < 70" | bc -l) )); then
+                            size_class="size-medium"
+                        else
+                            size_class="size-bad"
+                        fi
+                        
+                        cat >> test-runs/preview.html << EOF
+                <div class="image-container">
+                    <h2>$type - $filter - $compression</h2>
+                    <div class="details">
+                        Settings: Type=$type, Filter=$filter, Compression=$compression
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="${size_class}">${nf_size}kB (${nf_percent}% of original)</span><br>
+                        Saved: ${saved_kb}kB
+                    </div>
+                    <img src="$png_name" alt="$png_name">
+                </div>
+EOF
+                    fi
+                done
+            done
+        done
+
+        # Close the grid and tab content
+        echo "</div></div>" >> test-runs/preview.html
+    fi
+done
+
+# Close the HTML
 cat >> test-runs/preview.html << EOF
-    </table>
-
-    <h3>Average Filter</h3>
-    <table style="border-collapse: collapse; width: 100%; margin-bottom: 30px;">
-        <tr style="background-color: #f5f5f5;">
-            <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Type</th>
-            <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">No Compression</th>
-            <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">DCT</th>
-            <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">DCT+Chroma</th>
-            <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">RLE</th>
-        </tr>
+    </div>
+    <script>
+        // Show first tab by default
+        document.querySelector('.tab-button').click();
+    </script>
+</body>
+</html>
 EOF
-
-# Fill the "Average Filter" table
-for type in "${TYPES[@]}"; do
-    echo "        <tr>" >> test-runs/preview.html
-    echo "            <td style=\"border: 1px solid #ddd; padding: 8px;\">$type</td>" >> test-runs/preview.html
-    for compression in "none" "dct" "dct_chroma" "rle"; do
-        if [ "$compression" = "dct_chroma" ] && [ "$type" != "ycbcr" ]; then
-            echo "            <td style=\"border: 1px solid #ddd; padding: 8px; text-align: center; color: #999;\">N/A</td>" >> test-runs/preview.html
-            continue
-        fi
-        nf_name="test-runs/$(sanitize "${type}")_average_${compression}.nf"
-        if [ -f "$nf_name" ]; then
-            nf_size=$(get_size_kb "$nf_name")
-            nf_percent=$(get_percentage $nf_size $original_size)
-            # Color coding based on compression ratio
-            if (( $(echo "$nf_percent < 40" | bc -l) )); then
-                color="#2a9d8f"
-            elif (( $(echo "$nf_percent < 70" | bc -l) )); then
-                color="#e9c46a"
-            else
-                color="#e76f51"
-            fi
-            echo "            <td style=\"border: 1px solid #ddd; padding: 8px; text-align: center; color: ${color}\">${nf_percent}%</td>" >> test-runs/preview.html
-        else
-            echo "            <td style=\"border: 1px solid #ddd; padding: 8px; text-align: center;\">N/A</td>" >> test-runs/preview.html
-        fi
-    done
-    echo "        </tr>" >> test-runs/preview.html
-done
-
-# Close the HTML file
-echo "</table></body></html>" >> test-runs/preview.html
 
 echo -e "\nCreated preview.html - open it in a browser to compare all images"
 echo "You can open it with: open test-runs/preview.html" 

@@ -19,244 +19,950 @@
         .size-medium { color: #e9c46a; }
         .size-bad { color: #e76f51; }
         .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        .tab-buttons { margin-bottom: 20px; }
+        .tab-button {
+            padding: 10px 20px;
+            border: none;
+            background: #f0f0f0;
+            cursor: pointer;
+            border-radius: 5px;
+            margin-right: 5px;
+        }
+        .tab-button.active {
+            background: #2a9d8f;
+            color: white;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
     </style>
+    <script>
+        function showTab(imageId) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.classList.remove('active');
+            });
+            
+            // Show selected tab
+            document.getElementById('tab-' + imageId).classList.add('active');
+            document.getElementById('button-' + imageId).classList.add('active');
+        }
+    </script>
 </head>
 <body>
     <h1>Image Conversion Results</h1>
-    <p>Original file: obrazek4.bmp (187kB)</p>
-    <div class="grid">
-    <div class="image-container">
-        <h2>rgb555 - none - none</h2>
-        <div class="details">
-            Settings: Type=rgb555, Filter=none, Compression=none
-        </div>
-        <div class="file-info">
-            NF size: <span class="size-medium">125kB (66.8% of original)</span><br>
-            Saved: 62kB
-        </div>
-        <img src="rgb555_none_none.png" alt="rgb555_none_none.png">
-    </div>
-    <div class="image-container">
-        <h2>rgb555 - none - dct</h2>
-        <div class="details">
-            Settings: Type=rgb555, Filter=none, Compression=dct
-        </div>
-        <div class="file-info">
-            NF size: <span class="size-medium">113kB (60.4% of original)</span><br>
-            Saved: 74kB
-        </div>
-        <img src="rgb555_none_dct.png" alt="rgb555_none_dct.png">
-    </div>
-    <div class="image-container">
-        <h2>rgb555 - none - rle</h2>
-        <div class="details">
-            Settings: Type=rgb555, Filter=none, Compression=rle
-        </div>
-        <div class="file-info">
-            NF size: <span class="size-bad">247kB (132.0% of original)</span><br>
-            Saved: -60kB
-        </div>
-        <img src="rgb555_none_rle.png" alt="rgb555_none_rle.png">
-    </div>
-    <div class="image-container">
-        <h2>rgb555 - average - none</h2>
-        <div class="details">
-            Settings: Type=rgb555, Filter=average, Compression=none
-        </div>
-        <div class="file-info">
-            NF size: <span class="size-medium">125kB (66.8% of original)</span><br>
-            Saved: 62kB
-        </div>
-        <img src="rgb555_average_none.png" alt="rgb555_average_none.png">
-    </div>
-    <div class="image-container">
-        <h2>rgb555 - average - dct</h2>
-        <div class="details">
-            Settings: Type=rgb555, Filter=average, Compression=dct
-        </div>
-        <div class="file-info">
-            NF size: <span class="size-bad">161kB (86.0% of original)</span><br>
-            Saved: 26kB
-        </div>
-        <img src="rgb555_average_dct.png" alt="rgb555_average_dct.png">
-    </div>
-    <div class="image-container">
-        <h2>rgb555 - average - rle</h2>
-        <div class="details">
-            Settings: Type=rgb555, Filter=average, Compression=rle
-        </div>
-        <div class="file-info">
-            NF size: <span class="size-bad">221kB (118.1% of original)</span><br>
-            Saved: -34kB
-        </div>
-        <img src="rgb555_average_rle.png" alt="rgb555_average_rle.png">
-    </div>
-    <div class="image-container">
-        <h2>rgb888 - none - none</h2>
-        <div class="details">
-            Settings: Type=rgb888, Filter=none, Compression=none
-        </div>
-        <div class="file-info">
-            NF size: <span class="size-bad">187kB (100.0% of original)</span><br>
-            Saved: 0kB
-        </div>
-        <img src="rgb888_none_none.png" alt="rgb888_none_none.png">
-    </div>
-    <div class="image-container">
-        <h2>rgb888 - none - dct</h2>
-        <div class="details">
-            Settings: Type=rgb888, Filter=none, Compression=dct
-        </div>
-        <div class="file-info">
-            NF size: <span class="size-medium">111kB (59.3% of original)</span><br>
-            Saved: 76kB
-        </div>
-        <img src="rgb888_none_dct.png" alt="rgb888_none_dct.png">
-    </div>
-    <div class="image-container">
-        <h2>rgb888 - none - rle</h2>
-        <div class="details">
-            Settings: Type=rgb888, Filter=none, Compression=rle
-        </div>
-        <div class="file-info">
-            NF size: <span class="size-bad">359kB (191.9% of original)</span><br>
-            Saved: -172kB
-        </div>
-        <img src="rgb888_none_rle.png" alt="rgb888_none_rle.png">
-    </div>
-    <div class="image-container">
-        <h2>rgb888 - average - none</h2>
-        <div class="details">
-            Settings: Type=rgb888, Filter=average, Compression=none
-        </div>
-        <div class="file-info">
-            NF size: <span class="size-bad">187kB (100.0% of original)</span><br>
-            Saved: 0kB
-        </div>
-        <img src="rgb888_average_none.png" alt="rgb888_average_none.png">
-    </div>
-    <div class="image-container">
-        <h2>rgb888 - average - dct</h2>
-        <div class="details">
-            Settings: Type=rgb888, Filter=average, Compression=dct
-        </div>
-        <div class="file-info">
-            NF size: <span class="size-bad">171kB (91.4% of original)</span><br>
-            Saved: 16kB
-        </div>
-        <img src="rgb888_average_dct.png" alt="rgb888_average_dct.png">
-    </div>
-    <div class="image-container">
-        <h2>rgb888 - average - rle</h2>
-        <div class="details">
-            Settings: Type=rgb888, Filter=average, Compression=rle
-        </div>
-        <div class="file-info">
-            NF size: <span class="size-bad">270kB (144.3% of original)</span><br>
-            Saved: -83kB
-        </div>
-        <img src="rgb888_average_rle.png" alt="rgb888_average_rle.png">
-    </div>
-    <div class="image-container">
-        <h2>ycbcr - none - none</h2>
-        <div class="details">
-            Settings: Type=ycbcr, Filter=none, Compression=none
-        </div>
-        <div class="file-info">
-            NF size: <span class="size-bad">187kB (100.0% of original)</span><br>
-            Saved: 0kB
-        </div>
-        <img src="ycbcr_none_none.png" alt="ycbcr_none_none.png">
-    </div>
-    <div class="image-container">
-        <h2>ycbcr - none - dct</h2>
-        <div class="details">
-            Settings: Type=ycbcr, Filter=none, Compression=dct
-        </div>
-        <div class="file-info">
-            NF size: <span class="size-bad">265kB (141.7% of original)</span><br>
-            Saved: -78kB
-        </div>
-        <img src="ycbcr_none_dct.png" alt="ycbcr_none_dct.png">
-    </div>
-    <div class="image-container">
-        <h2>ycbcr - none - dct_chroma</h2>
-        <div class="details">
-            Settings: Type=ycbcr, Filter=none, Compression=dct_chroma
-        </div>
-        <div class="file-info">
-            NF size: <span class="size-good">44kB (23.5% of original)</span><br>
-            Saved: 143kB
-        </div>
-        <img src="ycbcr_none_dct_chroma.png" alt="ycbcr_none_dct_chroma.png">
-    </div>
-    <div class="image-container">
-        <h2>ycbcr - none - rle</h2>
-        <div class="details">
-            Settings: Type=ycbcr, Filter=none, Compression=rle
-        </div>
-        <div class="file-info">
-            NF size: <span class="size-bad">265kB (141.7% of original)</span><br>
-            Saved: -78kB
-        </div>
-        <img src="ycbcr_none_rle.png" alt="ycbcr_none_rle.png">
-    </div>
-    <div class="image-container">
-        <h2>ycbcr - average - none</h2>
-        <div class="details">
-            Settings: Type=ycbcr, Filter=average, Compression=none
-        </div>
-        <div class="file-info">
-            NF size: <span class="size-bad">187kB (100.0% of original)</span><br>
-            Saved: 0kB
-        </div>
-        <img src="ycbcr_average_none.png" alt="ycbcr_average_none.png">
-    </div>
-    <div class="image-container">
-        <h2>ycbcr - average - dct</h2>
-        <div class="details">
-            Settings: Type=ycbcr, Filter=average, Compression=dct
-        </div>
-        <div class="file-info">
-            NF size: <span class="size-bad">321kB (171.6% of original)</span><br>
-            Saved: -134kB
-        </div>
-        <img src="ycbcr_average_dct.png" alt="ycbcr_average_dct.png">
-    </div>
-    <div class="image-container">
-        <h2>ycbcr - average - dct_chroma</h2>
-        <div class="details">
-            Settings: Type=ycbcr, Filter=average, Compression=dct_chroma
-        </div>
-        <div class="file-info">
-            NF size: <span class="size-good">70kB (37.4% of original)</span><br>
-            Saved: 117kB
-        </div>
-        <img src="ycbcr_average_dct_chroma.png" alt="ycbcr_average_dct_chroma.png">
-    </div>
-    <div class="image-container">
-        <h2>ycbcr - average - rle</h2>
-        <div class="details">
-            Settings: Type=ycbcr, Filter=average, Compression=rle
-        </div>
-        <div class="file-info">
-            NF size: <span class="size-bad">321kB (171.6% of original)</span><br>
-            Saved: -134kB
-        </div>
-        <img src="ycbcr_average_rle.png" alt="ycbcr_average_rle.png">
-    </div>
-</div>
-    <h2>Compression Ratio Comparison Tables</h2>
     
-    <h3>No Filter</h3>
-    <table style="border-collapse: collapse; width: 100%; margin-bottom: 30px;">
-        <tr style="background-color: #f5f5f5;">
-            <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Type</th>
-            <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">No Compression</th>
-            <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">DCT</th>
-            <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">DCT+Chroma</th>
-            <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">RLE</th>
+    <div class="tab-buttons">
+        <button id="button-obrazek1" class="tab-button" onclick="showTab('obrazek1')">obrazek1</button>
+        <button id="button-obrazek2" class="tab-button" onclick="showTab('obrazek2')">obrazek2</button>
+        <button id="button-obrazek3" class="tab-button" onclick="showTab('obrazek3')">obrazek3</button>
+        <button id="button-obrazek4" class="tab-button" onclick="showTab('obrazek4')">obrazek4</button>
+        <button id="button-obrazek5" class="tab-button" onclick="showTab('obrazek5')">obrazek5</button>
+        <button id="button-obrazek6" class="tab-button" onclick="showTab('obrazek6')">obrazek6</button>
+        <button id="button-obrazek7" class="tab-button" onclick="showTab('obrazek7')">obrazek7</button>
+        <button id="button-obrazek8" class="tab-button" onclick="showTab('obrazek8')">obrazek8</button>
+        <button id="button-obrazek9" class="tab-button" onclick="showTab('obrazek9')">obrazek9</button>
+<div class="tabs-content">
+        <div id="tab-obrazek1" class="tab-content">
+            <h2>obrazek1</h2>
+            <p>Original file: obrazek1.bmp (187kB)</p>
+            
+            <h3>Compression Ratio Comparison Tables</h3>
+            
+            <h4>No Filter</h4>
+            <table style="border-collapse: collapse; width: 100%; margin-bottom: 30px;">
+                <tr style="background-color: #f5f5f5;">
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Type</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">No Compression</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">DCT</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">DCT+Chroma</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">RLE</th>
+                </tr>
+        <tr>
+            <td style="border: 1px solid #ddd; padding: 8px;">rgb555</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e9c46a">66.8%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e9c46a">47.5%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #999;">N/A</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">133.1%</td>
         </tr>
+        <tr>
+            <td style="border: 1px solid #ddd; padding: 8px;">rgb888</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">100.0%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e9c46a">46.5%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #999;">N/A</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">200.0%</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid #ddd; padding: 8px;">ycbcr</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">100.0%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">163.1%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #2a9d8f">20.3%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">163.1%</td>
+        </tr>
+            </table>
+
+            <h4>Average Filter</h4>
+            <table style="border-collapse: collapse; width: 100%; margin-bottom: 30px;">
+                <tr style="background-color: #f5f5f5;">
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Type</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">No Compression</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">DCT</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">DCT+Chroma</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">RLE</th>
+                </tr>
+        <tr>
+            <td style="border: 1px solid #ddd; padding: 8px;">rgb555</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e9c46a">66.8%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">71.6%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #999;">N/A</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">119.7%</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid #ddd; padding: 8px;">rgb888</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">100.0%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">78.6%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #999;">N/A</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">179.6%</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid #ddd; padding: 8px;">ycbcr</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">100.0%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">176.4%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #2a9d8f">35.2%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">176.4%</td>
+        </tr>
+            </table>
+
+            <h3>Image Comparisons</h3>
+            <div class="grid">
+                <div class="image-container">
+                    <h2>rgb555 - none - none</h2>
+                    <div class="details">
+                        Settings: Type=rgb555, Filter=none, Compression=none
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-medium">125kB (66.8% of original)</span><br>
+                        Saved: 62kB
+                    </div>
+                    <img src="obrazek1/rgb555_none_none.png" alt="obrazek1/rgb555_none_none.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb555 - none - dct</h2>
+                    <div class="details">
+                        Settings: Type=rgb555, Filter=none, Compression=dct
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-medium">89kB (47.5% of original)</span><br>
+                        Saved: 98kB
+                    </div>
+                    <img src="obrazek1/rgb555_none_dct.png" alt="obrazek1/rgb555_none_dct.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb555 - none - rle</h2>
+                    <div class="details">
+                        Settings: Type=rgb555, Filter=none, Compression=rle
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">249kB (133.1% of original)</span><br>
+                        Saved: -62kB
+                    </div>
+                    <img src="obrazek1/rgb555_none_rle.png" alt="obrazek1/rgb555_none_rle.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb555 - average - none</h2>
+                    <div class="details">
+                        Settings: Type=rgb555, Filter=average, Compression=none
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-medium">125kB (66.8% of original)</span><br>
+                        Saved: 62kB
+                    </div>
+                    <img src="obrazek1/rgb555_average_none.png" alt="obrazek1/rgb555_average_none.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb555 - average - dct</h2>
+                    <div class="details">
+                        Settings: Type=rgb555, Filter=average, Compression=dct
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">134kB (71.6% of original)</span><br>
+                        Saved: 53kB
+                    </div>
+                    <img src="obrazek1/rgb555_average_dct.png" alt="obrazek1/rgb555_average_dct.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb555 - average - rle</h2>
+                    <div class="details">
+                        Settings: Type=rgb555, Filter=average, Compression=rle
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">224kB (119.7% of original)</span><br>
+                        Saved: -37kB
+                    </div>
+                    <img src="obrazek1/rgb555_average_rle.png" alt="obrazek1/rgb555_average_rle.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb888 - none - none</h2>
+                    <div class="details">
+                        Settings: Type=rgb888, Filter=none, Compression=none
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">187kB (100.0% of original)</span><br>
+                        Saved: 0kB
+                    </div>
+                    <img src="obrazek1/rgb888_none_none.png" alt="obrazek1/rgb888_none_none.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb888 - none - dct</h2>
+                    <div class="details">
+                        Settings: Type=rgb888, Filter=none, Compression=dct
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-medium">87kB (46.5% of original)</span><br>
+                        Saved: 100kB
+                    </div>
+                    <img src="obrazek1/rgb888_none_dct.png" alt="obrazek1/rgb888_none_dct.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb888 - none - rle</h2>
+                    <div class="details">
+                        Settings: Type=rgb888, Filter=none, Compression=rle
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">374kB (200.0% of original)</span><br>
+                        Saved: -187kB
+                    </div>
+                    <img src="obrazek1/rgb888_none_rle.png" alt="obrazek1/rgb888_none_rle.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb888 - average - none</h2>
+                    <div class="details">
+                        Settings: Type=rgb888, Filter=average, Compression=none
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">187kB (100.0% of original)</span><br>
+                        Saved: 0kB
+                    </div>
+                    <img src="obrazek1/rgb888_average_none.png" alt="obrazek1/rgb888_average_none.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb888 - average - dct</h2>
+                    <div class="details">
+                        Settings: Type=rgb888, Filter=average, Compression=dct
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">147kB (78.6% of original)</span><br>
+                        Saved: 40kB
+                    </div>
+                    <img src="obrazek1/rgb888_average_dct.png" alt="obrazek1/rgb888_average_dct.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb888 - average - rle</h2>
+                    <div class="details">
+                        Settings: Type=rgb888, Filter=average, Compression=rle
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">336kB (179.6% of original)</span><br>
+                        Saved: -149kB
+                    </div>
+                    <img src="obrazek1/rgb888_average_rle.png" alt="obrazek1/rgb888_average_rle.png">
+                </div>
+                <div class="image-container">
+                    <h2>ycbcr - none - none</h2>
+                    <div class="details">
+                        Settings: Type=ycbcr, Filter=none, Compression=none
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">187kB (100.0% of original)</span><br>
+                        Saved: 0kB
+                    </div>
+                    <img src="obrazek1/ycbcr_none_none.png" alt="obrazek1/ycbcr_none_none.png">
+                </div>
+                <div class="image-container">
+                    <h2>ycbcr - none - dct</h2>
+                    <div class="details">
+                        Settings: Type=ycbcr, Filter=none, Compression=dct
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">305kB (163.1% of original)</span><br>
+                        Saved: -118kB
+                    </div>
+                    <img src="obrazek1/ycbcr_none_dct.png" alt="obrazek1/ycbcr_none_dct.png">
+                </div>
+                <div class="image-container">
+                    <h2>ycbcr - none - dct_chroma</h2>
+                    <div class="details">
+                        Settings: Type=ycbcr, Filter=none, Compression=dct_chroma
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-good">38kB (20.3% of original)</span><br>
+                        Saved: 149kB
+                    </div>
+                    <img src="obrazek1/ycbcr_none_dct_chroma.png" alt="obrazek1/ycbcr_none_dct_chroma.png">
+                </div>
+                <div class="image-container">
+                    <h2>ycbcr - none - rle</h2>
+                    <div class="details">
+                        Settings: Type=ycbcr, Filter=none, Compression=rle
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">305kB (163.1% of original)</span><br>
+                        Saved: -118kB
+                    </div>
+                    <img src="obrazek1/ycbcr_none_rle.png" alt="obrazek1/ycbcr_none_rle.png">
+                </div>
+                <div class="image-container">
+                    <h2>ycbcr - average - none</h2>
+                    <div class="details">
+                        Settings: Type=ycbcr, Filter=average, Compression=none
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">187kB (100.0% of original)</span><br>
+                        Saved: 0kB
+                    </div>
+                    <img src="obrazek1/ycbcr_average_none.png" alt="obrazek1/ycbcr_average_none.png">
+                </div>
+                <div class="image-container">
+                    <h2>ycbcr - average - dct</h2>
+                    <div class="details">
+                        Settings: Type=ycbcr, Filter=average, Compression=dct
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">330kB (176.4% of original)</span><br>
+                        Saved: -143kB
+                    </div>
+                    <img src="obrazek1/ycbcr_average_dct.png" alt="obrazek1/ycbcr_average_dct.png">
+                </div>
+                <div class="image-container">
+                    <h2>ycbcr - average - dct_chroma</h2>
+                    <div class="details">
+                        Settings: Type=ycbcr, Filter=average, Compression=dct_chroma
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-good">66kB (35.2% of original)</span><br>
+                        Saved: 121kB
+                    </div>
+                    <img src="obrazek1/ycbcr_average_dct_chroma.png" alt="obrazek1/ycbcr_average_dct_chroma.png">
+                </div>
+                <div class="image-container">
+                    <h2>ycbcr - average - rle</h2>
+                    <div class="details">
+                        Settings: Type=ycbcr, Filter=average, Compression=rle
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">330kB (176.4% of original)</span><br>
+                        Saved: -143kB
+                    </div>
+                    <img src="obrazek1/ycbcr_average_rle.png" alt="obrazek1/ycbcr_average_rle.png">
+                </div>
+</div></div>
+        <div id="tab-obrazek2" class="tab-content">
+            <h2>obrazek2</h2>
+            <p>Original file: obrazek2.bmp (187kB)</p>
+            
+            <h3>Compression Ratio Comparison Tables</h3>
+            
+            <h4>No Filter</h4>
+            <table style="border-collapse: collapse; width: 100%; margin-bottom: 30px;">
+                <tr style="background-color: #f5f5f5;">
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Type</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">No Compression</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">DCT</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">DCT+Chroma</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">RLE</th>
+                </tr>
+        <tr>
+            <td style="border: 1px solid #ddd; padding: 8px;">rgb555</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e9c46a">66.8%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e9c46a">45.9%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #999;">N/A</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">132.6%</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid #ddd; padding: 8px;">rgb888</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">100.0%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e9c46a">44.9%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #999;">N/A</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">198.9%</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid #ddd; padding: 8px;">ycbcr</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">100.0%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">165.7%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #2a9d8f">18.1%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">165.7%</td>
+        </tr>
+            </table>
+
+            <h4>Average Filter</h4>
+            <table style="border-collapse: collapse; width: 100%; margin-bottom: 30px;">
+                <tr style="background-color: #f5f5f5;">
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Type</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">No Compression</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">DCT</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">DCT+Chroma</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">RLE</th>
+                </tr>
+        <tr>
+            <td style="border: 1px solid #ddd; padding: 8px;">rgb555</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e9c46a">66.8%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">70.0%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #999;">N/A</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">120.8%</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid #ddd; padding: 8px;">rgb888</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">100.0%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">75.9%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #999;">N/A</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">182.3%</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid #ddd; padding: 8px;">ycbcr</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">100.0%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">178.6%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #2a9d8f">32.0%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">178.6%</td>
+        </tr>
+            </table>
+
+            <h3>Image Comparisons</h3>
+            <div class="grid">
+                <div class="image-container">
+                    <h2>rgb555 - none - none</h2>
+                    <div class="details">
+                        Settings: Type=rgb555, Filter=none, Compression=none
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-medium">125kB (66.8% of original)</span><br>
+                        Saved: 62kB
+                    </div>
+                    <img src="obrazek2/rgb555_none_none.png" alt="obrazek2/rgb555_none_none.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb555 - none - dct</h2>
+                    <div class="details">
+                        Settings: Type=rgb555, Filter=none, Compression=dct
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-medium">86kB (45.9% of original)</span><br>
+                        Saved: 101kB
+                    </div>
+                    <img src="obrazek2/rgb555_none_dct.png" alt="obrazek2/rgb555_none_dct.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb555 - none - rle</h2>
+                    <div class="details">
+                        Settings: Type=rgb555, Filter=none, Compression=rle
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">248kB (132.6% of original)</span><br>
+                        Saved: -61kB
+                    </div>
+                    <img src="obrazek2/rgb555_none_rle.png" alt="obrazek2/rgb555_none_rle.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb555 - average - none</h2>
+                    <div class="details">
+                        Settings: Type=rgb555, Filter=average, Compression=none
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-medium">125kB (66.8% of original)</span><br>
+                        Saved: 62kB
+                    </div>
+                    <img src="obrazek2/rgb555_average_none.png" alt="obrazek2/rgb555_average_none.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb555 - average - dct</h2>
+                    <div class="details">
+                        Settings: Type=rgb555, Filter=average, Compression=dct
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">131kB (70.0% of original)</span><br>
+                        Saved: 56kB
+                    </div>
+                    <img src="obrazek2/rgb555_average_dct.png" alt="obrazek2/rgb555_average_dct.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb555 - average - rle</h2>
+                    <div class="details">
+                        Settings: Type=rgb555, Filter=average, Compression=rle
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">226kB (120.8% of original)</span><br>
+                        Saved: -39kB
+                    </div>
+                    <img src="obrazek2/rgb555_average_rle.png" alt="obrazek2/rgb555_average_rle.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb888 - none - none</h2>
+                    <div class="details">
+                        Settings: Type=rgb888, Filter=none, Compression=none
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">187kB (100.0% of original)</span><br>
+                        Saved: 0kB
+                    </div>
+                    <img src="obrazek2/rgb888_none_none.png" alt="obrazek2/rgb888_none_none.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb888 - none - dct</h2>
+                    <div class="details">
+                        Settings: Type=rgb888, Filter=none, Compression=dct
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-medium">84kB (44.9% of original)</span><br>
+                        Saved: 103kB
+                    </div>
+                    <img src="obrazek2/rgb888_none_dct.png" alt="obrazek2/rgb888_none_dct.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb888 - none - rle</h2>
+                    <div class="details">
+                        Settings: Type=rgb888, Filter=none, Compression=rle
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">372kB (198.9% of original)</span><br>
+                        Saved: -185kB
+                    </div>
+                    <img src="obrazek2/rgb888_none_rle.png" alt="obrazek2/rgb888_none_rle.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb888 - average - none</h2>
+                    <div class="details">
+                        Settings: Type=rgb888, Filter=average, Compression=none
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">187kB (100.0% of original)</span><br>
+                        Saved: 0kB
+                    </div>
+                    <img src="obrazek2/rgb888_average_none.png" alt="obrazek2/rgb888_average_none.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb888 - average - dct</h2>
+                    <div class="details">
+                        Settings: Type=rgb888, Filter=average, Compression=dct
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">142kB (75.9% of original)</span><br>
+                        Saved: 45kB
+                    </div>
+                    <img src="obrazek2/rgb888_average_dct.png" alt="obrazek2/rgb888_average_dct.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb888 - average - rle</h2>
+                    <div class="details">
+                        Settings: Type=rgb888, Filter=average, Compression=rle
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">341kB (182.3% of original)</span><br>
+                        Saved: -154kB
+                    </div>
+                    <img src="obrazek2/rgb888_average_rle.png" alt="obrazek2/rgb888_average_rle.png">
+                </div>
+                <div class="image-container">
+                    <h2>ycbcr - none - none</h2>
+                    <div class="details">
+                        Settings: Type=ycbcr, Filter=none, Compression=none
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">187kB (100.0% of original)</span><br>
+                        Saved: 0kB
+                    </div>
+                    <img src="obrazek2/ycbcr_none_none.png" alt="obrazek2/ycbcr_none_none.png">
+                </div>
+                <div class="image-container">
+                    <h2>ycbcr - none - dct</h2>
+                    <div class="details">
+                        Settings: Type=ycbcr, Filter=none, Compression=dct
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">310kB (165.7% of original)</span><br>
+                        Saved: -123kB
+                    </div>
+                    <img src="obrazek2/ycbcr_none_dct.png" alt="obrazek2/ycbcr_none_dct.png">
+                </div>
+                <div class="image-container">
+                    <h2>ycbcr - none - dct_chroma</h2>
+                    <div class="details">
+                        Settings: Type=ycbcr, Filter=none, Compression=dct_chroma
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-good">34kB (18.1% of original)</span><br>
+                        Saved: 153kB
+                    </div>
+                    <img src="obrazek2/ycbcr_none_dct_chroma.png" alt="obrazek2/ycbcr_none_dct_chroma.png">
+                </div>
+                <div class="image-container">
+                    <h2>ycbcr - none - rle</h2>
+                    <div class="details">
+                        Settings: Type=ycbcr, Filter=none, Compression=rle
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">310kB (165.7% of original)</span><br>
+                        Saved: -123kB
+                    </div>
+                    <img src="obrazek2/ycbcr_none_rle.png" alt="obrazek2/ycbcr_none_rle.png">
+                </div>
+                <div class="image-container">
+                    <h2>ycbcr - average - none</h2>
+                    <div class="details">
+                        Settings: Type=ycbcr, Filter=average, Compression=none
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">187kB (100.0% of original)</span><br>
+                        Saved: 0kB
+                    </div>
+                    <img src="obrazek2/ycbcr_average_none.png" alt="obrazek2/ycbcr_average_none.png">
+                </div>
+                <div class="image-container">
+                    <h2>ycbcr - average - dct</h2>
+                    <div class="details">
+                        Settings: Type=ycbcr, Filter=average, Compression=dct
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">334kB (178.6% of original)</span><br>
+                        Saved: -147kB
+                    </div>
+                    <img src="obrazek2/ycbcr_average_dct.png" alt="obrazek2/ycbcr_average_dct.png">
+                </div>
+                <div class="image-container">
+                    <h2>ycbcr - average - dct_chroma</h2>
+                    <div class="details">
+                        Settings: Type=ycbcr, Filter=average, Compression=dct_chroma
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-good">60kB (32.0% of original)</span><br>
+                        Saved: 127kB
+                    </div>
+                    <img src="obrazek2/ycbcr_average_dct_chroma.png" alt="obrazek2/ycbcr_average_dct_chroma.png">
+                </div>
+                <div class="image-container">
+                    <h2>ycbcr - average - rle</h2>
+                    <div class="details">
+                        Settings: Type=ycbcr, Filter=average, Compression=rle
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">334kB (178.6% of original)</span><br>
+                        Saved: -147kB
+                    </div>
+                    <img src="obrazek2/ycbcr_average_rle.png" alt="obrazek2/ycbcr_average_rle.png">
+                </div>
+</div></div>
+        <div id="tab-obrazek3" class="tab-content">
+            <h2>obrazek3</h2>
+            <p>Original file: obrazek3.bmp (187kB)</p>
+            
+            <h3>Compression Ratio Comparison Tables</h3>
+            
+            <h4>No Filter</h4>
+            <table style="border-collapse: collapse; width: 100%; margin-bottom: 30px;">
+                <tr style="background-color: #f5f5f5;">
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Type</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">No Compression</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">DCT</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">DCT+Chroma</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">RLE</th>
+                </tr>
+        <tr>
+            <td style="border: 1px solid #ddd; padding: 8px;">rgb555</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e9c46a">66.8%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e9c46a">59.8%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #999;">N/A</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">133.1%</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid #ddd; padding: 8px;">rgb888</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">100.0%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e9c46a">58.8%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #999;">N/A</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">182.3%</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid #ddd; padding: 8px;">ycbcr</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">100.0%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">153.4%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #2a9d8f">22.4%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">153.4%</td>
+        </tr>
+            </table>
+
+            <h4>Average Filter</h4>
+            <table style="border-collapse: collapse; width: 100%; margin-bottom: 30px;">
+                <tr style="background-color: #f5f5f5;">
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Type</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">No Compression</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">DCT</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">DCT+Chroma</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">RLE</th>
+                </tr>
+        <tr>
+            <td style="border: 1px solid #ddd; padding: 8px;">rgb555</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e9c46a">66.8%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">85.0%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #999;">N/A</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">122.4%</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid #ddd; padding: 8px;">rgb888</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">100.0%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">89.8%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #999;">N/A</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">156.6%</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid #ddd; padding: 8px;">ycbcr</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">100.0%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">177.0%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #2a9d8f">35.8%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">177.0%</td>
+        </tr>
+            </table>
+
+            <h3>Image Comparisons</h3>
+            <div class="grid">
+                <div class="image-container">
+                    <h2>rgb555 - none - none</h2>
+                    <div class="details">
+                        Settings: Type=rgb555, Filter=none, Compression=none
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-medium">125kB (66.8% of original)</span><br>
+                        Saved: 62kB
+                    </div>
+                    <img src="obrazek3/rgb555_none_none.png" alt="obrazek3/rgb555_none_none.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb555 - none - dct</h2>
+                    <div class="details">
+                        Settings: Type=rgb555, Filter=none, Compression=dct
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-medium">112kB (59.8% of original)</span><br>
+                        Saved: 75kB
+                    </div>
+                    <img src="obrazek3/rgb555_none_dct.png" alt="obrazek3/rgb555_none_dct.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb555 - none - rle</h2>
+                    <div class="details">
+                        Settings: Type=rgb555, Filter=none, Compression=rle
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">249kB (133.1% of original)</span><br>
+                        Saved: -62kB
+                    </div>
+                    <img src="obrazek3/rgb555_none_rle.png" alt="obrazek3/rgb555_none_rle.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb555 - average - none</h2>
+                    <div class="details">
+                        Settings: Type=rgb555, Filter=average, Compression=none
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-medium">125kB (66.8% of original)</span><br>
+                        Saved: 62kB
+                    </div>
+                    <img src="obrazek3/rgb555_average_none.png" alt="obrazek3/rgb555_average_none.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb555 - average - dct</h2>
+                    <div class="details">
+                        Settings: Type=rgb555, Filter=average, Compression=dct
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">159kB (85.0% of original)</span><br>
+                        Saved: 28kB
+                    </div>
+                    <img src="obrazek3/rgb555_average_dct.png" alt="obrazek3/rgb555_average_dct.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb555 - average - rle</h2>
+                    <div class="details">
+                        Settings: Type=rgb555, Filter=average, Compression=rle
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">229kB (122.4% of original)</span><br>
+                        Saved: -42kB
+                    </div>
+                    <img src="obrazek3/rgb555_average_rle.png" alt="obrazek3/rgb555_average_rle.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb888 - none - none</h2>
+                    <div class="details">
+                        Settings: Type=rgb888, Filter=none, Compression=none
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">187kB (100.0% of original)</span><br>
+                        Saved: 0kB
+                    </div>
+                    <img src="obrazek3/rgb888_none_none.png" alt="obrazek3/rgb888_none_none.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb888 - none - dct</h2>
+                    <div class="details">
+                        Settings: Type=rgb888, Filter=none, Compression=dct
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-medium">110kB (58.8% of original)</span><br>
+                        Saved: 77kB
+                    </div>
+                    <img src="obrazek3/rgb888_none_dct.png" alt="obrazek3/rgb888_none_dct.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb888 - none - rle</h2>
+                    <div class="details">
+                        Settings: Type=rgb888, Filter=none, Compression=rle
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">341kB (182.3% of original)</span><br>
+                        Saved: -154kB
+                    </div>
+                    <img src="obrazek3/rgb888_none_rle.png" alt="obrazek3/rgb888_none_rle.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb888 - average - none</h2>
+                    <div class="details">
+                        Settings: Type=rgb888, Filter=average, Compression=none
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">187kB (100.0% of original)</span><br>
+                        Saved: 0kB
+                    </div>
+                    <img src="obrazek3/rgb888_average_none.png" alt="obrazek3/rgb888_average_none.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb888 - average - dct</h2>
+                    <div class="details">
+                        Settings: Type=rgb888, Filter=average, Compression=dct
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">168kB (89.8% of original)</span><br>
+                        Saved: 19kB
+                    </div>
+                    <img src="obrazek3/rgb888_average_dct.png" alt="obrazek3/rgb888_average_dct.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb888 - average - rle</h2>
+                    <div class="details">
+                        Settings: Type=rgb888, Filter=average, Compression=rle
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">293kB (156.6% of original)</span><br>
+                        Saved: -106kB
+                    </div>
+                    <img src="obrazek3/rgb888_average_rle.png" alt="obrazek3/rgb888_average_rle.png">
+                </div>
+                <div class="image-container">
+                    <h2>ycbcr - none - none</h2>
+                    <div class="details">
+                        Settings: Type=ycbcr, Filter=none, Compression=none
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">187kB (100.0% of original)</span><br>
+                        Saved: 0kB
+                    </div>
+                    <img src="obrazek3/ycbcr_none_none.png" alt="obrazek3/ycbcr_none_none.png">
+                </div>
+                <div class="image-container">
+                    <h2>ycbcr - none - dct</h2>
+                    <div class="details">
+                        Settings: Type=ycbcr, Filter=none, Compression=dct
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">287kB (153.4% of original)</span><br>
+                        Saved: -100kB
+                    </div>
+                    <img src="obrazek3/ycbcr_none_dct.png" alt="obrazek3/ycbcr_none_dct.png">
+                </div>
+                <div class="image-container">
+                    <h2>ycbcr - none - dct_chroma</h2>
+                    <div class="details">
+                        Settings: Type=ycbcr, Filter=none, Compression=dct_chroma
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-good">42kB (22.4% of original)</span><br>
+                        Saved: 145kB
+                    </div>
+                    <img src="obrazek3/ycbcr_none_dct_chroma.png" alt="obrazek3/ycbcr_none_dct_chroma.png">
+                </div>
+                <div class="image-container">
+                    <h2>ycbcr - none - rle</h2>
+                    <div class="details">
+                        Settings: Type=ycbcr, Filter=none, Compression=rle
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">287kB (153.4% of original)</span><br>
+                        Saved: -100kB
+                    </div>
+                    <img src="obrazek3/ycbcr_none_rle.png" alt="obrazek3/ycbcr_none_rle.png">
+                </div>
+                <div class="image-container">
+                    <h2>ycbcr - average - none</h2>
+                    <div class="details">
+                        Settings: Type=ycbcr, Filter=average, Compression=none
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">187kB (100.0% of original)</span><br>
+                        Saved: 0kB
+                    </div>
+                    <img src="obrazek3/ycbcr_average_none.png" alt="obrazek3/ycbcr_average_none.png">
+                </div>
+                <div class="image-container">
+                    <h2>ycbcr - average - dct</h2>
+                    <div class="details">
+                        Settings: Type=ycbcr, Filter=average, Compression=dct
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">331kB (177.0% of original)</span><br>
+                        Saved: -144kB
+                    </div>
+                    <img src="obrazek3/ycbcr_average_dct.png" alt="obrazek3/ycbcr_average_dct.png">
+                </div>
+                <div class="image-container">
+                    <h2>ycbcr - average - dct_chroma</h2>
+                    <div class="details">
+                        Settings: Type=ycbcr, Filter=average, Compression=dct_chroma
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-good">67kB (35.8% of original)</span><br>
+                        Saved: 120kB
+                    </div>
+                    <img src="obrazek3/ycbcr_average_dct_chroma.png" alt="obrazek3/ycbcr_average_dct_chroma.png">
+                </div>
+                <div class="image-container">
+                    <h2>ycbcr - average - rle</h2>
+                    <div class="details">
+                        Settings: Type=ycbcr, Filter=average, Compression=rle
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">331kB (177.0% of original)</span><br>
+                        Saved: -144kB
+                    </div>
+                    <img src="obrazek3/ycbcr_average_rle.png" alt="obrazek3/ycbcr_average_rle.png">
+                </div>
+</div></div>
+        <div id="tab-obrazek4" class="tab-content">
+            <h2>obrazek4</h2>
+            <p>Original file: obrazek4.bmp (187kB)</p>
+            
+            <h3>Compression Ratio Comparison Tables</h3>
+            
+            <h4>No Filter</h4>
+            <table style="border-collapse: collapse; width: 100%; margin-bottom: 30px;">
+                <tr style="background-color: #f5f5f5;">
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Type</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">No Compression</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">DCT</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">DCT+Chroma</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">RLE</th>
+                </tr>
         <tr>
             <td style="border: 1px solid #ddd; padding: 8px;">rgb555</td>
             <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e9c46a">66.8%</td>
@@ -278,17 +984,17 @@
             <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #2a9d8f">23.5%</td>
             <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">141.7%</td>
         </tr>
-    </table>
+            </table>
 
-    <h3>Average Filter</h3>
-    <table style="border-collapse: collapse; width: 100%; margin-bottom: 30px;">
-        <tr style="background-color: #f5f5f5;">
-            <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Type</th>
-            <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">No Compression</th>
-            <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">DCT</th>
-            <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">DCT+Chroma</th>
-            <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">RLE</th>
-        </tr>
+            <h4>Average Filter</h4>
+            <table style="border-collapse: collapse; width: 100%; margin-bottom: 30px;">
+                <tr style="background-color: #f5f5f5;">
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Type</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">No Compression</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">DCT</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">DCT+Chroma</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">RLE</th>
+                </tr>
         <tr>
             <td style="border: 1px solid #ddd; padding: 8px;">rgb555</td>
             <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e9c46a">66.8%</td>
@@ -310,4 +1016,1700 @@
             <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #2a9d8f">37.4%</td>
             <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">171.6%</td>
         </tr>
-</table></body></html>
+            </table>
+
+            <h3>Image Comparisons</h3>
+            <div class="grid">
+                <div class="image-container">
+                    <h2>rgb555 - none - none</h2>
+                    <div class="details">
+                        Settings: Type=rgb555, Filter=none, Compression=none
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-medium">125kB (66.8% of original)</span><br>
+                        Saved: 62kB
+                    </div>
+                    <img src="obrazek4/rgb555_none_none.png" alt="obrazek4/rgb555_none_none.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb555 - none - dct</h2>
+                    <div class="details">
+                        Settings: Type=rgb555, Filter=none, Compression=dct
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-medium">113kB (60.4% of original)</span><br>
+                        Saved: 74kB
+                    </div>
+                    <img src="obrazek4/rgb555_none_dct.png" alt="obrazek4/rgb555_none_dct.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb555 - none - rle</h2>
+                    <div class="details">
+                        Settings: Type=rgb555, Filter=none, Compression=rle
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">247kB (132.0% of original)</span><br>
+                        Saved: -60kB
+                    </div>
+                    <img src="obrazek4/rgb555_none_rle.png" alt="obrazek4/rgb555_none_rle.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb555 - average - none</h2>
+                    <div class="details">
+                        Settings: Type=rgb555, Filter=average, Compression=none
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-medium">125kB (66.8% of original)</span><br>
+                        Saved: 62kB
+                    </div>
+                    <img src="obrazek4/rgb555_average_none.png" alt="obrazek4/rgb555_average_none.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb555 - average - dct</h2>
+                    <div class="details">
+                        Settings: Type=rgb555, Filter=average, Compression=dct
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">161kB (86.0% of original)</span><br>
+                        Saved: 26kB
+                    </div>
+                    <img src="obrazek4/rgb555_average_dct.png" alt="obrazek4/rgb555_average_dct.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb555 - average - rle</h2>
+                    <div class="details">
+                        Settings: Type=rgb555, Filter=average, Compression=rle
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">221kB (118.1% of original)</span><br>
+                        Saved: -34kB
+                    </div>
+                    <img src="obrazek4/rgb555_average_rle.png" alt="obrazek4/rgb555_average_rle.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb888 - none - none</h2>
+                    <div class="details">
+                        Settings: Type=rgb888, Filter=none, Compression=none
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">187kB (100.0% of original)</span><br>
+                        Saved: 0kB
+                    </div>
+                    <img src="obrazek4/rgb888_none_none.png" alt="obrazek4/rgb888_none_none.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb888 - none - dct</h2>
+                    <div class="details">
+                        Settings: Type=rgb888, Filter=none, Compression=dct
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-medium">111kB (59.3% of original)</span><br>
+                        Saved: 76kB
+                    </div>
+                    <img src="obrazek4/rgb888_none_dct.png" alt="obrazek4/rgb888_none_dct.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb888 - none - rle</h2>
+                    <div class="details">
+                        Settings: Type=rgb888, Filter=none, Compression=rle
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">359kB (191.9% of original)</span><br>
+                        Saved: -172kB
+                    </div>
+                    <img src="obrazek4/rgb888_none_rle.png" alt="obrazek4/rgb888_none_rle.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb888 - average - none</h2>
+                    <div class="details">
+                        Settings: Type=rgb888, Filter=average, Compression=none
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">187kB (100.0% of original)</span><br>
+                        Saved: 0kB
+                    </div>
+                    <img src="obrazek4/rgb888_average_none.png" alt="obrazek4/rgb888_average_none.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb888 - average - dct</h2>
+                    <div class="details">
+                        Settings: Type=rgb888, Filter=average, Compression=dct
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">171kB (91.4% of original)</span><br>
+                        Saved: 16kB
+                    </div>
+                    <img src="obrazek4/rgb888_average_dct.png" alt="obrazek4/rgb888_average_dct.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb888 - average - rle</h2>
+                    <div class="details">
+                        Settings: Type=rgb888, Filter=average, Compression=rle
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">270kB (144.3% of original)</span><br>
+                        Saved: -83kB
+                    </div>
+                    <img src="obrazek4/rgb888_average_rle.png" alt="obrazek4/rgb888_average_rle.png">
+                </div>
+                <div class="image-container">
+                    <h2>ycbcr - none - none</h2>
+                    <div class="details">
+                        Settings: Type=ycbcr, Filter=none, Compression=none
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">187kB (100.0% of original)</span><br>
+                        Saved: 0kB
+                    </div>
+                    <img src="obrazek4/ycbcr_none_none.png" alt="obrazek4/ycbcr_none_none.png">
+                </div>
+                <div class="image-container">
+                    <h2>ycbcr - none - dct</h2>
+                    <div class="details">
+                        Settings: Type=ycbcr, Filter=none, Compression=dct
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">265kB (141.7% of original)</span><br>
+                        Saved: -78kB
+                    </div>
+                    <img src="obrazek4/ycbcr_none_dct.png" alt="obrazek4/ycbcr_none_dct.png">
+                </div>
+                <div class="image-container">
+                    <h2>ycbcr - none - dct_chroma</h2>
+                    <div class="details">
+                        Settings: Type=ycbcr, Filter=none, Compression=dct_chroma
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-good">44kB (23.5% of original)</span><br>
+                        Saved: 143kB
+                    </div>
+                    <img src="obrazek4/ycbcr_none_dct_chroma.png" alt="obrazek4/ycbcr_none_dct_chroma.png">
+                </div>
+                <div class="image-container">
+                    <h2>ycbcr - none - rle</h2>
+                    <div class="details">
+                        Settings: Type=ycbcr, Filter=none, Compression=rle
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">265kB (141.7% of original)</span><br>
+                        Saved: -78kB
+                    </div>
+                    <img src="obrazek4/ycbcr_none_rle.png" alt="obrazek4/ycbcr_none_rle.png">
+                </div>
+                <div class="image-container">
+                    <h2>ycbcr - average - none</h2>
+                    <div class="details">
+                        Settings: Type=ycbcr, Filter=average, Compression=none
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">187kB (100.0% of original)</span><br>
+                        Saved: 0kB
+                    </div>
+                    <img src="obrazek4/ycbcr_average_none.png" alt="obrazek4/ycbcr_average_none.png">
+                </div>
+                <div class="image-container">
+                    <h2>ycbcr - average - dct</h2>
+                    <div class="details">
+                        Settings: Type=ycbcr, Filter=average, Compression=dct
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">321kB (171.6% of original)</span><br>
+                        Saved: -134kB
+                    </div>
+                    <img src="obrazek4/ycbcr_average_dct.png" alt="obrazek4/ycbcr_average_dct.png">
+                </div>
+                <div class="image-container">
+                    <h2>ycbcr - average - dct_chroma</h2>
+                    <div class="details">
+                        Settings: Type=ycbcr, Filter=average, Compression=dct_chroma
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-good">70kB (37.4% of original)</span><br>
+                        Saved: 117kB
+                    </div>
+                    <img src="obrazek4/ycbcr_average_dct_chroma.png" alt="obrazek4/ycbcr_average_dct_chroma.png">
+                </div>
+                <div class="image-container">
+                    <h2>ycbcr - average - rle</h2>
+                    <div class="details">
+                        Settings: Type=ycbcr, Filter=average, Compression=rle
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">321kB (171.6% of original)</span><br>
+                        Saved: -134kB
+                    </div>
+                    <img src="obrazek4/ycbcr_average_rle.png" alt="obrazek4/ycbcr_average_rle.png">
+                </div>
+</div></div>
+        <div id="tab-obrazek5" class="tab-content">
+            <h2>obrazek5</h2>
+            <p>Original file: obrazek5.bmp (187kB)</p>
+            
+            <h3>Compression Ratio Comparison Tables</h3>
+            
+            <h4>No Filter</h4>
+            <table style="border-collapse: collapse; width: 100%; margin-bottom: 30px;">
+                <tr style="background-color: #f5f5f5;">
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Type</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">No Compression</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">DCT</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">DCT+Chroma</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">RLE</th>
+                </tr>
+        <tr>
+            <td style="border: 1px solid #ddd; padding: 8px;">rgb555</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e9c46a">66.8%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e9c46a">58.8%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #999;">N/A</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">132.6%</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid #ddd; padding: 8px;">rgb888</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">100.0%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e9c46a">58.2%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #999;">N/A</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">197.3%</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid #ddd; padding: 8px;">ycbcr</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">100.0%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">147.5%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #2a9d8f">22.4%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">147.5%</td>
+        </tr>
+            </table>
+
+            <h4>Average Filter</h4>
+            <table style="border-collapse: collapse; width: 100%; margin-bottom: 30px;">
+                <tr style="background-color: #f5f5f5;">
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Type</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">No Compression</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">DCT</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">DCT+Chroma</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">RLE</th>
+                </tr>
+        <tr>
+            <td style="border: 1px solid #ddd; padding: 8px;">rgb555</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e9c46a">66.8%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">87.7%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #999;">N/A</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">116.5%</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid #ddd; padding: 8px;">rgb888</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">100.0%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">94.6%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #999;">N/A</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">166.8%</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid #ddd; padding: 8px;">ycbcr</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">100.0%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">165.7%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #2a9d8f">37.4%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">165.7%</td>
+        </tr>
+            </table>
+
+            <h3>Image Comparisons</h3>
+            <div class="grid">
+                <div class="image-container">
+                    <h2>rgb555 - none - none</h2>
+                    <div class="details">
+                        Settings: Type=rgb555, Filter=none, Compression=none
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-medium">125kB (66.8% of original)</span><br>
+                        Saved: 62kB
+                    </div>
+                    <img src="obrazek5/rgb555_none_none.png" alt="obrazek5/rgb555_none_none.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb555 - none - dct</h2>
+                    <div class="details">
+                        Settings: Type=rgb555, Filter=none, Compression=dct
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-medium">110kB (58.8% of original)</span><br>
+                        Saved: 77kB
+                    </div>
+                    <img src="obrazek5/rgb555_none_dct.png" alt="obrazek5/rgb555_none_dct.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb555 - none - rle</h2>
+                    <div class="details">
+                        Settings: Type=rgb555, Filter=none, Compression=rle
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">248kB (132.6% of original)</span><br>
+                        Saved: -61kB
+                    </div>
+                    <img src="obrazek5/rgb555_none_rle.png" alt="obrazek5/rgb555_none_rle.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb555 - average - none</h2>
+                    <div class="details">
+                        Settings: Type=rgb555, Filter=average, Compression=none
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-medium">125kB (66.8% of original)</span><br>
+                        Saved: 62kB
+                    </div>
+                    <img src="obrazek5/rgb555_average_none.png" alt="obrazek5/rgb555_average_none.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb555 - average - dct</h2>
+                    <div class="details">
+                        Settings: Type=rgb555, Filter=average, Compression=dct
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">164kB (87.7% of original)</span><br>
+                        Saved: 23kB
+                    </div>
+                    <img src="obrazek5/rgb555_average_dct.png" alt="obrazek5/rgb555_average_dct.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb555 - average - rle</h2>
+                    <div class="details">
+                        Settings: Type=rgb555, Filter=average, Compression=rle
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">218kB (116.5% of original)</span><br>
+                        Saved: -31kB
+                    </div>
+                    <img src="obrazek5/rgb555_average_rle.png" alt="obrazek5/rgb555_average_rle.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb888 - none - none</h2>
+                    <div class="details">
+                        Settings: Type=rgb888, Filter=none, Compression=none
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">187kB (100.0% of original)</span><br>
+                        Saved: 0kB
+                    </div>
+                    <img src="obrazek5/rgb888_none_none.png" alt="obrazek5/rgb888_none_none.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb888 - none - dct</h2>
+                    <div class="details">
+                        Settings: Type=rgb888, Filter=none, Compression=dct
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-medium">109kB (58.2% of original)</span><br>
+                        Saved: 78kB
+                    </div>
+                    <img src="obrazek5/rgb888_none_dct.png" alt="obrazek5/rgb888_none_dct.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb888 - none - rle</h2>
+                    <div class="details">
+                        Settings: Type=rgb888, Filter=none, Compression=rle
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">369kB (197.3% of original)</span><br>
+                        Saved: -182kB
+                    </div>
+                    <img src="obrazek5/rgb888_none_rle.png" alt="obrazek5/rgb888_none_rle.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb888 - average - none</h2>
+                    <div class="details">
+                        Settings: Type=rgb888, Filter=average, Compression=none
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">187kB (100.0% of original)</span><br>
+                        Saved: 0kB
+                    </div>
+                    <img src="obrazek5/rgb888_average_none.png" alt="obrazek5/rgb888_average_none.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb888 - average - dct</h2>
+                    <div class="details">
+                        Settings: Type=rgb888, Filter=average, Compression=dct
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">177kB (94.6% of original)</span><br>
+                        Saved: 10kB
+                    </div>
+                    <img src="obrazek5/rgb888_average_dct.png" alt="obrazek5/rgb888_average_dct.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb888 - average - rle</h2>
+                    <div class="details">
+                        Settings: Type=rgb888, Filter=average, Compression=rle
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">312kB (166.8% of original)</span><br>
+                        Saved: -125kB
+                    </div>
+                    <img src="obrazek5/rgb888_average_rle.png" alt="obrazek5/rgb888_average_rle.png">
+                </div>
+                <div class="image-container">
+                    <h2>ycbcr - none - none</h2>
+                    <div class="details">
+                        Settings: Type=ycbcr, Filter=none, Compression=none
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">187kB (100.0% of original)</span><br>
+                        Saved: 0kB
+                    </div>
+                    <img src="obrazek5/ycbcr_none_none.png" alt="obrazek5/ycbcr_none_none.png">
+                </div>
+                <div class="image-container">
+                    <h2>ycbcr - none - dct</h2>
+                    <div class="details">
+                        Settings: Type=ycbcr, Filter=none, Compression=dct
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">276kB (147.5% of original)</span><br>
+                        Saved: -89kB
+                    </div>
+                    <img src="obrazek5/ycbcr_none_dct.png" alt="obrazek5/ycbcr_none_dct.png">
+                </div>
+                <div class="image-container">
+                    <h2>ycbcr - none - dct_chroma</h2>
+                    <div class="details">
+                        Settings: Type=ycbcr, Filter=none, Compression=dct_chroma
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-good">42kB (22.4% of original)</span><br>
+                        Saved: 145kB
+                    </div>
+                    <img src="obrazek5/ycbcr_none_dct_chroma.png" alt="obrazek5/ycbcr_none_dct_chroma.png">
+                </div>
+                <div class="image-container">
+                    <h2>ycbcr - none - rle</h2>
+                    <div class="details">
+                        Settings: Type=ycbcr, Filter=none, Compression=rle
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">276kB (147.5% of original)</span><br>
+                        Saved: -89kB
+                    </div>
+                    <img src="obrazek5/ycbcr_none_rle.png" alt="obrazek5/ycbcr_none_rle.png">
+                </div>
+                <div class="image-container">
+                    <h2>ycbcr - average - none</h2>
+                    <div class="details">
+                        Settings: Type=ycbcr, Filter=average, Compression=none
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">187kB (100.0% of original)</span><br>
+                        Saved: 0kB
+                    </div>
+                    <img src="obrazek5/ycbcr_average_none.png" alt="obrazek5/ycbcr_average_none.png">
+                </div>
+                <div class="image-container">
+                    <h2>ycbcr - average - dct</h2>
+                    <div class="details">
+                        Settings: Type=ycbcr, Filter=average, Compression=dct
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">310kB (165.7% of original)</span><br>
+                        Saved: -123kB
+                    </div>
+                    <img src="obrazek5/ycbcr_average_dct.png" alt="obrazek5/ycbcr_average_dct.png">
+                </div>
+                <div class="image-container">
+                    <h2>ycbcr - average - dct_chroma</h2>
+                    <div class="details">
+                        Settings: Type=ycbcr, Filter=average, Compression=dct_chroma
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-good">70kB (37.4% of original)</span><br>
+                        Saved: 117kB
+                    </div>
+                    <img src="obrazek5/ycbcr_average_dct_chroma.png" alt="obrazek5/ycbcr_average_dct_chroma.png">
+                </div>
+                <div class="image-container">
+                    <h2>ycbcr - average - rle</h2>
+                    <div class="details">
+                        Settings: Type=ycbcr, Filter=average, Compression=rle
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">310kB (165.7% of original)</span><br>
+                        Saved: -123kB
+                    </div>
+                    <img src="obrazek5/ycbcr_average_rle.png" alt="obrazek5/ycbcr_average_rle.png">
+                </div>
+</div></div>
+        <div id="tab-obrazek6" class="tab-content">
+            <h2>obrazek6</h2>
+            <p>Original file: obrazek6.bmp (187kB)</p>
+            
+            <h3>Compression Ratio Comparison Tables</h3>
+            
+            <h4>No Filter</h4>
+            <table style="border-collapse: collapse; width: 100%; margin-bottom: 30px;">
+                <tr style="background-color: #f5f5f5;">
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Type</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">No Compression</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">DCT</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">DCT+Chroma</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">RLE</th>
+                </tr>
+        <tr>
+            <td style="border: 1px solid #ddd; padding: 8px;">rgb555</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e9c46a">66.8%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #2a9d8f">10.1%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #999;">N/A</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">131.0%</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid #ddd; padding: 8px;">rgb888</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">100.0%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #2a9d8f">10.1%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #999;">N/A</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">112.8%</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid #ddd; padding: 8px;">ycbcr</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">100.0%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e9c46a">52.9%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #2a9d8f">5.3%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e9c46a">52.9%</td>
+        </tr>
+            </table>
+
+            <h4>Average Filter</h4>
+            <table style="border-collapse: collapse; width: 100%; margin-bottom: 30px;">
+                <tr style="background-color: #f5f5f5;">
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Type</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">No Compression</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">DCT</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">DCT+Chroma</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">RLE</th>
+                </tr>
+        <tr>
+            <td style="border: 1px solid #ddd; padding: 8px;">rgb555</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e9c46a">66.8%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #2a9d8f">18.7%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #999;">N/A</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e9c46a">67.3%</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid #ddd; padding: 8px;">rgb888</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">100.0%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #2a9d8f">20.3%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #999;">N/A</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">86.6%</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid #ddd; padding: 8px;">ycbcr</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">100.0%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e9c46a">58.8%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #2a9d8f">11.2%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e9c46a">58.8%</td>
+        </tr>
+            </table>
+
+            <h3>Image Comparisons</h3>
+            <div class="grid">
+                <div class="image-container">
+                    <h2>rgb555 - none - none</h2>
+                    <div class="details">
+                        Settings: Type=rgb555, Filter=none, Compression=none
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-medium">125kB (66.8% of original)</span><br>
+                        Saved: 62kB
+                    </div>
+                    <img src="obrazek6/rgb555_none_none.png" alt="obrazek6/rgb555_none_none.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb555 - none - dct</h2>
+                    <div class="details">
+                        Settings: Type=rgb555, Filter=none, Compression=dct
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-good">19kB (10.1% of original)</span><br>
+                        Saved: 168kB
+                    </div>
+                    <img src="obrazek6/rgb555_none_dct.png" alt="obrazek6/rgb555_none_dct.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb555 - none - rle</h2>
+                    <div class="details">
+                        Settings: Type=rgb555, Filter=none, Compression=rle
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">245kB (131.0% of original)</span><br>
+                        Saved: -58kB
+                    </div>
+                    <img src="obrazek6/rgb555_none_rle.png" alt="obrazek6/rgb555_none_rle.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb555 - average - none</h2>
+                    <div class="details">
+                        Settings: Type=rgb555, Filter=average, Compression=none
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-medium">125kB (66.8% of original)</span><br>
+                        Saved: 62kB
+                    </div>
+                    <img src="obrazek6/rgb555_average_none.png" alt="obrazek6/rgb555_average_none.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb555 - average - dct</h2>
+                    <div class="details">
+                        Settings: Type=rgb555, Filter=average, Compression=dct
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-good">35kB (18.7% of original)</span><br>
+                        Saved: 152kB
+                    </div>
+                    <img src="obrazek6/rgb555_average_dct.png" alt="obrazek6/rgb555_average_dct.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb555 - average - rle</h2>
+                    <div class="details">
+                        Settings: Type=rgb555, Filter=average, Compression=rle
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-medium">126kB (67.3% of original)</span><br>
+                        Saved: 61kB
+                    </div>
+                    <img src="obrazek6/rgb555_average_rle.png" alt="obrazek6/rgb555_average_rle.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb888 - none - none</h2>
+                    <div class="details">
+                        Settings: Type=rgb888, Filter=none, Compression=none
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">187kB (100.0% of original)</span><br>
+                        Saved: 0kB
+                    </div>
+                    <img src="obrazek6/rgb888_none_none.png" alt="obrazek6/rgb888_none_none.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb888 - none - dct</h2>
+                    <div class="details">
+                        Settings: Type=rgb888, Filter=none, Compression=dct
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-good">19kB (10.1% of original)</span><br>
+                        Saved: 168kB
+                    </div>
+                    <img src="obrazek6/rgb888_none_dct.png" alt="obrazek6/rgb888_none_dct.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb888 - none - rle</h2>
+                    <div class="details">
+                        Settings: Type=rgb888, Filter=none, Compression=rle
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">211kB (112.8% of original)</span><br>
+                        Saved: -24kB
+                    </div>
+                    <img src="obrazek6/rgb888_none_rle.png" alt="obrazek6/rgb888_none_rle.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb888 - average - none</h2>
+                    <div class="details">
+                        Settings: Type=rgb888, Filter=average, Compression=none
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">187kB (100.0% of original)</span><br>
+                        Saved: 0kB
+                    </div>
+                    <img src="obrazek6/rgb888_average_none.png" alt="obrazek6/rgb888_average_none.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb888 - average - dct</h2>
+                    <div class="details">
+                        Settings: Type=rgb888, Filter=average, Compression=dct
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-good">38kB (20.3% of original)</span><br>
+                        Saved: 149kB
+                    </div>
+                    <img src="obrazek6/rgb888_average_dct.png" alt="obrazek6/rgb888_average_dct.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb888 - average - rle</h2>
+                    <div class="details">
+                        Settings: Type=rgb888, Filter=average, Compression=rle
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">162kB (86.6% of original)</span><br>
+                        Saved: 25kB
+                    </div>
+                    <img src="obrazek6/rgb888_average_rle.png" alt="obrazek6/rgb888_average_rle.png">
+                </div>
+                <div class="image-container">
+                    <h2>ycbcr - none - none</h2>
+                    <div class="details">
+                        Settings: Type=ycbcr, Filter=none, Compression=none
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">187kB (100.0% of original)</span><br>
+                        Saved: 0kB
+                    </div>
+                    <img src="obrazek6/ycbcr_none_none.png" alt="obrazek6/ycbcr_none_none.png">
+                </div>
+                <div class="image-container">
+                    <h2>ycbcr - none - dct</h2>
+                    <div class="details">
+                        Settings: Type=ycbcr, Filter=none, Compression=dct
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-medium">99kB (52.9% of original)</span><br>
+                        Saved: 88kB
+                    </div>
+                    <img src="obrazek6/ycbcr_none_dct.png" alt="obrazek6/ycbcr_none_dct.png">
+                </div>
+                <div class="image-container">
+                    <h2>ycbcr - none - dct_chroma</h2>
+                    <div class="details">
+                        Settings: Type=ycbcr, Filter=none, Compression=dct_chroma
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-good">10kB (5.3% of original)</span><br>
+                        Saved: 177kB
+                    </div>
+                    <img src="obrazek6/ycbcr_none_dct_chroma.png" alt="obrazek6/ycbcr_none_dct_chroma.png">
+                </div>
+                <div class="image-container">
+                    <h2>ycbcr - none - rle</h2>
+                    <div class="details">
+                        Settings: Type=ycbcr, Filter=none, Compression=rle
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-medium">99kB (52.9% of original)</span><br>
+                        Saved: 88kB
+                    </div>
+                    <img src="obrazek6/ycbcr_none_rle.png" alt="obrazek6/ycbcr_none_rle.png">
+                </div>
+                <div class="image-container">
+                    <h2>ycbcr - average - none</h2>
+                    <div class="details">
+                        Settings: Type=ycbcr, Filter=average, Compression=none
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">187kB (100.0% of original)</span><br>
+                        Saved: 0kB
+                    </div>
+                    <img src="obrazek6/ycbcr_average_none.png" alt="obrazek6/ycbcr_average_none.png">
+                </div>
+                <div class="image-container">
+                    <h2>ycbcr - average - dct</h2>
+                    <div class="details">
+                        Settings: Type=ycbcr, Filter=average, Compression=dct
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-medium">110kB (58.8% of original)</span><br>
+                        Saved: 77kB
+                    </div>
+                    <img src="obrazek6/ycbcr_average_dct.png" alt="obrazek6/ycbcr_average_dct.png">
+                </div>
+                <div class="image-container">
+                    <h2>ycbcr - average - dct_chroma</h2>
+                    <div class="details">
+                        Settings: Type=ycbcr, Filter=average, Compression=dct_chroma
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-good">21kB (11.2% of original)</span><br>
+                        Saved: 166kB
+                    </div>
+                    <img src="obrazek6/ycbcr_average_dct_chroma.png" alt="obrazek6/ycbcr_average_dct_chroma.png">
+                </div>
+                <div class="image-container">
+                    <h2>ycbcr - average - rle</h2>
+                    <div class="details">
+                        Settings: Type=ycbcr, Filter=average, Compression=rle
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-medium">110kB (58.8% of original)</span><br>
+                        Saved: 77kB
+                    </div>
+                    <img src="obrazek6/ycbcr_average_rle.png" alt="obrazek6/ycbcr_average_rle.png">
+                </div>
+</div></div>
+        <div id="tab-obrazek7" class="tab-content">
+            <h2>obrazek7</h2>
+            <p>Original file: obrazek7.bmp (187kB)</p>
+            
+            <h3>Compression Ratio Comparison Tables</h3>
+            
+            <h4>No Filter</h4>
+            <table style="border-collapse: collapse; width: 100%; margin-bottom: 30px;">
+                <tr style="background-color: #f5f5f5;">
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Type</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">No Compression</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">DCT</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">DCT+Chroma</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">RLE</th>
+                </tr>
+        <tr>
+            <td style="border: 1px solid #ddd; padding: 8px;">rgb555</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e9c46a">66.8%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #2a9d8f">21.9%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #999;">N/A</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">118.1%</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid #ddd; padding: 8px;">rgb888</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">100.0%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #2a9d8f">21.3%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #999;">N/A</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">148.6%</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid #ddd; padding: 8px;">ycbcr</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">100.0%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #2a9d8f">16.0%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #2a9d8f">10.1%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #2a9d8f">16.0%</td>
+        </tr>
+            </table>
+
+            <h4>Average Filter</h4>
+            <table style="border-collapse: collapse; width: 100%; margin-bottom: 30px;">
+                <tr style="background-color: #f5f5f5;">
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Type</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">No Compression</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">DCT</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">DCT+Chroma</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">RLE</th>
+                </tr>
+        <tr>
+            <td style="border: 1px solid #ddd; padding: 8px;">rgb555</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e9c46a">66.8%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #2a9d8f">33.6%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #999;">N/A</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">80.7%</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid #ddd; padding: 8px;">rgb888</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">100.0%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #2a9d8f">35.8%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #999;">N/A</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #2a9d8f">12.2%</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid #ddd; padding: 8px;">ycbcr</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">100.0%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #2a9d8f">28.3%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #2a9d8f">17.6%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #2a9d8f">28.3%</td>
+        </tr>
+            </table>
+
+            <h3>Image Comparisons</h3>
+            <div class="grid">
+                <div class="image-container">
+                    <h2>rgb555 - none - none</h2>
+                    <div class="details">
+                        Settings: Type=rgb555, Filter=none, Compression=none
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-medium">125kB (66.8% of original)</span><br>
+                        Saved: 62kB
+                    </div>
+                    <img src="obrazek7/rgb555_none_none.png" alt="obrazek7/rgb555_none_none.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb555 - none - dct</h2>
+                    <div class="details">
+                        Settings: Type=rgb555, Filter=none, Compression=dct
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-good">41kB (21.9% of original)</span><br>
+                        Saved: 146kB
+                    </div>
+                    <img src="obrazek7/rgb555_none_dct.png" alt="obrazek7/rgb555_none_dct.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb555 - none - rle</h2>
+                    <div class="details">
+                        Settings: Type=rgb555, Filter=none, Compression=rle
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">221kB (118.1% of original)</span><br>
+                        Saved: -34kB
+                    </div>
+                    <img src="obrazek7/rgb555_none_rle.png" alt="obrazek7/rgb555_none_rle.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb555 - average - none</h2>
+                    <div class="details">
+                        Settings: Type=rgb555, Filter=average, Compression=none
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-medium">125kB (66.8% of original)</span><br>
+                        Saved: 62kB
+                    </div>
+                    <img src="obrazek7/rgb555_average_none.png" alt="obrazek7/rgb555_average_none.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb555 - average - dct</h2>
+                    <div class="details">
+                        Settings: Type=rgb555, Filter=average, Compression=dct
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-good">63kB (33.6% of original)</span><br>
+                        Saved: 124kB
+                    </div>
+                    <img src="obrazek7/rgb555_average_dct.png" alt="obrazek7/rgb555_average_dct.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb555 - average - rle</h2>
+                    <div class="details">
+                        Settings: Type=rgb555, Filter=average, Compression=rle
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">151kB (80.7% of original)</span><br>
+                        Saved: 36kB
+                    </div>
+                    <img src="obrazek7/rgb555_average_rle.png" alt="obrazek7/rgb555_average_rle.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb888 - none - none</h2>
+                    <div class="details">
+                        Settings: Type=rgb888, Filter=none, Compression=none
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">187kB (100.0% of original)</span><br>
+                        Saved: 0kB
+                    </div>
+                    <img src="obrazek7/rgb888_none_none.png" alt="obrazek7/rgb888_none_none.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb888 - none - dct</h2>
+                    <div class="details">
+                        Settings: Type=rgb888, Filter=none, Compression=dct
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-good">40kB (21.3% of original)</span><br>
+                        Saved: 147kB
+                    </div>
+                    <img src="obrazek7/rgb888_none_dct.png" alt="obrazek7/rgb888_none_dct.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb888 - none - rle</h2>
+                    <div class="details">
+                        Settings: Type=rgb888, Filter=none, Compression=rle
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">278kB (148.6% of original)</span><br>
+                        Saved: -91kB
+                    </div>
+                    <img src="obrazek7/rgb888_none_rle.png" alt="obrazek7/rgb888_none_rle.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb888 - average - none</h2>
+                    <div class="details">
+                        Settings: Type=rgb888, Filter=average, Compression=none
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">187kB (100.0% of original)</span><br>
+                        Saved: 0kB
+                    </div>
+                    <img src="obrazek7/rgb888_average_none.png" alt="obrazek7/rgb888_average_none.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb888 - average - dct</h2>
+                    <div class="details">
+                        Settings: Type=rgb888, Filter=average, Compression=dct
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-good">67kB (35.8% of original)</span><br>
+                        Saved: 120kB
+                    </div>
+                    <img src="obrazek7/rgb888_average_dct.png" alt="obrazek7/rgb888_average_dct.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb888 - average - rle</h2>
+                    <div class="details">
+                        Settings: Type=rgb888, Filter=average, Compression=rle
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-good">23kB (12.2% of original)</span><br>
+                        Saved: 164kB
+                    </div>
+                    <img src="obrazek7/rgb888_average_rle.png" alt="obrazek7/rgb888_average_rle.png">
+                </div>
+                <div class="image-container">
+                    <h2>ycbcr - none - none</h2>
+                    <div class="details">
+                        Settings: Type=ycbcr, Filter=none, Compression=none
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">187kB (100.0% of original)</span><br>
+                        Saved: 0kB
+                    </div>
+                    <img src="obrazek7/ycbcr_none_none.png" alt="obrazek7/ycbcr_none_none.png">
+                </div>
+                <div class="image-container">
+                    <h2>ycbcr - none - dct</h2>
+                    <div class="details">
+                        Settings: Type=ycbcr, Filter=none, Compression=dct
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-good">30kB (16.0% of original)</span><br>
+                        Saved: 157kB
+                    </div>
+                    <img src="obrazek7/ycbcr_none_dct.png" alt="obrazek7/ycbcr_none_dct.png">
+                </div>
+                <div class="image-container">
+                    <h2>ycbcr - none - dct_chroma</h2>
+                    <div class="details">
+                        Settings: Type=ycbcr, Filter=none, Compression=dct_chroma
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-good">19kB (10.1% of original)</span><br>
+                        Saved: 168kB
+                    </div>
+                    <img src="obrazek7/ycbcr_none_dct_chroma.png" alt="obrazek7/ycbcr_none_dct_chroma.png">
+                </div>
+                <div class="image-container">
+                    <h2>ycbcr - none - rle</h2>
+                    <div class="details">
+                        Settings: Type=ycbcr, Filter=none, Compression=rle
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-good">30kB (16.0% of original)</span><br>
+                        Saved: 157kB
+                    </div>
+                    <img src="obrazek7/ycbcr_none_rle.png" alt="obrazek7/ycbcr_none_rle.png">
+                </div>
+                <div class="image-container">
+                    <h2>ycbcr - average - none</h2>
+                    <div class="details">
+                        Settings: Type=ycbcr, Filter=average, Compression=none
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">187kB (100.0% of original)</span><br>
+                        Saved: 0kB
+                    </div>
+                    <img src="obrazek7/ycbcr_average_none.png" alt="obrazek7/ycbcr_average_none.png">
+                </div>
+                <div class="image-container">
+                    <h2>ycbcr - average - dct</h2>
+                    <div class="details">
+                        Settings: Type=ycbcr, Filter=average, Compression=dct
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-good">53kB (28.3% of original)</span><br>
+                        Saved: 134kB
+                    </div>
+                    <img src="obrazek7/ycbcr_average_dct.png" alt="obrazek7/ycbcr_average_dct.png">
+                </div>
+                <div class="image-container">
+                    <h2>ycbcr - average - dct_chroma</h2>
+                    <div class="details">
+                        Settings: Type=ycbcr, Filter=average, Compression=dct_chroma
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-good">33kB (17.6% of original)</span><br>
+                        Saved: 154kB
+                    </div>
+                    <img src="obrazek7/ycbcr_average_dct_chroma.png" alt="obrazek7/ycbcr_average_dct_chroma.png">
+                </div>
+                <div class="image-container">
+                    <h2>ycbcr - average - rle</h2>
+                    <div class="details">
+                        Settings: Type=ycbcr, Filter=average, Compression=rle
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-good">53kB (28.3% of original)</span><br>
+                        Saved: 134kB
+                    </div>
+                    <img src="obrazek7/ycbcr_average_rle.png" alt="obrazek7/ycbcr_average_rle.png">
+                </div>
+</div></div>
+        <div id="tab-obrazek8" class="tab-content">
+            <h2>obrazek8</h2>
+            <p>Original file: obrazek8.bmp (187kB)</p>
+            
+            <h3>Compression Ratio Comparison Tables</h3>
+            
+            <h4>No Filter</h4>
+            <table style="border-collapse: collapse; width: 100%; margin-bottom: 30px;">
+                <tr style="background-color: #f5f5f5;">
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Type</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">No Compression</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">DCT</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">DCT+Chroma</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">RLE</th>
+                </tr>
+        <tr>
+            <td style="border: 1px solid #ddd; padding: 8px;">rgb555</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e9c46a">66.8%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">75.9%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #999;">N/A</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">132.6%</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid #ddd; padding: 8px;">rgb888</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">100.0%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">74.8%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #999;">N/A</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">183.4%</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid #ddd; padding: 8px;">ycbcr</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">100.0%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">137.4%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #2a9d8f">30.4%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">137.4%</td>
+        </tr>
+            </table>
+
+            <h4>Average Filter</h4>
+            <table style="border-collapse: collapse; width: 100%; margin-bottom: 30px;">
+                <tr style="background-color: #f5f5f5;">
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Type</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">No Compression</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">DCT</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">DCT+Chroma</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">RLE</th>
+                </tr>
+        <tr>
+            <td style="border: 1px solid #ddd; padding: 8px;">rgb555</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e9c46a">66.8%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">102.1%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #999;">N/A</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">123.5%</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid #ddd; padding: 8px;">rgb888</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">100.0%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">106.4%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #999;">N/A</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">136.3%</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid #ddd; padding: 8px;">ycbcr</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">100.0%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">168.4%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e9c46a">45.4%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">168.4%</td>
+        </tr>
+            </table>
+
+            <h3>Image Comparisons</h3>
+            <div class="grid">
+                <div class="image-container">
+                    <h2>rgb555 - none - none</h2>
+                    <div class="details">
+                        Settings: Type=rgb555, Filter=none, Compression=none
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-medium">125kB (66.8% of original)</span><br>
+                        Saved: 62kB
+                    </div>
+                    <img src="obrazek8/rgb555_none_none.png" alt="obrazek8/rgb555_none_none.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb555 - none - dct</h2>
+                    <div class="details">
+                        Settings: Type=rgb555, Filter=none, Compression=dct
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">142kB (75.9% of original)</span><br>
+                        Saved: 45kB
+                    </div>
+                    <img src="obrazek8/rgb555_none_dct.png" alt="obrazek8/rgb555_none_dct.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb555 - none - rle</h2>
+                    <div class="details">
+                        Settings: Type=rgb555, Filter=none, Compression=rle
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">248kB (132.6% of original)</span><br>
+                        Saved: -61kB
+                    </div>
+                    <img src="obrazek8/rgb555_none_rle.png" alt="obrazek8/rgb555_none_rle.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb555 - average - none</h2>
+                    <div class="details">
+                        Settings: Type=rgb555, Filter=average, Compression=none
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-medium">125kB (66.8% of original)</span><br>
+                        Saved: 62kB
+                    </div>
+                    <img src="obrazek8/rgb555_average_none.png" alt="obrazek8/rgb555_average_none.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb555 - average - dct</h2>
+                    <div class="details">
+                        Settings: Type=rgb555, Filter=average, Compression=dct
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">191kB (102.1% of original)</span><br>
+                        Saved: -4kB
+                    </div>
+                    <img src="obrazek8/rgb555_average_dct.png" alt="obrazek8/rgb555_average_dct.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb555 - average - rle</h2>
+                    <div class="details">
+                        Settings: Type=rgb555, Filter=average, Compression=rle
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">231kB (123.5% of original)</span><br>
+                        Saved: -44kB
+                    </div>
+                    <img src="obrazek8/rgb555_average_rle.png" alt="obrazek8/rgb555_average_rle.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb888 - none - none</h2>
+                    <div class="details">
+                        Settings: Type=rgb888, Filter=none, Compression=none
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">187kB (100.0% of original)</span><br>
+                        Saved: 0kB
+                    </div>
+                    <img src="obrazek8/rgb888_none_none.png" alt="obrazek8/rgb888_none_none.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb888 - none - dct</h2>
+                    <div class="details">
+                        Settings: Type=rgb888, Filter=none, Compression=dct
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">140kB (74.8% of original)</span><br>
+                        Saved: 47kB
+                    </div>
+                    <img src="obrazek8/rgb888_none_dct.png" alt="obrazek8/rgb888_none_dct.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb888 - none - rle</h2>
+                    <div class="details">
+                        Settings: Type=rgb888, Filter=none, Compression=rle
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">343kB (183.4% of original)</span><br>
+                        Saved: -156kB
+                    </div>
+                    <img src="obrazek8/rgb888_none_rle.png" alt="obrazek8/rgb888_none_rle.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb888 - average - none</h2>
+                    <div class="details">
+                        Settings: Type=rgb888, Filter=average, Compression=none
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">187kB (100.0% of original)</span><br>
+                        Saved: 0kB
+                    </div>
+                    <img src="obrazek8/rgb888_average_none.png" alt="obrazek8/rgb888_average_none.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb888 - average - dct</h2>
+                    <div class="details">
+                        Settings: Type=rgb888, Filter=average, Compression=dct
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">199kB (106.4% of original)</span><br>
+                        Saved: -12kB
+                    </div>
+                    <img src="obrazek8/rgb888_average_dct.png" alt="obrazek8/rgb888_average_dct.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb888 - average - rle</h2>
+                    <div class="details">
+                        Settings: Type=rgb888, Filter=average, Compression=rle
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">255kB (136.3% of original)</span><br>
+                        Saved: -68kB
+                    </div>
+                    <img src="obrazek8/rgb888_average_rle.png" alt="obrazek8/rgb888_average_rle.png">
+                </div>
+                <div class="image-container">
+                    <h2>ycbcr - none - none</h2>
+                    <div class="details">
+                        Settings: Type=ycbcr, Filter=none, Compression=none
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">187kB (100.0% of original)</span><br>
+                        Saved: 0kB
+                    </div>
+                    <img src="obrazek8/ycbcr_none_none.png" alt="obrazek8/ycbcr_none_none.png">
+                </div>
+                <div class="image-container">
+                    <h2>ycbcr - none - dct</h2>
+                    <div class="details">
+                        Settings: Type=ycbcr, Filter=none, Compression=dct
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">257kB (137.4% of original)</span><br>
+                        Saved: -70kB
+                    </div>
+                    <img src="obrazek8/ycbcr_none_dct.png" alt="obrazek8/ycbcr_none_dct.png">
+                </div>
+                <div class="image-container">
+                    <h2>ycbcr - none - dct_chroma</h2>
+                    <div class="details">
+                        Settings: Type=ycbcr, Filter=none, Compression=dct_chroma
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-good">57kB (30.4% of original)</span><br>
+                        Saved: 130kB
+                    </div>
+                    <img src="obrazek8/ycbcr_none_dct_chroma.png" alt="obrazek8/ycbcr_none_dct_chroma.png">
+                </div>
+                <div class="image-container">
+                    <h2>ycbcr - none - rle</h2>
+                    <div class="details">
+                        Settings: Type=ycbcr, Filter=none, Compression=rle
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">257kB (137.4% of original)</span><br>
+                        Saved: -70kB
+                    </div>
+                    <img src="obrazek8/ycbcr_none_rle.png" alt="obrazek8/ycbcr_none_rle.png">
+                </div>
+                <div class="image-container">
+                    <h2>ycbcr - average - none</h2>
+                    <div class="details">
+                        Settings: Type=ycbcr, Filter=average, Compression=none
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">187kB (100.0% of original)</span><br>
+                        Saved: 0kB
+                    </div>
+                    <img src="obrazek8/ycbcr_average_none.png" alt="obrazek8/ycbcr_average_none.png">
+                </div>
+                <div class="image-container">
+                    <h2>ycbcr - average - dct</h2>
+                    <div class="details">
+                        Settings: Type=ycbcr, Filter=average, Compression=dct
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">315kB (168.4% of original)</span><br>
+                        Saved: -128kB
+                    </div>
+                    <img src="obrazek8/ycbcr_average_dct.png" alt="obrazek8/ycbcr_average_dct.png">
+                </div>
+                <div class="image-container">
+                    <h2>ycbcr - average - dct_chroma</h2>
+                    <div class="details">
+                        Settings: Type=ycbcr, Filter=average, Compression=dct_chroma
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-medium">85kB (45.4% of original)</span><br>
+                        Saved: 102kB
+                    </div>
+                    <img src="obrazek8/ycbcr_average_dct_chroma.png" alt="obrazek8/ycbcr_average_dct_chroma.png">
+                </div>
+                <div class="image-container">
+                    <h2>ycbcr - average - rle</h2>
+                    <div class="details">
+                        Settings: Type=ycbcr, Filter=average, Compression=rle
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">315kB (168.4% of original)</span><br>
+                        Saved: -128kB
+                    </div>
+                    <img src="obrazek8/ycbcr_average_rle.png" alt="obrazek8/ycbcr_average_rle.png">
+                </div>
+</div></div>
+        <div id="tab-obrazek9" class="tab-content">
+            <h2>obrazek9</h2>
+            <p>Original file: obrazek9.bmp (187kB)</p>
+            
+            <h3>Compression Ratio Comparison Tables</h3>
+            
+            <h4>No Filter</h4>
+            <table style="border-collapse: collapse; width: 100%; margin-bottom: 30px;">
+                <tr style="background-color: #f5f5f5;">
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Type</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">No Compression</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">DCT</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">DCT+Chroma</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">RLE</th>
+                </tr>
+        <tr>
+            <td style="border: 1px solid #ddd; padding: 8px;">rgb555</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e9c46a">66.8%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e9c46a">47.0%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #999;">N/A</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">132.6%</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid #ddd; padding: 8px;">rgb888</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">100.0%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e9c46a">45.9%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #999;">N/A</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">160.9%</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid #ddd; padding: 8px;">ycbcr</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">100.0%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">96.7%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #2a9d8f">16.0%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">96.7%</td>
+        </tr>
+            </table>
+
+            <h4>Average Filter</h4>
+            <table style="border-collapse: collapse; width: 100%; margin-bottom: 30px;">
+                <tr style="background-color: #f5f5f5;">
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Type</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">No Compression</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">DCT</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">DCT+Chroma</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">RLE</th>
+                </tr>
+        <tr>
+            <td style="border: 1px solid #ddd; padding: 8px;">rgb555</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e9c46a">66.8%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e9c46a">68.9%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #999;">N/A</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">108.0%</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid #ddd; padding: 8px;">rgb888</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">100.0%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">73.2%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #999;">N/A</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">95.7%</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid #ddd; padding: 8px;">ycbcr</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">100.0%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">136.3%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #2a9d8f">26.2%</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; color: #e76f51">136.3%</td>
+        </tr>
+            </table>
+
+            <h3>Image Comparisons</h3>
+            <div class="grid">
+                <div class="image-container">
+                    <h2>rgb555 - none - none</h2>
+                    <div class="details">
+                        Settings: Type=rgb555, Filter=none, Compression=none
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-medium">125kB (66.8% of original)</span><br>
+                        Saved: 62kB
+                    </div>
+                    <img src="obrazek9/rgb555_none_none.png" alt="obrazek9/rgb555_none_none.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb555 - none - dct</h2>
+                    <div class="details">
+                        Settings: Type=rgb555, Filter=none, Compression=dct
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-medium">88kB (47.0% of original)</span><br>
+                        Saved: 99kB
+                    </div>
+                    <img src="obrazek9/rgb555_none_dct.png" alt="obrazek9/rgb555_none_dct.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb555 - none - rle</h2>
+                    <div class="details">
+                        Settings: Type=rgb555, Filter=none, Compression=rle
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">248kB (132.6% of original)</span><br>
+                        Saved: -61kB
+                    </div>
+                    <img src="obrazek9/rgb555_none_rle.png" alt="obrazek9/rgb555_none_rle.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb555 - average - none</h2>
+                    <div class="details">
+                        Settings: Type=rgb555, Filter=average, Compression=none
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-medium">125kB (66.8% of original)</span><br>
+                        Saved: 62kB
+                    </div>
+                    <img src="obrazek9/rgb555_average_none.png" alt="obrazek9/rgb555_average_none.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb555 - average - dct</h2>
+                    <div class="details">
+                        Settings: Type=rgb555, Filter=average, Compression=dct
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-medium">129kB (68.9% of original)</span><br>
+                        Saved: 58kB
+                    </div>
+                    <img src="obrazek9/rgb555_average_dct.png" alt="obrazek9/rgb555_average_dct.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb555 - average - rle</h2>
+                    <div class="details">
+                        Settings: Type=rgb555, Filter=average, Compression=rle
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">202kB (108.0% of original)</span><br>
+                        Saved: -15kB
+                    </div>
+                    <img src="obrazek9/rgb555_average_rle.png" alt="obrazek9/rgb555_average_rle.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb888 - none - none</h2>
+                    <div class="details">
+                        Settings: Type=rgb888, Filter=none, Compression=none
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">187kB (100.0% of original)</span><br>
+                        Saved: 0kB
+                    </div>
+                    <img src="obrazek9/rgb888_none_none.png" alt="obrazek9/rgb888_none_none.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb888 - none - dct</h2>
+                    <div class="details">
+                        Settings: Type=rgb888, Filter=none, Compression=dct
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-medium">86kB (45.9% of original)</span><br>
+                        Saved: 101kB
+                    </div>
+                    <img src="obrazek9/rgb888_none_dct.png" alt="obrazek9/rgb888_none_dct.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb888 - none - rle</h2>
+                    <div class="details">
+                        Settings: Type=rgb888, Filter=none, Compression=rle
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">301kB (160.9% of original)</span><br>
+                        Saved: -114kB
+                    </div>
+                    <img src="obrazek9/rgb888_none_rle.png" alt="obrazek9/rgb888_none_rle.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb888 - average - none</h2>
+                    <div class="details">
+                        Settings: Type=rgb888, Filter=average, Compression=none
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">187kB (100.0% of original)</span><br>
+                        Saved: 0kB
+                    </div>
+                    <img src="obrazek9/rgb888_average_none.png" alt="obrazek9/rgb888_average_none.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb888 - average - dct</h2>
+                    <div class="details">
+                        Settings: Type=rgb888, Filter=average, Compression=dct
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">137kB (73.2% of original)</span><br>
+                        Saved: 50kB
+                    </div>
+                    <img src="obrazek9/rgb888_average_dct.png" alt="obrazek9/rgb888_average_dct.png">
+                </div>
+                <div class="image-container">
+                    <h2>rgb888 - average - rle</h2>
+                    <div class="details">
+                        Settings: Type=rgb888, Filter=average, Compression=rle
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">179kB (95.7% of original)</span><br>
+                        Saved: 8kB
+                    </div>
+                    <img src="obrazek9/rgb888_average_rle.png" alt="obrazek9/rgb888_average_rle.png">
+                </div>
+                <div class="image-container">
+                    <h2>ycbcr - none - none</h2>
+                    <div class="details">
+                        Settings: Type=ycbcr, Filter=none, Compression=none
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">187kB (100.0% of original)</span><br>
+                        Saved: 0kB
+                    </div>
+                    <img src="obrazek9/ycbcr_none_none.png" alt="obrazek9/ycbcr_none_none.png">
+                </div>
+                <div class="image-container">
+                    <h2>ycbcr - none - dct</h2>
+                    <div class="details">
+                        Settings: Type=ycbcr, Filter=none, Compression=dct
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">181kB (96.7% of original)</span><br>
+                        Saved: 6kB
+                    </div>
+                    <img src="obrazek9/ycbcr_none_dct.png" alt="obrazek9/ycbcr_none_dct.png">
+                </div>
+                <div class="image-container">
+                    <h2>ycbcr - none - dct_chroma</h2>
+                    <div class="details">
+                        Settings: Type=ycbcr, Filter=none, Compression=dct_chroma
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-good">30kB (16.0% of original)</span><br>
+                        Saved: 157kB
+                    </div>
+                    <img src="obrazek9/ycbcr_none_dct_chroma.png" alt="obrazek9/ycbcr_none_dct_chroma.png">
+                </div>
+                <div class="image-container">
+                    <h2>ycbcr - none - rle</h2>
+                    <div class="details">
+                        Settings: Type=ycbcr, Filter=none, Compression=rle
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">181kB (96.7% of original)</span><br>
+                        Saved: 6kB
+                    </div>
+                    <img src="obrazek9/ycbcr_none_rle.png" alt="obrazek9/ycbcr_none_rle.png">
+                </div>
+                <div class="image-container">
+                    <h2>ycbcr - average - none</h2>
+                    <div class="details">
+                        Settings: Type=ycbcr, Filter=average, Compression=none
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">187kB (100.0% of original)</span><br>
+                        Saved: 0kB
+                    </div>
+                    <img src="obrazek9/ycbcr_average_none.png" alt="obrazek9/ycbcr_average_none.png">
+                </div>
+                <div class="image-container">
+                    <h2>ycbcr - average - dct</h2>
+                    <div class="details">
+                        Settings: Type=ycbcr, Filter=average, Compression=dct
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">255kB (136.3% of original)</span><br>
+                        Saved: -68kB
+                    </div>
+                    <img src="obrazek9/ycbcr_average_dct.png" alt="obrazek9/ycbcr_average_dct.png">
+                </div>
+                <div class="image-container">
+                    <h2>ycbcr - average - dct_chroma</h2>
+                    <div class="details">
+                        Settings: Type=ycbcr, Filter=average, Compression=dct_chroma
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-good">49kB (26.2% of original)</span><br>
+                        Saved: 138kB
+                    </div>
+                    <img src="obrazek9/ycbcr_average_dct_chroma.png" alt="obrazek9/ycbcr_average_dct_chroma.png">
+                </div>
+                <div class="image-container">
+                    <h2>ycbcr - average - rle</h2>
+                    <div class="details">
+                        Settings: Type=ycbcr, Filter=average, Compression=rle
+                    </div>
+                    <div class="file-info">
+                        NF size: <span class="size-bad">255kB (136.3% of original)</span><br>
+                        Saved: -68kB
+                    </div>
+                    <img src="obrazek9/ycbcr_average_rle.png" alt="obrazek9/ycbcr_average_rle.png">
+                </div>
+</div></div>
+    </div>
+    <script>
+        // Show first tab by default
+        document.querySelector('.tab-button').click();
+    </script>
+</body>
+</html>
