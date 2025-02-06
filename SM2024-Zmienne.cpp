@@ -19,4 +19,4 @@ bool operator!=(const Color &lhs, const Color &rhs) {
     return !(lhs == rhs);
 }
 
-// Removed the template specializations of hash<Color> and equal_to<Color>
+

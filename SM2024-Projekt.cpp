@@ -169,7 +169,7 @@ int main(int argc, char *argv[]) {
 
   try {
     switch (commandId) {
-    case 1: { // convert
+    case 1: { 
       if (!hasParameter(params, 'i') || !hasParameter(params, 'o')) {
         std::cerr << "Error: Input and output paths are required for convert "
                      "command\n";
@@ -189,15 +189,15 @@ int main(int argc, char *argv[]) {
       }
 
       if (inputIsBMP) {
-        // BMP to NF conversion
+        
         Canvas image = loadBMPToCanvas(inputPath);
 
-        // Create header with user parameters
+        
         NFHeaderUser header;
         header.width = image[0].size();
         header.height = image.size();
 
-        // Set defaults if parameters are not provided
+        
         header.type = hasParameter(params, 't') ? parseImageType(params['t'])
                                                 : ImageType::RGB888;
 
@@ -208,12 +208,12 @@ int main(int argc, char *argv[]) {
                                  ? parseCompressionType(params['c'])
                                  : CompressionType::None;
 
-        // Save as NF format
+        
         saveNFImage(outputPath, header, image);
         std::cout << "Successfully converted " << inputPath << " to "
                   << outputPath << std::endl;
       } else {
-        // NF to BMP conversion
+        
         auto [header, image] = loadNFImage(inputPath);
         saveCanvasToBMP(image, outputPath);
         std::cout << "Successfully converted " << inputPath << " to "
@@ -222,35 +222,35 @@ int main(int argc, char *argv[]) {
       break;
     }
 
-    case 2: { // view
+    case 2: { 
       if (!hasParameter(params, 'i')) {
         std::cerr << "Error: Input path is required for view command\n";
         printUsage();
         return 1;
       }
 
-      // Load the NF image
+      
       auto [header, image] = loadNFImage(params['i']);
 
-      // Save as temporary BMP for viewing
+      
       std::string tempFile = "temp_view.bmp";
       saveCanvasToBMP(image, tempFile);
 
-      // Open with system default viewer (you might want to implement a proper
-      // viewer)
+      
+      
       std::string command = "open " + tempFile;
       system(command.c_str());
       break;
     }
 
-    case 3: { // info
+    case 3: { 
       if (!hasParameter(params, 'i')) {
         std::cerr << "Error: Input path is required for info command\n";
         printUsage();
         return 1;
       }
 
-      // Load and display header information
+      
       auto [header, _] = loadNFImage(params['i']);
 
       std::cout << "Image Information:\n"

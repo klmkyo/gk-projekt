@@ -50,7 +50,7 @@ constexpr int maxKolorow = 320 * 600;
 
 bool czyTrybJestZPaleta(TrybObrazu tryb);
 
-// Move the hash and equal_to definitions here, fully implementing them
+
 namespace std {
     template <>
     struct hash<Color> {
@@ -68,4 +68,4 @@ namespace std {
     };
 }
 
-#endif // SM2024_ZMIENNE_H
+#endif 

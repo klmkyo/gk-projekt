@@ -2,12 +2,12 @@
 #include "SM2024-Zmienne.h"
 #include <SDL.h>
 #include <algorithm>
-#include <cmath> // <-- For std::cos, std::sqrt
+#include <cmath> 
 #include <ctime>
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
-#include <vector> // <-- Needed for vectors
+#include <vector> 
 
 extern const char FILE_SIGNATURE[2];
 
@@ -31,7 +31,7 @@ std::vector<Uint8> serializeHeader(NFHeaderUser header) {
   std::vector<Uint8> headerData;
   headerData.reserve(NFHEADER_SIZE);
 
-  // Setting Magic
+  
   for (int i = 0; i < 4; i++) {
     headerData.push_back(NOFI_MAGIC[i]);
   }
@@ -47,7 +47,7 @@ std::vector<Uint8> serializeHeader(NFHeaderUser header) {
   headerData.push_back(header.height & 0xFF);
   headerData.push_back((header.height >> 8) & 0xFF);
 
-  // Pad to HEADER_SIZE
+  
   while (headerData.size() < NFHEADER_SIZE) {
     headerData.push_back(0);
   }
@@ -87,11 +87,11 @@ void saveNFImage(const std::string &filename, NFHeaderUser header,
                  Canvas &image) {
   std::vector<Uint8> bytes;
 
-  // add header
+  
   std::vector<Uint8> headerBytes = serializeHeader(header);
   bytes.insert(bytes.end(), headerBytes.begin(), headerBytes.end());
 
-  // add image data
+  
   std::vector<Uint8> imageData = serializeCanvas(image, header);
 
   bytes.insert(bytes.end(), imageData.begin(), imageData.end());
@@ -105,7 +105,7 @@ std::pair<NFHeader, Canvas> loadNFImage(const std::string &filename) {
   std::ifstream file(filename, std::ios::in | std::ios::binary);
   std::vector<Uint8> bytes;
 
-  // read the whole file into bytes
+  
   file.seekg(0, std::ios::end);
   bytes.resize(file.tellg());
   file.seekg(0, std::ios::beg);
@@ -118,16 +118,16 @@ std::pair<NFHeader, Canvas> loadNFImage(const std::string &filename) {
   std::vector<Uint8> headerBytes(bytes.begin(), bytes.begin() + headerSize);
   NFHeader header = deserializeHeader(headerBytes);
 
-  // image data is the rest of the bytes
+  
   std::vector<Uint8> imageData(bytes.begin() + headerSize, bytes.end());
 
   Canvas image = deserializeCanvas(imageData, header);
   return {header, image};
 }
 
-// -----------------------------------------------------------------------------
-// Basic clamp
-// -----------------------------------------------------------------------------
+
+
+
 template <typename T>
 T clamp(const T &value, const T &minVal, const T &maxVal) {
   if (value < minVal)
@@ -137,9 +137,9 @@ T clamp(const T &value, const T &minVal, const T &maxVal) {
   return value;
 }
 
-// -----------------------------------------------------------------------------
-// 8×8 Bayer dithering matrix
-// -----------------------------------------------------------------------------
+
+
+
 const int BAYER_MATRIX_SIZE = 8;
 const float BAYER_MATRIX[8][8] = {
     {0, 48, 12, 60, 3, 51, 15, 63}, {32, 16, 44, 28, 35, 19, 47, 31},
@@ -150,17 +150,17 @@ const float BAYER_MATRIX[8][8] = {
 Uint8 applyBayerDithering(int x, int y, Uint8 value) {
   float bayerValue =
       BAYER_MATRIX[y % BAYER_MATRIX_SIZE][x % BAYER_MATRIX_SIZE] / 64.0f;
-  bayerValue = (bayerValue - 0.5f) * (8.0f / 255.0f); // for ~5-bit
+  bayerValue = (bayerValue - 0.5f) * (8.0f / 255.0f); 
   float dithered = (value / 255.0f) + bayerValue;
   dithered = std::max(0.0f, std::min(1.0f, dithered));
   return static_cast<Uint8>(dithered * 31.0f + 0.5f);
 }
 
-// -----------------------------------------------------------------------------
-// NEW: Simple DCT + quantization tables
-// -----------------------------------------------------------------------------
 
-// DCT tables (quantization for Y & C). Very simple example:
+
+
+
+
 static const float QY[8][8] = {
     {16, 11, 10, 16, 24, 40, 51, 61},     {12, 12, 14, 19, 26, 58, 60, 55},
     {14, 13, 16, 24, 40, 57, 69, 56},     {14, 17, 22, 29, 51, 87, 80, 62},
@@ -173,9 +173,9 @@ static const float QC[8][8] = {
     {99, 99, 99, 99, 99, 99, 99, 99}, {99, 99, 99, 99, 99, 99, 99, 99},
     {99, 99, 99, 99, 99, 99, 99, 99}, {99, 99, 99, 99, 99, 99, 99, 99}};
 
-// Forward & inverse DCT helpers
+
 static inline float c(int idx) {
-  // "alpha" factor
+  
   return (idx == 0) ? (1.0f / std::sqrt(8.0f)) : std::sqrt(2.0f / 8.0f);
 }
 
@@ -211,9 +211,9 @@ static void inverseDCT8x8(const float in[8][8], float out[8][8]) {
   }
 }
 
-// -----------------------------------------------------------------------------
-// RLE compression functions (unchanged)
-// -----------------------------------------------------------------------------
+
+
+
 std::vector<Uint8> compressRLE(const std::vector<Uint8> &input) {
   std::vector<Uint8> compressed;
   size_t i = 0;
@@ -227,9 +227,9 @@ std::vector<Uint8> compressRLE(const std::vector<Uint8> &input) {
       i++;
     }
 
-    // If run length is 1 and next byte is different, store without RLE
+    
     if (count == 1 && i + 1 < input.size() && input[i + 1] != current) {
-      compressed.push_back(0); // 0 count means literal byte follows
+      compressed.push_back(0); 
       compressed.push_back(current);
     } else {
       compressed.push_back(count);
@@ -251,10 +251,10 @@ std::vector<Uint8> decompressRLE(const std::vector<Uint8> &input) {
     Uint8 value = input[i++];
 
     if (count == 0) {
-      // Literal byte
+      
       decompressed.push_back(value);
     } else {
-      // Run of identical bytes
+      
       for (Uint8 j = 0; j < count; j++) {
         decompressed.push_back(value);
       }
@@ -264,9 +264,9 @@ std::vector<Uint8> decompressRLE(const std::vector<Uint8> &input) {
   return decompressed;
 }
 
-// -----------------------------------------------------------------------------
-// serializeCanvas (updated to handle DCT for YCbCr + subsampling)
-// -----------------------------------------------------------------------------
+
+
+
 std::vector<Uint8> serializeCanvas(Canvas &image, NFHeaderUser header) {
   NFHeader fullHeader;
   fullHeader.type = header.type;
@@ -282,7 +282,7 @@ std::vector<Uint8> serializeCanvas(Canvas &image, NFHeader header) {
   int width = (int)image[0].size();
   int height = (int)image.size();
 
-  // Validate that DctPlusChromaSubsampling is only used with YCbCr
+  
   if (header.compression == CompressionType::DctPlusChromaSubsampling &&
       header.type != ImageType::YCbCr888) {
     throw std::invalid_argument(
@@ -291,14 +291,14 @@ std::vector<Uint8> serializeCanvas(Canvas &image, NFHeader header) {
 
   switch (header.type) {
   case ImageType::RGB888: {
-    // Standard RGB888 - 3 bytes/pixel
+    
     if (header.compression == CompressionType::Dct) {
-      // Create separate planes for R, G, B
+      
       std::vector<std::vector<float>> Rf(height, std::vector<float>(width));
       std::vector<std::vector<float>> Gf(height, std::vector<float>(width));
       std::vector<std::vector<float>> Bf(height, std::vector<float>(width));
 
-      // Fill the planes
+      
       for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
           Rf[y][x] = (float)image[y][x].r;
@@ -311,7 +311,7 @@ std::vector<Uint8> serializeCanvas(Canvas &image, NFHeader header) {
                                 int h) {
         for (int by = 0; by < h; by += 8) {
           for (int bx = 0; bx < w; bx += 8) {
-            // Gather block -> subtract 128
+            
             float block[8][8];
             for (int yb = 0; yb < 8; yb++) {
               for (int xb = 0; xb < 8; xb++) {
@@ -324,27 +324,27 @@ std::vector<Uint8> serializeCanvas(Canvas &image, NFHeader header) {
                 block[yb][xb] = val;
               }
             }
-            // Forward DCT
+            
             float dctOut[8][8];
             forwardDCT8x8(block, dctOut);
-            // Quantize & store
+            
             for (int yb = 0; yb < 8; yb++) {
               for (int xb = 0; xb < 8; xb++) {
-                float q = QY[yb][xb]; // Use luminance quantization for RGB
+                float q = QY[yb][xb]; 
                 float coeff = dctOut[yb][xb] / q;
-                // Scale and clamp to 8-bit range
+                
                 int8_t iCoeff =
                     (int8_t)clamp<int>((int)std::round(coeff), -128, 127);
-                // Store as single byte
+                
                 data.push_back(
-                    (Uint8)(iCoeff + 128)); // Shift from -128..127 to 0..255
+                    (Uint8)(iCoeff + 128)); 
               }
             }
           }
         }
       };
 
-      // Encode each color plane
+      
       encodePlaneDCT(Rf, width, height);
       encodePlaneDCT(Gf, width, height);
       encodePlaneDCT(Bf, width, height);
@@ -361,12 +361,12 @@ std::vector<Uint8> serializeCanvas(Canvas &image, NFHeader header) {
   }
   case ImageType::RGB555_WITH_BAYER_DITHERING: {
     if (header.compression == CompressionType::Dct) {
-      // Create separate planes for R5, G5, B5
+      
       std::vector<std::vector<float>> R5f(height, std::vector<float>(width));
       std::vector<std::vector<float>> G5f(height, std::vector<float>(width));
       std::vector<std::vector<float>> B5f(height, std::vector<float>(width));
 
-      // Fill the planes with dithered 5-bit values
+      
       for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
           R5f[y][x] = (float)applyBayerDithering(x, y, image[y][x].r);
@@ -379,7 +379,7 @@ std::vector<Uint8> serializeCanvas(Canvas &image, NFHeader header) {
                                 int h) {
         for (int by = 0; by < h; by += 8) {
           for (int bx = 0; bx < w; bx += 8) {
-            // Gather block -> scale to 0-255 range and subtract 128
+            
             float block[8][8];
             for (int yb = 0; yb < 8; yb++) {
               for (int xb = 0; xb < 8; xb++) {
@@ -392,32 +392,32 @@ std::vector<Uint8> serializeCanvas(Canvas &image, NFHeader header) {
                 block[yb][xb] = val;
               }
             }
-            // Forward DCT
+            
             float dctOut[8][8];
             forwardDCT8x8(block, dctOut);
-            // Quantize & store
+            
             for (int yb = 0; yb < 8; yb++) {
               for (int xb = 0; xb < 8; xb++) {
-                float q = QY[yb][xb]; // Use luminance quantization
+                float q = QY[yb][xb]; 
                 float coeff = dctOut[yb][xb] / q;
-                // Scale and clamp to 8-bit range
+                
                 int8_t iCoeff =
                     (int8_t)clamp<int>((int)std::round(coeff), -128, 127);
-                // Store as single byte
+                
                 data.push_back(
-                    (Uint8)(iCoeff + 128)); // Shift from -128..127 to 0..255
+                    (Uint8)(iCoeff + 128)); 
               }
             }
           }
         }
       };
 
-      // Encode each 5-bit color plane
+      
       encodePlaneDCT(R5f, width, height);
       encodePlaneDCT(G5f, width, height);
       encodePlaneDCT(B5f, width, height);
     } else {
-      // Original RGB555 with Bayer code
+      
       for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
           Uint8 r5 = applyBayerDithering(x, y, image[y][x].r);
@@ -432,20 +432,20 @@ std::vector<Uint8> serializeCanvas(Canvas &image, NFHeader header) {
     break;
   }
   case ImageType::YCbCr888: {
-    // If compression = DctPlusChromaSubsampling, do block-based DCT
+    
     bool useSubsampling =
         (header.compression == CompressionType::DctPlusChromaSubsampling);
     int subsampleWidth = useSubsampling ? (width + 1) / 2 : width;
     int subsampleHeight = useSubsampling ? (height + 1) / 2 : height;
 
-    // Allocate Y/Cb/Cr planes
+    
     std::vector<std::vector<float>> Yf(height, std::vector<float>(width));
     std::vector<std::vector<float>> Cbf(subsampleHeight,
                                         std::vector<float>(subsampleWidth));
     std::vector<std::vector<float>> Crf(subsampleHeight,
                                         std::vector<float>(subsampleWidth));
 
-    // Convert RGB -> YCbCr
+    
     for (int yy = 0; yy < height; yy++) {
       for (int xx = 0; xx < width; xx++) {
         float r = image[yy][xx].r;
@@ -473,16 +473,16 @@ std::vector<Uint8> serializeCanvas(Canvas &image, NFHeader header) {
     }
 
     if (useSubsampling) {
-      // -----------------------------------------------------------------
-      // // DCT ADDITIONS: Block-based DCT for Y, Cb, Cr
-      // -----------------------------------------------------------------
-      // We'll store 8×8 block data as 64 int16 per block in row-major order.
+      
+      
+      
+      
 
       auto encodePlaneDCT = [&](std::vector<std::vector<float>> &plane, int w,
                                 int h, const float quant[8][8]) {
         for (int by = 0; by < h; by += 8) {
           for (int bx = 0; bx < w; bx += 8) {
-            // Gather block -> subtract 128
+            
             float block[8][8];
             for (int yb = 0; yb < 8; yb++) {
               for (int xb = 0; xb < 8; xb++) {
@@ -495,47 +495,47 @@ std::vector<Uint8> serializeCanvas(Canvas &image, NFHeader header) {
                 block[yb][xb] = val;
               }
             }
-            // Forward DCT
+            
             float dctOut[8][8];
             forwardDCT8x8(block, dctOut);
-            // Quantize & store
+            
             for (int yb = 0; yb < 8; yb++) {
               for (int xb = 0; xb < 8; xb++) {
                 float q = quant[yb][xb];
                 float coeff = dctOut[yb][xb] / q;
-                // Scale and clamp to 8-bit range
+                
                 int8_t iCoeff =
                     (int8_t)clamp<int>((int)std::round(coeff), -128, 127);
-                // Store as single byte
+                
                 data.push_back(
-                    (Uint8)(iCoeff + 128)); // Shift from -128..127 to 0..255
+                    (Uint8)(iCoeff + 128)); 
               }
             }
           }
         }
       };
 
-      // Encode Y plane (full res)
+      
       encodePlaneDCT(Yf, width, height, QY);
-      // Encode Cb plane (subsampled)
+      
       encodePlaneDCT(Cbf, subsampleWidth, subsampleHeight, QC);
-      // Encode Cr plane (subsampled)
+      
       encodePlaneDCT(Crf, subsampleWidth, subsampleHeight, QC);
     } else {
-      // Existing path (no DCT, just store the planes raw)
-      // Store Y
+      
+      
       for (int yy = 0; yy < height; yy++) {
         for (int xx = 0; xx < width; xx++) {
           data.push_back((Uint8)(Yf[yy][xx]));
         }
       }
-      // Store Cb
+      
       for (int yy = 0; yy < height; yy++) {
         for (int xx = 0; xx < width; xx++) {
           data.push_back((Uint8)(Cbf[yy][xx]));
         }
       }
-      // Store Cr
+      
       for (int yy = 0; yy < height; yy++) {
         for (int xx = 0; xx < width; xx++) {
           data.push_back((Uint8)(Crf[yy][xx]));
@@ -546,7 +546,7 @@ std::vector<Uint8> serializeCanvas(Canvas &image, NFHeader header) {
   }
   }
 
-  // Apply filter if specified
+  
   if (header.filter == FilterType::Average) {
     std::vector<Uint8> filtered;
     filtered.reserve(data.size());
@@ -557,9 +557,9 @@ std::vector<Uint8> serializeCanvas(Canvas &image, NFHeader header) {
       bytesPerPixel = 2;
       break;
     default:
-      // Typically 3 for RGB888 or 1 if you treat Y-plane data, etc.
-      // We'll keep it simple: For raw RGB888 => 3. For DCT data => 1 not
-      // typical.
+      
+      
+      
       bytesPerPixel = 3;
       break;
     }
@@ -577,7 +577,7 @@ std::vector<Uint8> serializeCanvas(Canvas &image, NFHeader header) {
     data = std::move(filtered);
   }
 
-  // Apply RLE if specified (unchanged)
+  
   if (header.compression != CompressionType::None) {
     data = compressRLE(data);
   }
@@ -585,17 +585,17 @@ std::vector<Uint8> serializeCanvas(Canvas &image, NFHeader header) {
   return data;
 }
 
-// -----------------------------------------------------------------------------
-// deserializeCanvas (updated to handle DCT if compression ==
-// DctPlusChromaSubsampling)
-// -----------------------------------------------------------------------------
+
+
+
+
 Canvas deserializeCanvas(std::vector<Uint8> data, NFHeader header) {
-  // If RLE was used, decompress first
+  
   if (header.compression != CompressionType::None) {
     data = decompressRLE(data);
   }
 
-  // If average filter was applied, reverse it first
+  
   if (header.filter == FilterType::Average) {
     std::vector<Uint8> unfiltered;
     unfiltered.reserve(data.size());
@@ -631,7 +631,7 @@ Canvas deserializeCanvas(std::vector<Uint8> data, NFHeader header) {
   switch (header.type) {
   case ImageType::RGB888: {
     if (header.compression == CompressionType::Dct) {
-      // Create planes for R, G, B
+      
       std::vector<std::vector<float>> Rf(height, std::vector<float>(width));
       std::vector<std::vector<float>> Gf(height, std::vector<float>(width));
       std::vector<std::vector<float>> Bf(height, std::vector<float>(width));
@@ -640,30 +640,30 @@ Canvas deserializeCanvas(std::vector<Uint8> data, NFHeader header) {
                                 int h) {
         for (int by = 0; by < h; by += 8) {
           for (int bx = 0; bx < w; bx += 8) {
-            // read 64 int8
+            
             float blockDCT[8][8];
             for (int yb = 0; yb < 8; yb++) {
               for (int xb = 0; xb < 8; xb++) {
                 if (dataIndex >= data.size()) {
-                  // Safety check or throw if data is incomplete
+                  
                   blockDCT[yb][xb] = 0;
                 } else {
-                  // Convert from 0..255 back to -128..127
+                  
                   int8_t coeff = (int8_t)((int)data[dataIndex++] - 128);
                   blockDCT[yb][xb] = (float)coeff;
                 }
               }
             }
-            // Dequantize + iDCT
+            
             float spatial[8][8];
             for (int yb = 0; yb < 8; yb++) {
               for (int xb = 0; xb < 8; xb++) {
                 blockDCT[yb][xb] *=
-                    QY[yb][xb]; // Use luminance quantization for RGB
+                    QY[yb][xb]; 
               }
             }
             inverseDCT8x8(blockDCT, spatial);
-            // place back
+            
             for (int yb = 0; yb < 8; yb++) {
               for (int xb = 0; xb < 8; xb++) {
                 int px = bx + xb;
@@ -679,12 +679,12 @@ Canvas deserializeCanvas(std::vector<Uint8> data, NFHeader header) {
         }
       };
 
-      // Decode each color plane
+      
       decodePlaneDCT(Rf, width, height);
       decodePlaneDCT(Gf, width, height);
       decodePlaneDCT(Bf, width, height);
 
-      // Convert back to RGB
+      
       for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
           image[y][x].r = (Uint8)clamp<int>((int)std::lround(Rf[y][x]), 0, 255);
@@ -693,7 +693,7 @@ Canvas deserializeCanvas(std::vector<Uint8> data, NFHeader header) {
         }
       }
     } else {
-      // Plain RGB888
+      
       for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
           image[y][x].r = data[dataIndex++];
@@ -706,7 +706,7 @@ Canvas deserializeCanvas(std::vector<Uint8> data, NFHeader header) {
   }
   case ImageType::RGB555_WITH_BAYER_DITHERING: {
     if (header.compression == CompressionType::Dct) {
-      // Create planes for R5, G5, B5
+      
       std::vector<std::vector<float>> R5f(height, std::vector<float>(width));
       std::vector<std::vector<float>> G5f(height, std::vector<float>(width));
       std::vector<std::vector<float>> B5f(height, std::vector<float>(width));
@@ -715,29 +715,29 @@ Canvas deserializeCanvas(std::vector<Uint8> data, NFHeader header) {
                                 int h) {
         for (int by = 0; by < h; by += 8) {
           for (int bx = 0; bx < w; bx += 8) {
-            // read 64 int8
+            
             float blockDCT[8][8];
             for (int yb = 0; yb < 8; yb++) {
               for (int xb = 0; xb < 8; xb++) {
                 if (dataIndex >= data.size()) {
-                  // Safety check or throw if data is incomplete
+                  
                   blockDCT[yb][xb] = 0;
                 } else {
-                  // Convert from 0..255 back to -128..127
+                  
                   int8_t coeff = (int8_t)((int)data[dataIndex++] - 128);
                   blockDCT[yb][xb] = (float)coeff;
                 }
               }
             }
-            // Dequantize + iDCT
+            
             float spatial[8][8];
             for (int yb = 0; yb < 8; yb++) {
               for (int xb = 0; xb < 8; xb++) {
-                blockDCT[yb][xb] *= QY[yb][xb]; // Use luminance quantization
+                blockDCT[yb][xb] *= QY[yb][xb]; 
               }
             }
             inverseDCT8x8(blockDCT, spatial);
-            // place back and scale from 0-255 to 0-31
+            
             for (int yb = 0; yb < 8; yb++) {
               for (int xb = 0; xb < 8; xb++) {
                 int px = bx + xb;
@@ -754,12 +754,12 @@ Canvas deserializeCanvas(std::vector<Uint8> data, NFHeader header) {
         }
       };
 
-      // Decode each color plane
+      
       decodePlaneDCT(R5f, width, height);
       decodePlaneDCT(G5f, width, height);
       decodePlaneDCT(B5f, width, height);
 
-      // Convert back to RGB888
+      
       for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
           Uint8 r5 = (Uint8)clamp<int>((int)std::lround(R5f[y][x]), 0, 31);
@@ -771,7 +771,7 @@ Canvas deserializeCanvas(std::vector<Uint8> data, NFHeader header) {
         }
       }
     } else {
-      // Original RGB555 code
+      
       for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
           Uint16 pixel = (Uint16)(data[dataIndex] | (data[dataIndex + 1] << 8));
@@ -793,7 +793,7 @@ Canvas deserializeCanvas(std::vector<Uint8> data, NFHeader header) {
     int subsampleWidth = useSubsampling ? (width + 1) / 2 : width;
     int subsampleHeight = useSubsampling ? (height + 1) / 2 : height;
 
-    // We'll decode into float planes
+    
     std::vector<std::vector<float>> Yf(height, std::vector<float>(width));
     std::vector<std::vector<float>> Cbf(subsampleHeight,
                                         std::vector<float>(subsampleWidth));
@@ -801,7 +801,7 @@ Canvas deserializeCanvas(std::vector<Uint8> data, NFHeader header) {
                                         std::vector<float>(subsampleWidth));
 
     if (!useSubsampling) {
-      // Existing approach: read raw Y, then Cb, then Cr
+      
       for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
           Yf[y][x] = (float)data[dataIndex++];
@@ -818,28 +818,28 @@ Canvas deserializeCanvas(std::vector<Uint8> data, NFHeader header) {
         }
       }
     } else {
-      // -----------------------------------------------------------------
-      // // DCT ADDITIONS: decode 8×8 blocks for Y, Cb, Cr
-      // -----------------------------------------------------------------
+      
+      
+      
       auto decodePlaneDCT = [&](std::vector<std::vector<float>> &plane, int w,
                                 int h, const float quant[8][8]) {
         for (int by = 0; by < h; by += 8) {
           for (int bx = 0; bx < w; bx += 8) {
-            // read 64 int8
+            
             float blockDCT[8][8];
             for (int yb = 0; yb < 8; yb++) {
               for (int xb = 0; xb < 8; xb++) {
                 if (dataIndex >= data.size()) {
-                  // Safety check or throw if data is incomplete
+                  
                   blockDCT[yb][xb] = 0;
                 } else {
-                  // Convert from 0..255 back to -128..127
+                  
                   int8_t coeff = (int8_t)((int)data[dataIndex++] - 128);
                   blockDCT[yb][xb] = (float)coeff;
                 }
               }
             }
-            // Dequantize + iDCT
+            
             float spatial[8][8];
             for (int yb = 0; yb < 8; yb++) {
               for (int xb = 0; xb < 8; xb++) {
@@ -847,7 +847,7 @@ Canvas deserializeCanvas(std::vector<Uint8> data, NFHeader header) {
               }
             }
             inverseDCT8x8(blockDCT, spatial);
-            // place back
+            
             for (int yb = 0; yb < 8; yb++) {
               for (int xb = 0; xb < 8; xb++) {
                 int px = bx + xb;
@@ -863,15 +863,15 @@ Canvas deserializeCanvas(std::vector<Uint8> data, NFHeader header) {
         }
       };
 
-      // Decode Y plane
+      
       decodePlaneDCT(Yf, width, height, QY);
-      // Decode Cb plane
+      
       decodePlaneDCT(Cbf, subsampleWidth, subsampleHeight, QC);
-      // Decode Cr plane
+      
       decodePlaneDCT(Crf, subsampleWidth, subsampleHeight, QC);
     }
 
-    // Convert YCbCr -> RGB
+    
     for (int yy = 0; yy < height; yy++) {
       for (int xx = 0; xx < width; xx++) {
         float yVal = Yf[yy][xx];

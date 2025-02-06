@@ -19,9 +19,9 @@ enum class CompressionType {
   RLE = 3,
 };
 
-// What the file contains
-// After that will be the image data, size of each
-// channel will be known based on width, height and subsampling info
+
+
+
 struct NFHeader {
   char magic[4];
   Uint8 version;
@@ -32,19 +32,19 @@ struct NFHeader {
   Uint16 height;
 };
 
-const int NFHEADER_SIZE_UNPADDED = 4 + // Magic
-                                   1 + // Version
-                                   1 + // ImageType
-                                   1 + // FilterType
-                                   1 + // CompressionType
-                                   2 + // Width
-                                   2;  // Height
+const int NFHEADER_SIZE_UNPADDED = 4 + 
+                                   1 + 
+                                   1 + 
+                                   1 + 
+                                   1 + 
+                                   2 + 
+                                   2;  
 
-// pad to 4 bytes
+
 const int NFHEADER_SIZE = 32;
 
-// What the user uses to create header (the same thing, but without magic and
-// version)
+
+
 struct NFHeaderUser {
   ImageType type;
   FilterType filter;
